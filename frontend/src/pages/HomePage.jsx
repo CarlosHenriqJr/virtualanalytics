@@ -105,7 +105,10 @@ const HomePage = () => {
                 </Button>
 
                 <Button
-                  onClick={() => handleFileLoaded(mockMatches)}
+                  onClick={() => {
+                    setMatches([]);
+                    setSelectedDate(null);
+                  }}
                   variant="outline"
                   className="bg-blue-600 border-blue-500 hover:bg-blue-700 text-white"
                 >
