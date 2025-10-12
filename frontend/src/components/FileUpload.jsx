@@ -1,7 +1,7 @@
 import React from 'react';
 import { Upload, FileCode } from 'lucide-react';
 import { Button } from './ui/button';
-import { toast } from './ui/use-toast';
+import { toast } from '../hooks/use-toast';
 
 const FileUpload = ({ onFileLoaded }) => {
   const fileInputRef = React.useRef(null);
