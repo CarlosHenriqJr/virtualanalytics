@@ -169,6 +169,5 @@ const FileUpload = ({ onFileLoaded }) => {
     </div>
   );
 };
-};
 
 export default FileUpload;
