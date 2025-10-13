@@ -1,51 +1,89 @@
 import React from 'react';
-import { Upload, FileCode } from 'lucide-react';
+import { Upload, FileCode, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { toast } from '../hooks/use-toast';
+import pako from 'pako';
 
 const FileUpload = ({ onFileLoaded }) => {
   const fileInputRef = React.useRef(null);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.name.endsWith('.js')) {
+    const isGzipped = file.name.endsWith('.gz');
+    const isJson = file.name.endsWith('.json') || file.name.endsWith('.json.gz');
+    const isJs = file.name.endsWith('.js');
+
+    if (!isJson && !isJs) {
       toast({
         title: "Erro no arquivo",
-        description: "Por favor, selecione um arquivo .js",
+        description: "Por favor, selecione um arquivo .js, .json ou .json.gz",
         variant: "destructive"
       });
       return;
     }
 
+    setIsProcessing(true);
+
     try {
-      const text = await file.text();
-      
-      // Remove export statement e extrai o array
-      const cleanedText = text
-        .replace(/export\s+const\s+\w+\s*=\s*/, '')
-        .replace(/;\s*$/, '');
-      
-      // Avalia o JavaScript
-      const matches = eval(`(${cleanedText})`);
+      let matches;
+
+      if (isGzipped) {
+        // Arquivo compactado com gzip
+        toast({
+          title: "Descompactando arquivo...",
+          description: "Aguarde enquanto processamos o arquivo compactado.",
+        });
+
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        // Descompactar com pako
+        const decompressed = pako.ungzip(uint8Array, { to: 'string' });
+        
+        // Parse JSON
+        matches = JSON.parse(decompressed);
+      } else if (isJson) {
+        // JSON não compactado
+        const text = await file.text();
+        matches = JSON.parse(text);
+      } else {
+        // JavaScript (.js)
+        const text = await file.text();
+        
+        // Remove export statement e extrai o array
+        const cleanedText = text
+          .replace(/export\s+const\s+\w+\s*=\s*/, '')
+          .replace(/;\s*$/, '');
+        
+        // Avalia o JavaScript
+        matches = eval(`(${cleanedText})`);
+      }
       
       if (!Array.isArray(matches) || matches.length === 0) {
         throw new Error('Formato inválido');
       }
 
       onFileLoaded(matches);
+      
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       toast({
-        title: "Arquivo carregado!",
-        description: `${matches.length} partidas carregadas com sucesso.`,
+        title: "✅ Arquivo carregado!",
+        description: `${matches.length} partidas carregadas (${fileSizeMB} MB)`,
       });
     } catch (error) {
       console.error('Erro ao processar arquivo:', error);
       toast({
         title: "Erro ao processar arquivo",
-        description: "Verifique se o arquivo está no formato correto.",
+        description: error.message || "Verifique se o arquivo está no formato correto.",
         variant: "destructive"
       });
+    } finally {
+      setIsProcessing(false);
+      // Limpa o input para permitir recarregar o mesmo arquivo
+      event.target.value = '';
     }
   };
 
