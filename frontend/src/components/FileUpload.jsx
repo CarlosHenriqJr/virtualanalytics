@@ -1,88 +1,133 @@
 import React from 'react';
-import { Upload, FileCode, Loader2 } from 'lucide-react';
+import { Upload, FileCode, Loader2, Files } from 'lucide-react';
 import { Button } from './ui/button';
 import { toast } from '../hooks/use-toast';
 import pako from 'pako';
+import { Progress } from './ui/progress';
 
 const FileUpload = ({ onFileLoaded }) => {
   const fileInputRef = React.useRef(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
+  const [currentFile, setCurrentFile] = React.useState('');
 
-  const handleFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
+  const processFile = async (file) => {
     const isGzipped = file.name.endsWith('.gz');
     const isJson = file.name.endsWith('.json') || file.name.endsWith('.json.gz');
     const isJs = file.name.endsWith('.js');
 
-    if (!isJson && !isJs) {
+    let matches;
+
+    if (isGzipped) {
+      const arrayBuffer = await file.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const decompressed = pako.ungzip(uint8Array, { to: 'string' });
+      matches = JSON.parse(decompressed);
+    } else if (isJson) {
+      const text = await file.text();
+      matches = JSON.parse(text);
+    } else if (isJs) {
+      const text = await file.text();
+      const cleanedText = text
+        .replace(/export\s+const\s+\w+\s*=\s*/, '')
+        .replace(/;\s*$/, '');
+      matches = eval(`(${cleanedText})`);
+    }
+
+    return matches;
+  };
+
+  const handleFileUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    // Verifica se todos os arquivos são válidos
+    const validExtensions = ['.js', '.json', '.gz'];
+    const invalidFiles = files.filter(file => 
+      !validExtensions.some(ext => file.name.endsWith(ext))
+    );
+
+    if (invalidFiles.length > 0) {
       toast({
-        title: "Erro no arquivo",
-        description: "Por favor, selecione um arquivo .js, .json ou .json.gz",
+        title: "Erro nos arquivos",
+        description: "Por favor, selecione apenas arquivos .js, .json ou .json.gz",
         variant: "destructive"
       });
       return;
     }
 
     setIsProcessing(true);
+    setProgress(0);
 
     try {
-      let matches;
+      let allMatches = [];
+      let totalSize = 0;
 
-      if (isGzipped) {
-        // Arquivo compactado com gzip
-        toast({
-          title: "Descompactando arquivo...",
-          description: "Aguarde enquanto processamos o arquivo compactado.",
-        });
+      // Ordena arquivos por nome (importante para parts: part1, part2, etc)
+      const sortedFiles = files.sort((a, b) => a.name.localeCompare(b.name));
 
-        const arrayBuffer = await file.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        
-        // Descompactar com pako
-        const decompressed = pako.ungzip(uint8Array, { to: 'string' });
-        
-        // Parse JSON
-        matches = JSON.parse(decompressed);
-      } else if (isJson) {
-        // JSON não compactado
-        const text = await file.text();
-        matches = JSON.parse(text);
-      } else {
-        // JavaScript (.js)
-        const text = await file.text();
-        
-        // Remove export statement e extrai o array
-        const cleanedText = text
-          .replace(/export\s+const\s+\w+\s*=\s*/, '')
-          .replace(/;\s*$/, '');
-        
-        // Avalia o JavaScript
-        matches = eval(`(${cleanedText})`);
-      }
-      
-      if (!Array.isArray(matches) || matches.length === 0) {
-        throw new Error('Formato inválido');
-      }
-
-      onFileLoaded(matches);
-      
-      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       toast({
-        title: "✅ Arquivo carregado!",
-        description: `${matches.length} partidas carregadas (${fileSizeMB} MB)`,
+        title: `Processando ${files.length} arquivo(s)...`,
+        description: "Aguarde enquanto carregamos os dados.",
+      });
+
+      // Processa cada arquivo sequencialmente
+      for (let i = 0; i < sortedFiles.length; i++) {
+        const file = sortedFiles[i];
+        setCurrentFile(file.name);
+        setProgress(Math.round((i / sortedFiles.length) * 100));
+
+        console.log(`Processando ${i + 1}/${sortedFiles.length}: ${file.name}`);
+
+        const matches = await processFile(file);
+
+        if (!Array.isArray(matches)) {
+          throw new Error(`Arquivo ${file.name} não contém um array válido`);
+        }
+
+        // Adiciona ao array principal
+        allMatches = allMatches.concat(matches);
+        totalSize += file.size;
+
+        // Libera memória (força garbage collection)
+        if (i < sortedFiles.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      setProgress(100);
+
+      if (allMatches.length === 0) {
+        throw new Error('Nenhuma partida encontrada nos arquivos');
+      }
+
+      // Remove duplicatas baseado no id (se houver)
+      const uniqueMatches = Array.from(
+        new Map(allMatches.map(m => [m.id, m])).values()
+      );
+
+      if (uniqueMatches.length !== allMatches.length) {
+        console.log(`Removidas ${allMatches.length - uniqueMatches.length} partidas duplicadas`);
+      }
+
+      onFileLoaded(uniqueMatches);
+
+      const fileSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+      toast({
+        title: "✅ Arquivos carregados com sucesso!",
+        description: `${uniqueMatches.length} partidas únicas de ${files.length} arquivo(s) (${fileSizeMB} MB)`,
       });
     } catch (error) {
-      console.error('Erro ao processar arquivo:', error);
+      console.error('Erro ao processar arquivos:', error);
       toast({
-        title: "Erro ao processar arquivo",
-        description: error.message || "Verifique se o arquivo está no formato correto.",
+        title: "Erro ao processar arquivos",
+        description: error.message || "Verifique se os arquivos estão no formato correto.",
         variant: "destructive"
       });
     } finally {
       setIsProcessing(false);
-      // Limpa o input para permitir recarregar o mesmo arquivo
+      setProgress(0);
+      setCurrentFile('');
       event.target.value = '';
     }
   };
