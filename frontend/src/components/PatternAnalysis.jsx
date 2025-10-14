@@ -257,7 +257,7 @@ const PatternAnalysis = ({ matches }) => {
 
         <div className="mt-4 bg-purple-900/20 border border-purple-500/30 rounded p-3">
           <p className="text-sm text-purple-300">
-            <strong>Insight:</strong> Odds mais baixas (< 2.0) geralmente indicam maior probabilidade
+            <strong>Insight:</strong> Odds mais baixas (&lt; 2.0) geralmente indicam maior probabilidade
             de Over 3.5. Use isso para identificar oportunidades de valor.
           </p>
         </div>
