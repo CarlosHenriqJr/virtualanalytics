@@ -126,25 +126,58 @@ const HomePage = () => {
               />
             </div>
 
-            {/* Grid de Partidas */}
+            {/* Grid de Partidas e Rankings */}
             {selectedDate && filteredMatches.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-white">
-                    Grade de Partidas - {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: require('date-fns/locale/pt-BR').ptBR })}
-                  </h2>
-                  <span className="text-gray-400">
-                    {filteredMatches.length} partida(s)
-                  </span>
-                </div>
-                
-                <MatchGrid
-                  matches={filteredMatches}
-                  showHT={showHT}
-                  filterMode={filterMode}
-                  onMatchClick={handleMatchClick}
-                />
-              </div>
+              <Tabs defaultValue="grid" className="space-y-6">
+                <TabsList className="bg-gray-900 border border-gray-800">
+                  <TabsTrigger value="grid" className="data-[state=active]:bg-blue-600">
+                    Grade de Partidas
+                  </TabsTrigger>
+                  <TabsTrigger value="rankings" className="data-[state=active]:bg-purple-600">
+                    Rankings
+                  </TabsTrigger>
+                  <TabsTrigger value="predictions" className="data-[state=active]:bg-purple-600 flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4" />
+                    Análise Preditiva
+                  </TabsTrigger>
+                  <TabsTrigger value="patterns" className="data-[state=active]:bg-cyan-600">
+                    Padrões & Clusters
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="grid" className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-white">
+                      Grade de Partidas - {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: require('date-fns/locale/pt-BR').ptBR })}
+                    </h2>
+                    <span className="text-gray-400">
+                      {filteredMatches.length} partida(s)
+                    </span>
+                  </div>
+                  
+                  <MatchGrid
+                    matches={filteredMatches}
+                    showHT={showHT}
+                    filterMode={filterMode}
+                    onMatchClick={handleMatchClick}
+                  />
+                </TabsContent>
+
+                <TabsContent value="rankings">
+                  <Rankings matches={filteredMatches} />
+                </TabsContent>
+
+                <TabsContent value="predictions">
+                  <PredictiveAnalysis 
+                    allMatches={matches}
+                    currentDate={selectedDate}
+                  />
+                </TabsContent>
+
+                <TabsContent value="patterns">
+                  <PatternAnalysis matches={filteredMatches} />
+                </TabsContent>
+              </Tabs>
             ) : (
               <div className="bg-gray-900/50 p-12 rounded-lg border border-gray-800 text-center">
                 <p className="text-gray-400 text-lg">
@@ -153,11 +186,6 @@ const HomePage = () => {
                     : 'Selecione uma data para visualizar as partidas'}
                 </p>
               </div>
-            )}
-
-            {/* Rankings */}
-            {selectedDate && filteredMatches.length > 0 && (
-              <Rankings matches={filteredMatches} />
             )}
           </div>
         )}
