@@ -8,6 +8,14 @@ import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
 const DateSelector = ({ selectedDate, availableDates, onDateChange }) => {
   const [open, setOpen] = React.useState(false);
+  const [currentMonth, setCurrentMonth] = React.useState(selectedDate || new Date());
+
+  // Atualiza o mês quando a data selecionada muda
+  React.useEffect(() => {
+    if (selectedDate) {
+      setCurrentMonth(selectedDate);
+    }
+  }, [selectedDate]);
 
   const formatDatePT = (date) => {
     if (!date) return 'Selecione uma data';
@@ -35,6 +43,8 @@ const DateSelector = ({ selectedDate, availableDates, onDateChange }) => {
           <Calendar
             mode="single"
             selected={selectedDate}
+            month={currentMonth}
+            onMonthChange={setCurrentMonth}
             onSelect={(date) => {
               if (date && isDateAvailable(date)) {
                 onDateChange(date);
