@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { format, parse } from 'date-fns';
-import { Eye, EyeOff, BarChart3 } from 'lucide-react';
+import { Eye, EyeOff, BarChart3, Zap } from 'lucide-react';
 import FileUpload from '../components/FileUpload';
 import DateSelector from '../components/DateSelector';
 import MatchGrid from '../components/MatchGrid';
@@ -9,6 +9,7 @@ import FilterButtons from '../components/FilterButtons';
 import Rankings from '../components/Rankings';
 import PredictiveAnalysis from '../components/PredictiveAnalysis';
 import PatternAnalysis from '../components/PatternAnalysis';
+import AdvancedPrediction from '../components/AdvancedPrediction';
 import { Button } from '../components/ui/button';
 import { Toaster } from '../components/ui/toaster';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
