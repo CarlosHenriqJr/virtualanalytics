@@ -129,8 +129,12 @@ const HomePage = () => {
 
             {/* Grid de Partidas e Rankings */}
             {selectedDate && filteredMatches.length > 0 ? (
-              <Tabs defaultValue="grid" className="space-y-6">
-                <TabsList className="bg-gray-900 border border-gray-800">
+              <Tabs defaultValue="prediction" className="space-y-6">
+                <TabsList className="bg-gray-900 border border-gray-800 flex-wrap h-auto">
+                  <TabsTrigger value="prediction" className="data-[state=active]:bg-yellow-600 flex items-center gap-2">
+                    <Zap className="w-4 h-4" />
+                    Previsão Próximo Dia
+                  </TabsTrigger>
                   <TabsTrigger value="grid" className="data-[state=active]:bg-blue-600">
                     Grade de Partidas
                   </TabsTrigger>
@@ -145,6 +149,13 @@ const HomePage = () => {
                     Padrões & Clusters
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="prediction">
+                  <AdvancedPrediction 
+                    allMatches={matches}
+                    currentDate={selectedDate}
+                  />
+                </TabsContent>
 
                 <TabsContent value="grid" className="space-y-4">
                   <div className="flex items-center justify-between">
