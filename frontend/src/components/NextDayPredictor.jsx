@@ -633,13 +633,14 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
   }
 
   const { 
-    previousDayAnalysis, 
-    predictedOdds, 
-    topMarkets,
+    previousDayAnalysis,
+    predictedOddsForOver35,
     predictedBiasedTeams,
     over35Prediction,
     nextDayPrediction,
     validation,
+    currentContext,
+    scenariosBeforeOver35,
     totalHistoricalDays
   } = prediction;
 
