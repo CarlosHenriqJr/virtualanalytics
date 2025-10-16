@@ -562,6 +562,163 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
         </div>
       </div>
 
+      {/* DESTAQUE: Probabilidade de Over 3.5 */}
+      <Card className="bg-gradient-to-br from-green-900/30 to-emerald-900/30 border-green-500/50 border-2 p-8">
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Target className="w-10 h-10 text-green-400" />
+            <h2 className="text-3xl font-bold text-white">Probabilidade de Over 3.5</h2>
+          </div>
+          
+          <div className="mb-6">
+            <div className="text-7xl font-bold text-green-400 mb-2">
+              {over35Prediction.predicted.toFixed(1)}%
+            </div>
+            <div className={`text-lg font-semibold ${
+              over35Prediction.confidence === 'alta' ? 'text-green-300' :
+              over35Prediction.confidence === 'média' ? 'text-yellow-300' :
+              'text-red-300'
+            }`}>
+              Confiança: {over35Prediction.confidence.toUpperCase()}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gray-800/50 rounded-lg p-4">
+              <p className="text-xs text-gray-400 mb-1">Padrão deste Dia</p>
+              <p className="text-2xl font-bold text-blue-400">
+                {over35Prediction.historicalDayRate.toFixed(1)}%
+              </p>
+            </div>
+            <div className="bg-gray-800/50 rounded-lg p-4">
+              <p className="text-xs text-gray-400 mb-1">Ontem</p>
+              <p className="text-2xl font-bold text-purple-400">
+                {over35Prediction.yesterdayRate.toFixed(1)}%
+              </p>
+            </div>
+            <div className="bg-gray-800/50 rounded-lg p-4">
+              <p className="text-xs text-gray-400 mb-1">Média Geral</p>
+              <p className="text-2xl font-bold text-yellow-400">
+                {over35Prediction.overallRate.toFixed(1)}%
+              </p>
+            </div>
+            <div className="bg-gray-800/50 rounded-lg p-4">
+              <p className="text-xs text-gray-400 mb-1">Bônus Times</p>
+              <p className="text-2xl font-bold text-orange-400">
+                +{over35Prediction.biasBonus.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+            <p className="text-sm text-green-200">
+              <strong>Interpretação:</strong> {
+                over35Prediction.predicted > 60 
+                  ? "Alta probabilidade de jogos com Over 3.5 amanhã! Foque em odds baixas."
+                  : over35Prediction.predicted > 40
+                  ? "Probabilidade moderada. Selecione jogos com times inviesados."
+                  : "Baixa probabilidade de Over 3.5. Considere Under ou outros mercados."
+              }
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Top 3 Times Inviesados Previstos */}
+      <Card className="bg-gradient-to-br from-orange-900/20 to-red-900/20 border-orange-500/30 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <TrendingUp className="w-7 h-7 text-orange-400" />
+          <div>
+            <h3 className="text-2xl font-bold text-white">Top 3 Times Inviesados Previstos</h3>
+            <p className="text-sm text-gray-400">Times com maior probabilidade de Over 3.5 amanhã</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {predictedBiasedTeams.map((team, idx) => (
+            <div
+              key={idx}
+              className="bg-gray-800/50 rounded-lg p-5 border-l-4 border-orange-500"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-red-500 text-white font-bold text-2xl">
+                    {idx + 1}
+                  </div>
+                  <div>
+                    <h4 className="text-2xl font-bold text-white">{team.team}</h4>
+                    {team.playedYesterday && (
+                      <span className="inline-block px-2 py-1 bg-blue-600 text-white text-xs rounded mt-1">
+                        JOGOU ONTEM
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-4xl font-bold text-orange-400">
+                    {team.biasScore.toFixed(0)}
+                  </div>
+                  <p className="text-xs text-gray-400">Score de Viés</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <div className="bg-gray-900/50 rounded p-3">
+                  <p className="text-xs text-gray-400 mb-1">Taxa Over 3.5</p>
+                  <p className="text-xl font-bold text-green-400">
+                    {team.overallRate.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-gray-500">{team.over35Games}/{team.totalGames} jogos</p>
+                </div>
+                
+                <div className="bg-gray-900/50 rounded p-3">
+                  <p className="text-xs text-gray-400 mb-1">Momentum</p>
+                  <p className="text-xl font-bold text-yellow-400">
+                    {team.momentum.toFixed(0)}%
+                  </p>
+                  <p className="text-xs text-gray-500">Últimos 3 jogos</p>
+                </div>
+
+                <div className="bg-gray-900/50 rounded p-3">
+                  <p className="text-xs text-gray-400 mb-1">Dias Quentes</p>
+                  <p className="text-xl font-bold text-red-400">
+                    {team.hotDays}
+                  </p>
+                  <p className="text-xs text-gray-500">de {Object.keys(team.byDate).length} dias</p>
+                </div>
+
+                <div className="bg-gray-900/50 rounded p-3">
+                  <p className="text-xs text-gray-400 mb-1">Prob. Aparecer</p>
+                  <p className="text-xl font-bold text-purple-400">
+                    {team.appearanceProbability.toFixed(0)}%
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Média a cada {team.avgGap?.toFixed(0) || '?'} dias
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-orange-900/20 border border-orange-500/30 rounded p-3">
+                <p className="text-sm text-orange-200">
+                  <strong>Por que está inviesado?</strong>{' '}
+                  {team.momentum > 60 && "Momentum forte nos últimos jogos. "}
+                  {team.hotDays >= 2 && `Teve ${team.hotDays} dias com alta taxa de Over. `}
+                  {team.overallRate > 50 && "Taxa geral acima de 50%. "}
+                  {team.daysSinceLastAppearance <= 1 && "Jogou recentemente e pode continuar. "}
+                  {team.appearanceProbability > 70 && "Padrão de rotação indica que deve jogar amanhã."}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {predictedBiasedTeams.length === 0 && (
+          <div className="text-center text-gray-500 py-8">
+            Dados insuficientes para prever times inviesados
+          </div>
+        )}
+      </Card>
+
       {/* Validação (se próximo dia já existe) */}
       {validation && (
         <Card className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-500/30 p-6">
