@@ -404,76 +404,8 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
       .sort((a, b) => b.score - a.score)
       .slice(0, 6);
 
-    // Top 5 odds mais prováveis para o próximo dia
-    const predictedOdds = Object.entries(oddsBeforeOver35)
-      .map(([oddKey, data]) => {
-        // Score baseado em:
-        // 1. Frequência histórica geral (40%)
-        // 2. Se apareceu no dia anterior (30%)
-        // 3. Se é comum nesse dia da semana (30%)
-        
-        const generalFreqScore = Math.min(data.frequency / 10, 1) * 40;
-        const previousDayScore = previousDayAnalysis.oddsUsed[oddKey] ? 30 : 0;
-        const dayOfWeekScore = historicalPattern?.oddsFrequency?.[oddKey] 
-          ? Math.min(historicalPattern.oddsFrequency[oddKey] / 5, 1) * 30 
-          : 0;
-
-        const totalScore = generalFreqScore + previousDayScore + dayOfWeekScore;
-
-        // Melhor mercado para essa odd
-        const bestMarket = Object.entries(data.markets)
-          .sort((a, b) => b[1].taxa - a[1].taxa)[0];
-
-        return {
-          odd: data.odd,
-          frequency: data.frequency,
-          score: totalScore,
-          bestMarket: bestMarket ? {
-            name: bestMarket[0],
-            taxa: bestMarket[1].taxa,
-            paid: bestMarket[1].paid,
-            total: bestMarket[1].count
-          } : null,
-          appearedYesterday: !!previousDayAnalysis.oddsUsed[oddKey],
-          commonOnThisDay: !!historicalPattern?.oddsFrequency?.[oddKey]
-        };
-      })
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 8);
-
-    // Mercados com maior taxa de pagamento
-    const topPayingMarkets = {};
-    Object.values(oddsAnalysis).forEach(oddData => {
-      Object.entries(oddData.markets).forEach(([market, data]) => {
-        if (!topPayingMarkets[market]) {
-          topPayingMarkets[market] = {
-            totalCount: 0,
-            totalPaid: 0,
-            byOdd: []
-          };
-        }
-        topPayingMarkets[market].totalCount += data.count;
-        topPayingMarkets[market].totalPaid += data.paid;
-        topPayingMarkets[market].byOdd.push({
-          odd: oddData.odd,
-          taxa: data.taxa
-        });
-      });
-    });
-
-    const topMarkets = Object.entries(topPayingMarkets)
-      .map(([market, data]) => ({
-        market,
-        taxa: (data.totalPaid / data.totalCount) * 100,
-        total: data.totalCount,
-        paid: data.totalPaid,
-        bestOdds: data.byOdd.sort((a, b) => b.taxa - a.taxa).slice(0, 3)
-      }))
-      .sort((a, b) => b.taxa - a.taxa)
-      .slice(0, 10);
-
     // ========================================
-    // 6. PREVISÃO PARA O PRÓXIMO DIA
+    // 7. CARACTERÍSTICAS DO PRÓXIMO DIA
     // ========================================
     const nextDayPrediction = {
       date: nextDate,
