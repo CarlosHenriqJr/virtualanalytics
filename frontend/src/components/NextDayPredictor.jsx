@@ -348,8 +348,64 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
 
     over35Prediction.confidence = over35Confidence;
 
+    // ========================================
+    // 6. PREVISÃO PARA O PRÓXIMO DIA (FOCO EM OVER 3.5)
+    // ========================================
+    
+    // Analisa situação atual (últimos 3 jogos do dia anterior)
+    const recent3Matches = currentDayMatches.slice(-3);
+    const currentContext = {
+      over35Count: recent3Matches.filter(m => m.totalGolsFT > 3.5).length,
+      avgGols: recent3Matches.reduce((acc, m) => acc + m.totalGolsFT, 0) / (recent3Matches.length || 1),
+      avgOdd: recent3Matches.reduce((acc, m) => acc + (m.markets?.TotalGols_MaisDe_35 || 0), 0) / (recent3Matches.length || 1),
+      lastOdd: currentDayMatches.length > 0 
+        ? currentDayMatches[currentDayMatches.length - 1].markets?.TotalGols_MaisDe_35 
+        : null
+    };
+
+    // Compara contexto atual com cenários históricos que geraram Over 3.5
+    const predictedOddsForOver35 = Object.values(oddsBeforeOver35)
+      .map(oddData => {
+        // Score baseado em:
+        // 1. Similaridade do contexto atual com cenários históricos (40%)
+        // 2. Frequência desta odd gerar Over 3.5 (30%)
+        // 3. Se apareceu recentemente (20%)
+        // 4. Padrão do dia da semana (10%)
+
+        // Similaridade de contexto
+        const contextSimilarity = 100 - (
+          Math.abs(currentContext.over35Count - oddData.avgPreviousOver35) * 20 +
+          Math.abs(currentContext.avgGols - oddData.avgPreviousGols) * 10 +
+          Math.abs((currentContext.avgOdd || oddData.odd) - oddData.avgPreviousOdd) * 5
+        );
+
+        const contextScore = Math.max(0, contextSimilarity) * 0.4;
+
+        // Frequência
+        const freqScore = Math.min(oddData.frequency / 5, 1) * 30;
+
+        // Apareceu recentemente
+        const recentScore = previousDayAnalysis.oddsUsed?.[oddData.odd.toFixed(2)] ? 20 : 0;
+
+        // Dia da semana
+        const dayScore = historicalPattern?.oddsFrequency?.[oddData.odd.toFixed(2)] 
+          ? Math.min(historicalPattern.oddsFrequency[oddData.odd.toFixed(2)] / 3, 1) * 10 
+          : 0;
+
+        const totalScore = contextScore + freqScore + recentScore + dayScore;
+
+        return {
+          ...oddData,
+          score: totalScore,
+          contextSimilarity: Math.max(0, contextSimilarity),
+          appearedYesterday: !!previousDayAnalysis.oddsUsed?.[oddData.odd.toFixed(2)]
+        };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6);
+
     // Top 5 odds mais prováveis para o próximo dia
-    const predictedOdds = Object.entries(oddsAnalysis)
+    const predictedOdds = Object.entries(oddsBeforeOver35)
       .map(([oddKey, data]) => {
         // Score baseado em:
         // 1. Frequência histórica geral (40%)
