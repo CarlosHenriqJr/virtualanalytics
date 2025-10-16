@@ -139,6 +139,9 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
       pattern.taxaOver45 = (pattern.over45 / pattern.matches) * 100;
     });
 
+    const nextDayOfWeek = format(nextDate, 'EEEE', { locale: ptBR });
+    const historicalPattern = dayOfWeekPatterns[nextDayOfWeek];
+
     // ========================================
     // 4. ANÁLISE DE TIMES INVIESADOS
     // ========================================
