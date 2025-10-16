@@ -597,18 +597,20 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
     return recommendations;
   }
 
-  function validatePrediction(actualMatches, predictedOdds, prediction) {
+  function validatePrediction(actualMatches, predictedOddsForOver, prediction) {
     const actualOddsUsed = {};
-    actualMatches.forEach(m => {
+    const actualOver35Matches = actualMatches.filter(m => m.totalGolsFT > 3.5);
+    
+    actualOver35Matches.forEach(m => {
       if (m.markets?.TotalGols_MaisDe_35) {
         const oddKey = m.markets.TotalGols_MaisDe_35.toFixed(2);
         actualOddsUsed[oddKey] = (actualOddsUsed[oddKey] || 0) + 1;
       }
     });
 
-    const actualOver35Rate = (actualMatches.filter(m => m.totalGolsFT > 3.5).length / actualMatches.length) * 100;
+    const actualOver35Rate = (actualOver35Matches.length / actualMatches.length) * 100;
 
-    const predictedOddsKeys = predictedOdds.slice(0, 5).map(o => o.odd.toFixed(2));
+    const predictedOddsKeys = predictedOddsForOver.slice(0, 5).map(o => o.odd.toFixed(2));
     const correctPredictions = predictedOddsKeys.filter(odd => actualOddsUsed[odd]).length;
 
     const accuracy = (correctPredictions / 5) * 100;
@@ -618,7 +620,9 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
       actualOver35Rate,
       predictedOver35Rate: prediction.expectedOver35Rate,
       accuracy: accuracy.toFixed(1),
-      correctOdds: correctPredictions
+      correctOdds: correctPredictions,
+      actualOver35Count: actualOver35Matches.length,
+      totalMatches: actualMatches.length
     };
   }
 
