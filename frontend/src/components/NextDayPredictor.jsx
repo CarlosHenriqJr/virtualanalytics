@@ -20,53 +20,101 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
     if (historicalMatches.length === 0) return null;
 
     // ========================================
-    // 1. ANÁLISE DE FREQUÊNCIA DE ODDS
+    // 1. ANÁLISE DE ODDS QUE ANTECEDEM OVER 3.5
     // ========================================
-    const oddsAnalysis = {};
+    const oddsBeforeOver35 = {};
+    const scenariosBeforeOver35 = [];
 
-    historicalMatches.forEach(match => {
-      if (!match.markets) return;
-
-      Object.entries(match.markets).forEach(([market, odd]) => {
-        if (typeof odd !== 'number') return;
-
-        // Arredonda odd para 2 casas decimais para agrupamento
+    historicalMatches.forEach((match, index) => {
+      const isOver35 = match.totalGolsFT > 3.5;
+      
+      if (isOver35 && match.markets?.TotalGols_MaisDe_35) {
+        const odd = match.markets.TotalGols_MaisDe_35;
         const oddKey = odd.toFixed(2);
-        
-        if (!oddsAnalysis[oddKey]) {
-          oddsAnalysis[oddKey] = {
+
+        // Registra a odd que apareceu ANTES de um Over 3.5
+        if (!oddsBeforeOver35[oddKey]) {
+          oddsBeforeOver35[oddKey] = {
             odd: parseFloat(oddKey),
             frequency: 0,
-            markets: {}
+            over35Count: 0,
+            taxa: 0,
+            scenarios: []
           };
         }
 
-        oddsAnalysis[oddKey].frequency++;
+        oddsBeforeOver35[oddKey].frequency++;
+        oddsBeforeOver35[oddKey].over35Count++;
 
-        // Registra o mercado e se pagou
-        if (!oddsAnalysis[oddKey].markets[market]) {
-          oddsAnalysis[oddKey].markets[market] = {
-            count: 0,
-            paid: 0,
-            taxa: 0
-          };
-        }
+        // Analisa cenário que antecede este Over 3.5
+        const previousMatches = historicalMatches.slice(Math.max(0, index - 3), index);
+        const scenario = {
+          odd: parseFloat(oddKey),
+          times: [match.timeCasa, match.timeFora],
+          hour: match.hour,
+          minute: match.minute,
+          placarHT: match.placarHT,
+          placarFT: match.placarFT,
+          
+          // Contexto dos 3 jogos anteriores
+          previous3: previousMatches.map(m => ({
+            over35: m.totalGolsFT > 3.5,
+            gols: m.totalGolsFT,
+            odd: m.markets?.TotalGols_MaisDe_35
+          })),
+          
+          // Padrão dos 3 anteriores
+          previousOver35Count: previousMatches.filter(m => m.totalGolsFT > 3.5).length,
+          previousAvgGols: previousMatches.reduce((acc, m) => acc + m.totalGolsFT, 0) / (previousMatches.length || 1),
+          previousAvgOdd: previousMatches.reduce((acc, m) => acc + (m.markets?.TotalGols_MaisDe_35 || 0), 0) / (previousMatches.length || 1)
+        };
 
-        oddsAnalysis[oddKey].markets[market].count++;
-
-        // Verifica se o mercado pagou
-        const paid = checkIfMarketPaid(match, market);
-        if (paid) {
-          oddsAnalysis[oddKey].markets[market].paid++;
-        }
-      });
+        oddsBeforeOver35[oddKey].scenarios.push(scenario);
+        scenariosBeforeOver35.push(scenario);
+      }
     });
 
-    // Calcula taxas de pagamento
-    Object.values(oddsAnalysis).forEach(oddData => {
-      Object.values(oddData.markets).forEach(marketData => {
-        marketData.taxa = (marketData.paid / marketData.count) * 100;
+    // Calcula taxas de acerto para odds que geraram Over 3.5
+    Object.values(oddsBeforeOver35).forEach(oddData => {
+      oddData.taxa = 100; // São todas odds que geraram Over 3.5
+      
+      // Identifica padrões comuns nos cenários
+      const scenarios = oddData.scenarios;
+      
+      // Horários mais comuns
+      const hourFreq = {};
+      scenarios.forEach(s => {
+        hourFreq[s.hour] = (hourFreq[s.hour] || 0) + 1;
       });
+      oddData.commonHours = Object.entries(hourFreq)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([h, f]) => ({ hour: parseInt(h), freq: f }));
+
+      // Padrão médio dos 3 anteriores
+      oddData.avgPreviousOver35 = scenarios.reduce((acc, s) => 
+        acc + s.previousOver35Count, 0
+      ) / scenarios.length;
+
+      oddData.avgPreviousGols = scenarios.reduce((acc, s) => 
+        acc + s.previousAvgGols, 0
+      ) / scenarios.length;
+
+      oddData.avgPreviousOdd = scenarios.reduce((acc, s) => 
+        acc + s.previousAvgOdd, 0
+      ) / scenarios.length;
+
+      // Times mais frequentes
+      const teamFreq = {};
+      scenarios.forEach(s => {
+        s.times.forEach(team => {
+          teamFreq[team] = (teamFreq[team] || 0) + 1;
+        });
+      });
+      oddData.topTeams = Object.entries(teamFreq)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([team, freq]) => ({ team, freq }));
     });
 
     // ========================================
