@@ -558,41 +558,39 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
     return { level: 'baixo', color: 'text-red-400', bg: 'bg-red-900/20' };
   }
 
-  function generateRecommendations(odds, markets, previousDay) {
+  function generateRecommendations(oddsForOver35, previousDay, currentCtx) {
     const recommendations = [];
 
-    // Recomendação 1: Odd mais provável
-    if (odds[0] && odds[0].score > 50) {
+    // Recomendação 1: Odd com melhor score para Over 3.5
+    if (oddsForOver35[0] && oddsForOver35[0].score > 40) {
       recommendations.push({
-        type: 'Odd Prioritária',
-        text: `Foque na odd ${odds[0].odd} - apareceu ${odds[0].frequency}x historicamente${
-          odds[0].appearedYesterday ? ' e ONTEM' : ''
-        }`,
-        confidence: odds[0].score > 70 ? 'alto' : 'médio'
+        type: 'Odd Ideal para Over 3.5',
+        text: `Foque na odd ${oddsForOver35[0].odd} - gerou Over 3.5 em ${oddsForOver35[0].frequency} jogos (${oddsForOver35[0].contextSimilarity.toFixed(0)}% similar ao contexto atual)`,
+        confidence: oddsForOver35[0].score > 70 ? 'alto' : 'médio'
       });
     }
 
-    // Recomendação 2: Melhor mercado
-    if (markets[0] && markets[0].taxa > 50) {
+    // Recomendação 2: Baseado no contexto
+    if (currentCtx.over35Count >= 2) {
       recommendations.push({
-        type: 'Mercado Mais Confiável',
-        text: `${markets[0].market} tem ${markets[0].taxa.toFixed(1)}% de taxa de pagamento (${markets[0].paid}/${markets[0].total})`,
-        confidence: markets[0].taxa > 70 ? 'alto' : 'médio'
+        type: 'Contexto Favorável',
+        text: `Últimos 3 jogos tiveram ${currentCtx.over35Count} Overs - contexto quente para continuar`,
+        confidence: 'alto'
+      });
+    } else if (currentCtx.over35Count === 0) {
+      recommendations.push({
+        type: 'Padrão de Inversão',
+        text: `Últimos 3 jogos sem Over - alta probabilidade de reversão para Over 3.5`,
+        confidence: 'médio'
       });
     }
 
     // Recomendação 3: Baseado no dia anterior
     if (previousDay.taxaOver35 > 50) {
       recommendations.push({
-        type: 'Tendência de Ontem',
-        text: `Ontem teve ${previousDay.taxaOver35.toFixed(1)}% de Over 3.5 - possível continuidade`,
+        type: 'Continuidade',
+        text: `Ontem teve ${previousDay.taxaOver35.toFixed(1)}% de Over 3.5 - tendência pode continuar`,
         confidence: 'médio'
-      });
-    } else if (previousDay.taxaOver35 < 30) {
-      recommendations.push({
-        type: 'Inversão de Tendência',
-        text: `Ontem teve baixo Over 3.5 (${previousDay.taxaOver35.toFixed(1)}%) - possível aumento hoje`,
-        confidence: 'baixo'
       });
     }
 
