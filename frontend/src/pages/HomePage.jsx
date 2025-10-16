@@ -160,7 +160,7 @@ const HomePage = () => {
                 </TabsContent>
 
                 <TabsContent value="prediction">
-                  <AdvancedPrediction 
+                  <NextDayPredictor 
                     allMatches={matches}
                     currentDate={selectedDate}
                   />
