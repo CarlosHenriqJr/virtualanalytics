@@ -131,8 +131,12 @@ const HomePage = () => {
 
             {/* Grid de Partidas e Rankings */}
             {selectedDate && filteredMatches.length > 0 ? (
-              <Tabs defaultValue="detector" className="space-y-6">
+              <Tabs defaultValue="neural" className="space-y-6">
                 <TabsList className="bg-gray-900 border border-gray-800 flex-wrap h-auto">
+                  <TabsTrigger value="neural" className="data-[state=active]:bg-pink-600 flex items-center gap-2">
+                    <Brain className="w-4 h-4" />
+                    IA Neural Network
+                  </TabsTrigger>
                   <TabsTrigger value="detector" className="data-[state=active]:bg-pink-600 flex items-center gap-2">
                     <Blocks className="w-4 h-4" />
                     Detector de Blocos
@@ -155,6 +159,13 @@ const HomePage = () => {
                     Padrões & Clusters
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="neural">
+                  <NeuralNetworkPredictor 
+                    allMatches={matches}
+                    currentDate={selectedDate}
+                  />
+                </TabsContent>
 
                 <TabsContent value="detector">
                   <PatternDetector matches={filteredMatches} />
