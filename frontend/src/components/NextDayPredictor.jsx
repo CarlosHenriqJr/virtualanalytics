@@ -299,8 +299,6 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
     }
 
     over35Prediction.confidence = over35Confidence;
-    const nextDayOfWeek = format(nextDate, 'EEEE', { locale: ptBR });
-    const historicalPattern = dayOfWeekPatterns[nextDayOfWeek];
 
     // Top 5 odds mais prováveis para o próximo dia
     const predictedOdds = Object.entries(oddsAnalysis)
