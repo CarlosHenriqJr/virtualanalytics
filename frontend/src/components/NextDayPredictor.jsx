@@ -140,8 +140,162 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
     });
 
     // ========================================
-    // 4. PREVISÃO PARA O PRÓXIMO DIA
+    // 4. ANÁLISE DE TIMES INVIESADOS
     // ========================================
+    const teamBiasAnalysis = {};
+
+    // Agrupa por data para identificar times "quentes" por dia
+    const matchesByDate = {};
+    historicalMatches.forEach(match => {
+      if (!matchesByDate[match.date]) {
+        matchesByDate[match.date] = [];
+      }
+      matchesByDate[match.date].push(match);
+    });
+
+    // Para cada time, analisa desempenho por dia
+    historicalMatches.forEach(match => {
+      [match.timeCasa, match.timeFora].forEach(team => {
+        if (!teamBiasAnalysis[team]) {
+          teamBiasAnalysis[team] = {
+            team,
+            totalGames: 0,
+            over35Games: 0,
+            byDate: {},
+            hotDays: 0, // Dias onde teve alta taxa de Over
+            lastAppearance: null,
+            momentum: []
+          };
+        }
+
+        const teamData = teamBiasAnalysis[team];
+        teamData.totalGames++;
+        teamData.lastAppearance = match.date;
+
+        if (!teamData.byDate[match.date]) {
+          teamData.byDate[match.date] = { games: 0, over35: 0 };
+        }
+
+        teamData.byDate[match.date].games++;
+        if (match.totalGolsFT > 3.5) {
+          teamData.over35Games++;
+          teamData.byDate[match.date].over35++;
+        }
+      });
+    });
+
+    // Calcula dias "quentes" e momentum
+    Object.values(teamBiasAnalysis).forEach(teamData => {
+      teamData.overallRate = (teamData.over35Games / teamData.totalGames) * 100;
+      
+      // Conta quantos dias teve alta taxa de Over (acima de 60%)
+      Object.values(teamData.byDate).forEach(dayData => {
+        const dayRate = (dayData.over35 / dayData.games) * 100;
+        if (dayRate >= 60) teamData.hotDays++;
+      });
+
+      // Calcula momentum recente (últimos 3 jogos)
+      const recentGames = historicalMatches
+        .filter(m => m.timeCasa === teamData.team || m.timeFora === teamData.team)
+        .slice(-3);
+      
+      const recentOver = recentGames.filter(m => m.totalGolsFT > 3.5).length;
+      teamData.momentum = (recentOver / Math.max(recentGames.length, 1)) * 100;
+
+      // Verifica se jogou ontem
+      teamData.playedYesterday = teamData.lastAppearance === currentDateStr;
+
+      // Padrão de rotação (aparece a cada X dias)
+      const appearances = Object.keys(teamData.byDate).sort();
+      if (appearances.length >= 2) {
+        const gaps = [];
+        for (let i = 1; i < appearances.length; i++) {
+          const gap = differenceInDays(
+            parseISO(appearances[i]), 
+            parseISO(appearances[i-1])
+          );
+          gaps.push(gap);
+        }
+        teamData.avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+        
+        // Dias desde última aparição
+        teamData.daysSinceLastAppearance = differenceInDays(
+          currentDate,
+          parseISO(teamData.lastAppearance)
+        );
+
+        // Probabilidade de aparecer amanhã baseado no padrão
+        teamData.appearanceProbability = teamData.avgGap 
+          ? Math.max(0, 100 - Math.abs(teamData.daysSinceLastAppearance - teamData.avgGap) * 20)
+          : 30;
+      } else {
+        teamData.appearanceProbability = 20;
+      }
+    });
+
+    // Top 3 times previstos para estar inviesados amanhã
+    const predictedBiasedTeams = Object.values(teamBiasAnalysis)
+      .filter(t => t.totalGames >= 2)
+      .map(t => {
+        // Score preditivo baseado em:
+        // - Taxa geral de Over (30%)
+        // - Momentum recente (25%)
+        // - Frequência de dias quentes (20%)
+        // - Probabilidade de aparecer amanhã (25%)
+        
+        const score = (
+          (t.overallRate / 100) * 30 +
+          (t.momentum / 100) * 25 +
+          (t.hotDays / Math.max(Object.keys(t.byDate).length, 1)) * 20 +
+          (t.appearanceProbability / 100) * 25
+        ) * 100;
+
+        return {
+          ...t,
+          biasScore: score
+        };
+      })
+      .sort((a, b) => b.biasScore - a.biasScore)
+      .slice(0, 3);
+
+    // ========================================
+    // 5. PREVISÃO DE OVER 3.5 PARA O PRÓXIMO DIA
+    // ========================================
+    const over35Prediction = {
+      // Baseado no padrão do dia da semana
+      historicalDayRate: historicalPattern?.taxaOver35 || 0,
+      
+      // Baseado no dia anterior
+      yesterdayRate: previousDayAnalysis.taxaOver35,
+      
+      // Média geral
+      overallRate: (historicalMatches.filter(m => m.totalGolsFT > 3.5).length / 
+                    historicalMatches.length) * 100,
+      
+      // Se times inviesados jogarem, aumenta probabilidade
+      biasBonus: predictedBiasedTeams.length > 0 ? 
+        (predictedBiasedTeams[0].overallRate * 0.3) : 0,
+    };
+
+    // Previsão final de Over 3.5 com pesos ajustados
+    over35Prediction.predicted = (
+      over35Prediction.historicalDayRate * 0.35 +  // 35% peso do padrão do dia
+      over35Prediction.yesterdayRate * 0.25 +      // 25% peso do dia anterior
+      over35Prediction.overallRate * 0.20 +        // 20% peso da média geral
+      over35Prediction.biasBonus * 0.20            // 20% peso dos times inviesados
+    );
+
+    // Confiança na previsão
+    let over35Confidence = 'baixa';
+    if (historicalPattern && historicalPattern.matches > 5) {
+      if (Math.abs(over35Prediction.predicted - over35Prediction.yesterdayRate) < 15) {
+        over35Confidence = 'alta';
+      } else {
+        over35Confidence = 'média';
+      }
+    }
+
+    over35Prediction.confidence = over35Confidence;
     const nextDayOfWeek = format(nextDate, 'EEEE', { locale: ptBR });
     const historicalPattern = dayOfWeekPatterns[nextDayOfWeek];
 
