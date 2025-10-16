@@ -507,15 +507,16 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
     }
 
     return {
-      oddsAnalysis: Object.values(oddsAnalysis).sort((a, b) => b.frequency - a.frequency),
+      oddsBeforeOver35: Object.values(oddsBeforeOver35).sort((a, b) => b.frequency - a.frequency),
+      scenariosBeforeOver35,
       previousDayAnalysis,
       historicalPattern,
-      predictedOdds,
-      topMarkets,
+      predictedOddsForOver35,
       predictedBiasedTeams,
       over35Prediction,
       nextDayPrediction,
       validation,
+      currentContext,
       totalHistoricalDays: new Set(historicalMatches.map(m => m.date)).size
     };
   }, [allMatches, currentDate]);
