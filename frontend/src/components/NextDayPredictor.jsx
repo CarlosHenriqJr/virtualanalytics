@@ -501,7 +501,7 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
     if (nextDayMatches.length > 0) {
       validation = validatePrediction(
         nextDayMatches,
-        predictedOdds,
+        predictedOddsForOver35,
         nextDayPrediction
       );
     }
