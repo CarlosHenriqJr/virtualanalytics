@@ -490,9 +490,9 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
       ),
 
       recommendations: generateRecommendations(
-        predictedOdds,
-        topMarkets,
-        previousDayAnalysis
+        predictedOddsForOver35,
+        previousDayAnalysis,
+        currentContext
       )
     };
 
