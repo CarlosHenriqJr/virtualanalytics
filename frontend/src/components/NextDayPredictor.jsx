@@ -407,6 +407,8 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
       historicalPattern,
       predictedOdds,
       topMarkets,
+      predictedBiasedTeams,
+      over35Prediction,
       nextDayPrediction,
       validation,
       totalHistoricalDays: new Set(historicalMatches.map(m => m.date)).size
