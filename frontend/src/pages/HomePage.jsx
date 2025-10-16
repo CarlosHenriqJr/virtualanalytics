@@ -130,8 +130,12 @@ const HomePage = () => {
 
             {/* Grid de Partidas e Rankings */}
             {selectedDate && filteredMatches.length > 0 ? (
-              <Tabs defaultValue="prediction" className="space-y-6">
+              <Tabs defaultValue="detector" className="space-y-6">
                 <TabsList className="bg-gray-900 border border-gray-800 flex-wrap h-auto">
+                  <TabsTrigger value="detector" className="data-[state=active]:bg-pink-600 flex items-center gap-2">
+                    <Blocks className="w-4 h-4" />
+                    Detector de Blocos
+                  </TabsTrigger>
                   <TabsTrigger value="prediction" className="data-[state=active]:bg-yellow-600 flex items-center gap-2">
                     <Zap className="w-4 h-4" />
                     Previsão Próximo Dia
@@ -150,6 +154,10 @@ const HomePage = () => {
                     Padrões & Clusters
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="detector">
+                  <PatternDetector matches={filteredMatches} />
+                </TabsContent>
 
                 <TabsContent value="prediction">
                   <AdvancedPrediction 
