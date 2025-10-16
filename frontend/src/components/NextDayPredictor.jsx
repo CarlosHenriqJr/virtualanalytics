@@ -368,7 +368,7 @@ const NextDayPredictor = ({ allMatches, currentDate }) => {
       .slice(0, 10);
 
     // ========================================
-    // 5. PREVISÃO DE CARACTERÍSTICAS DO PRÓXIMO DIA
+    // 6. PREVISÃO PARA O PRÓXIMO DIA
     // ========================================
     const nextDayPrediction = {
       date: nextDate,
