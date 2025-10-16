@@ -9,7 +9,7 @@ import FilterButtons from '../components/FilterButtons';
 import Rankings from '../components/Rankings';
 import PredictiveAnalysis from '../components/PredictiveAnalysis';
 import PatternAnalysis from '../components/PatternAnalysis';
-import AdvancedPrediction from '../components/AdvancedPrediction';
+import NextDayPredictor from '../components/NextDayPredictor';
 import PatternDetector from '../components/PatternDetector';
 import { Button } from '../components/ui/button';
 import { Toaster } from '../components/ui/toaster';
