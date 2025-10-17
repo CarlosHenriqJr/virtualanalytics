@@ -69,8 +69,24 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         minute: c.minute
       }));
 
-      // Data atual selecionada
-      const currentDate = parse(selectedDate, 'dd/MM/yyyy', new Date());
+      // Data atual selecionada - tenta diferentes formatos
+      let currentDate;
+      try {
+        // Tenta formato dd/MM/yyyy
+        currentDate = parse(selectedDate, 'dd/MM/yyyy', new Date());
+        if (!isValid(currentDate)) {
+          // Tenta formato yyyy-MM-dd
+          currentDate = parse(selectedDate, 'yyyy-MM-dd', new Date());
+        }
+      } catch {
+        currentDate = new Date(selectedDate);
+      }
+      
+      if (!isValid(currentDate)) {
+        alert('Erro ao processar a data selecionada');
+        setIsAnalyzing(false);
+        return;
+      }
       
       // Array para armazenar resultados históricos
       const historicalOccurrences = [];
@@ -78,10 +94,15 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
       // Itera pelos X dias anteriores
       for (let i = 1; i <= daysToAnalyze; i++) {
         const pastDate = subDays(currentDate, i);
-        const pastDateStr = format(pastDate, 'dd/MM/yyyy');
         
-        // Busca partidas do dia anterior
-        const pastMatches = allMatchesData?.filter(m => m.date === pastDateStr) || [];
+        // Tenta ambos os formatos de data para comparação
+        const pastDateStr1 = format(pastDate, 'dd/MM/yyyy');
+        const pastDateStr2 = format(pastDate, 'yyyy-MM-dd');
+        
+        // Busca partidas do dia anterior (ambos os formatos)
+        const pastMatches = allMatchesData?.filter(m => 
+          m.date === pastDateStr1 || m.date === pastDateStr2
+        ) || [];
         
         if (pastMatches.length === 0) continue;
 
@@ -106,7 +127,7 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
           const isFullMatch = over35Count === pattern.length;
 
           historicalOccurrences.push({
-            date: pastDateStr,
+            date: pastDateStr1,
             matches: patternMatches,
             over35Count,
             totalInPattern,
@@ -141,9 +162,11 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         partialMatches: totalOccurrences - fullMatches,
         successRate,
         frequency,
-        occurrences: historicalOccurrences.sort((a, b) => 
-          parse(b.date, 'dd/MM/yyyy', new Date()) - parse(a.date, 'dd/MM/yyyy', new Date())
-        )
+        occurrences: historicalOccurrences.sort((a, b) => {
+          const dateA = parse(a.date, 'dd/MM/yyyy', new Date());
+          const dateB = parse(b.date, 'dd/MM/yyyy', new Date());
+          return dateB - dateA;
+        })
       };
 
       setHistoricalResults(results);
