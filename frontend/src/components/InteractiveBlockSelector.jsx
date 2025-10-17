@@ -631,21 +631,52 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
             <p className="text-sm text-blue-200 mb-2">
               <strong>{selectedCells.length} célula(s) selecionada(s)</strong>
             </p>
-            <div className="flex flex-wrap gap-2">
-              {selectedCells.map((cell, idx) => {
-                const isOver35 = cell.match.totalGolsFT > 3.5;
-                return (
-                  <div key={idx} className={`px-2 py-1 rounded text-xs font-semibold ${
-                    isOver35 ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
-                  }`}>
-                    {idx + 1}. {cell.hour}:{cell.minute.toString().padStart(2, '0')} - {isOver35 ? 'Over 3.5 ✓' : 'Not Over ✗'}
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-xs text-blue-300 mt-2">
-              Padrão: {selectedCells.map(c => c.match.totalGolsFT > 3.5 ? '🟢' : '🔴').join(' ')}
-            </p>
+            
+            {/* Células PADRÃO */}
+            {selectedCells.filter(c => cellTypes[`${c.hour}-${c.minute}`] === 'pattern').length > 0 && (
+              <div className="mb-2">
+                <p className="text-xs text-yellow-300 font-semibold mb-1">PADRÃO (Base):</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCells
+                    .filter(c => cellTypes[`${c.hour}-${c.minute}`] === 'pattern')
+                    .map((cell, idx) => {
+                      const isOver35 = cell.match.totalGolsFT > 3.5;
+                      return (
+                        <div key={idx} className={`px-2 py-1 rounded text-xs font-semibold ${
+                          isOver35 ? 'bg-yellow-600 text-white' : 'bg-yellow-800 text-white'
+                        }`}>
+                          {cell.hour}:{cell.minute.toString().padStart(2, '0')} - {isOver35 ? 'Over 3.5 ✓' : 'Not Over ✗'}
+                        </div>
+                      );
+                    })}
+                </div>
+                <p className="text-xs text-yellow-400 mt-1">
+                  {selectedCells.filter(c => cellTypes[`${c.hour}-${c.minute}`] === 'pattern')
+                    .map(c => c.match.totalGolsFT > 3.5 ? '🟢' : '🔴').join(' ')}
+                </p>
+              </div>
+            )}
+
+            {/* Células ENTRADA */}
+            {selectedCells.filter(c => cellTypes[`${c.hour}-${c.minute}`] === 'entry').length > 0 && (
+              <div>
+                <p className="text-xs text-purple-300 font-semibold mb-1">ENTRADA (Aposta):</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCells
+                    .filter(c => cellTypes[`${c.hour}-${c.minute}`] === 'entry')
+                    .map((cell, idx) => {
+                      const isOver35 = cell.match.totalGolsFT > 3.5;
+                      return (
+                        <div key={idx} className={`px-2 py-1 rounded text-xs font-semibold ${
+                          isOver35 ? 'bg-purple-600 text-white' : 'bg-purple-800 text-white'
+                        }`}>
+                          {cell.hour}:{cell.minute.toString().padStart(2, '0')} - {isOver35 ? 'Over 3.5 ✓' : 'Not Over ✗'}
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Card>
