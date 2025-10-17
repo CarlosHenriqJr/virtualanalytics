@@ -485,204 +485,192 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         </div>
       </Card>
 
-      {/* Resultados da Análise Histórica */}
+      {/* Resultados da Análise de Jogos Anteriores */}
       {historicalResults && (
-        <Card className="bg-gradient-to-br from-green-900/20 to-blue-900/20 border-green-500/30 p-6">
+        <Card className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border-purple-500/30 p-6">
           <div className="flex items-center gap-3 mb-6">
-            <TrendingUp className="w-6 h-6 text-green-400" />
-            <h3 className="text-xl font-bold text-white">Análise Histórica do Padrão</h3>
+            <TrendingUp className="w-6 h-6 text-purple-400" />
+            <h3 className="text-xl font-bold text-white">Análise de Jogos Anteriores - Padrões Antes do Over 3.5</h3>
           </div>
 
-          {/* Padrão Buscado */}
+          {/* Resumo Geral */}
           <div className="mb-6 p-4 bg-gray-900/70 rounded-lg border border-gray-700">
-            <p className="text-sm text-gray-400 mb-2">Padrão buscado (combinação de resultados):</p>
-            <div className="flex flex-wrap gap-2">
-              {historicalResults.pattern.map((p, idx) => (
-                <div key={idx} className={`px-3 py-2 rounded ${
-                  p.isOver35 ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
-                } font-semibold`}>
-                  {idx + 1}. {p.isOver35 ? 'Over 3.5 ✓' : 'Not Over ✗'}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-gray-400">Células Over 3.5 Analisadas</p>
+                <p className="text-2xl font-bold text-white">{historicalResults.selectedOver35Count}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Jogos Anteriores por Célula</p>
+                <p className="text-2xl font-bold text-blue-400">{historicalResults.previousGamesToAnalyze}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Total de Jogos Analisados</p>
+                <p className="text-2xl font-bold text-green-400">{historicalResults.globalPatterns.totalGamesAnalyzed}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Qualidade da Análise</p>
+                <p className={`text-2xl font-bold ${
+                  historicalResults.globalPatterns.analysisQuality === 'high' ? 'text-green-400' : 'text-yellow-400'
+                }`}>
+                  {historicalResults.globalPatterns.analysisQuality === 'high' ? 'Alta' : 'Média'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Padrões Globais */}
+          <div className="mb-6 p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+            <h4 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+              <Award className="w-5 h-5 text-green-400" />
+              Odds Mais Frequentes nos Jogos Anteriores aos Over 3.5
+            </h4>
+            <p className="text-sm text-gray-300 mb-3">
+              Estas odds apareceram com maior frequência antes dos Over 3.5 acontecerem:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {historicalResults.globalPatterns.commonGreenOdds.map((odd, idx) => (
+                <div key={idx} className="bg-gray-800/50 rounded p-3 border border-green-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-green-400">
+                      #{idx + 1} {odd.market.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {odd.frequency}x ({odd.percentage}%)
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Apareceu em {odd.appearsInCells} de {historicalResults.selectedOver35Count} células analisadas
+                  </p>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-2">
-              Código do padrão: {historicalResults.patternString} 
-              <span className="ml-2 text-gray-500">(1 = Over 3.5, 0 = Not Over)</span>
-            </p>
           </div>
 
-          {/* Estatísticas Principais */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gray-900/70 rounded-lg p-4 border border-gray-700">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="w-4 h-4 text-blue-400" />
-                <p className="text-xs text-gray-400">Dias Analisados</p>
-              </div>
-              <p className="text-3xl font-bold text-white">{historicalResults.daysAnalyzed}</p>
-            </div>
+          {/* Análise Individual de Cada Célula Over 3.5 */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-bold text-white">Análise Detalhada por Célula Over 3.5</h4>
+            
+            {historicalResults.cellAnalyses.map((analysis, idx) => (
+              <div key={idx} className="bg-gray-800/50 rounded-lg p-5 border border-gray-700">
+                {/* Header da Célula */}
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-700">
+                  <div>
+                    <h5 className="text-lg font-bold text-white flex items-center gap-2">
+                      <span className="bg-green-600 text-white px-3 py-1 rounded">
+                        {analysis.cellPosition}
+                      </span>
+                      Over 3.5 ✓
+                    </h5>
+                    <p className="text-sm text-gray-400 mt-1">{analysis.cellTeams}</p>
+                    <p className="text-xs text-gray-500">
+                      Placar: {analysis.cellScore} ({analysis.cellTotalGoals} gols)
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-400">Jogos Anteriores</p>
+                    <p className="text-3xl font-bold text-blue-400">{analysis.previousGamesCount}</p>
+                  </div>
+                </div>
 
-            <div className="bg-gray-900/70 rounded-lg p-4 border border-gray-700">
-              <div className="flex items-center gap-2 mb-2">
-                <Search className="w-4 h-4 text-purple-400" />
-                <p className="text-xs text-gray-400">Frequência</p>
-              </div>
-              <p className="text-3xl font-bold text-purple-400">
-                {historicalResults.frequency.toFixed(0)}%
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {historicalResults.totalOccurrences} ocorrências
-              </p>
-            </div>
-
-            <div className="bg-gray-900/70 rounded-lg p-4 border border-green-600/50">
-              <div className="flex items-center gap-2 mb-2">
-                <Award className="w-4 h-4 text-green-400" />
-                <p className="text-xs text-gray-400">Taxa de Acerto</p>
-              </div>
-              <p className="text-3xl font-bold text-green-400">
-                {historicalResults.successRate.toFixed(0)}%
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {historicalResults.fullMatches} padrões completos
-              </p>
-            </div>
-
-            <div className="bg-gray-900/70 rounded-lg p-4 border border-gray-700">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="w-4 h-4 text-yellow-400" />
-                <p className="text-xs text-gray-400">Tamanho Padrão</p>
-              </div>
-              <p className="text-3xl font-bold text-yellow-400">
-                {historicalResults.patternSize}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">jogos consecutivos</p>
-            </div>
-          </div>
-
-          {/* Interpretação */}
-          <div className={`p-4 rounded-lg border mb-6 ${
-            historicalResults.frequency >= 30 && historicalResults.successRate >= 70 ? 'bg-green-900/30 border-green-500/50' :
-            historicalResults.frequency >= 15 && historicalResults.successRate >= 50 ? 'bg-yellow-900/30 border-yellow-500/50' :
-            'bg-red-900/30 border-red-500/50'
-          }`}>
-            <p className="text-sm font-semibold mb-2 text-white">
-              {historicalResults.frequency >= 30 && historicalResults.successRate >= 70 ? '✅ Padrão Forte e Frequente!' :
-               historicalResults.frequency >= 15 && historicalResults.successRate >= 50 ? '⚠️ Padrão Moderado' :
-               '❌ Padrão Fraco ou Raro'}
-            </p>
-            <p className="text-sm text-gray-300">
-              {historicalResults.totalOccurrences === 0 ? (
-                `Esta combinação específica não foi encontrada nos últimos ${historicalResults.daysAnalyzed} dias. Pode ser um padrão raro ou único.`
-              ) : (
-                <>
-                  Esta combinação apareceu <strong>{historicalResults.totalOccurrences} vez(es)</strong> nos 
-                  últimos {historicalResults.daysAnalyzed} dias (<strong>{historicalResults.frequency.toFixed(1)}%</strong> dos dias).
-                  {' '}Das ocorrências encontradas, <strong>{historicalResults.fullMatches}</strong> tiveram 
-                  o padrão exato de Over 3.5 (<strong>{historicalResults.successRate.toFixed(1)}%</strong> de acerto).
-                  {historicalResults.frequency >= 30 && historicalResults.successRate >= 70 && ' 🎯 Excelente padrão para estratégias!'}
-                  {historicalResults.frequency < 15 && ' Considere aumentar o período de análise ou buscar padrões mais comuns.'}
-                </>
-              )}
-            </p>
-          </div>
-
-          {/* Lista de Ocorrências */}
-          {historicalResults.occurrences.length > 0 && (
-            <div>
-              <h4 className="text-lg font-bold text-white mb-4">
-                Ocorrências Encontradas ({historicalResults.occurrences.length})
-              </h4>
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                {historicalResults.occurrences.map((occurrence, idx) => (
-                  <div 
-                    key={idx} 
-                    className={`bg-gray-800/50 rounded-lg p-4 border ${
-                      occurrence.isFullMatch ? 'border-green-500/50' : 'border-yellow-500/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-4 h-4 text-blue-400" />
-                        <span className="font-semibold text-white">{occurrence.date}</span>
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${
-                          occurrence.isFullMatch ? 'bg-green-600 text-white' :
-                          'bg-yellow-600 text-white'
-                        }`}>
-                          {occurrence.isFullMatch ? '✓ Padrão Exato' : '~ Parcial'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          occurrence.matchRate === 100 ? 'bg-green-600 text-white' :
-                          occurrence.matchRate >= 60 ? 'bg-yellow-600 text-white' :
-                          'bg-red-600 text-white'
-                        }`}>
-                          {occurrence.matchRate.toFixed(0)}% Match
-                        </span>
+                {/* Padrões Encontrados */}
+                {analysis.patterns && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    {/* Estatísticas Gerais */}
+                    <div className="bg-gray-900/50 rounded p-3">
+                      <p className="text-xs text-gray-400 mb-2 font-semibold">Estatísticas dos Jogos Anteriores:</p>
+                      <div className="space-y-1 text-sm">
+                        <p className="text-gray-300">
+                          Over 3.5: <span className="text-green-400 font-bold">{analysis.patterns.over35Count}</span> 
+                          <span className="text-gray-500"> ({analysis.patterns.over35Percentage}%)</span>
+                        </p>
+                        <p className="text-gray-300">
+                          Over 4.5: <span className="text-blue-400 font-bold">{analysis.patterns.over45Count}</span>
+                          <span className="text-gray-500"> ({analysis.patterns.over45Percentage}%)</span>
+                        </p>
+                        <p className="text-gray-300">
+                          Média de Gols: <span className="text-yellow-400 font-bold">{analysis.patterns.avgGoals}</span>
+                        </p>
                       </div>
                     </div>
 
-                    {/* Sequência encontrada */}
-                    <div className="mb-2">
-                      <p className="text-xs text-gray-400 mb-1">Sequência encontrada:</p>
-                      <div className="flex gap-1">
-                        {occurrence.details.map((detail, didx) => (
-                          <div key={didx} className={`w-6 h-6 rounded flex items-center justify-center ${
-                            detail.isOver35 ? 'bg-green-600' : 'bg-gray-600'
-                          }`}>
-                            <span className="text-white text-xs font-bold">
-                              {detail.isOver35 ? '✓' : '✗'}
-                            </span>
+                    {/* Top Odds Green */}
+                    <div className="bg-gray-900/50 rounded p-3">
+                      <p className="text-xs text-gray-400 mb-2 font-semibold">Top Odds Green:</p>
+                      <div className="space-y-1">
+                        {analysis.patterns.topGreenOdds?.slice(0, 3).map((odd, oidx) => (
+                          <div key={oidx} className="flex items-center justify-between text-xs">
+                            <span className="text-green-400">{odd.market.replace(/_/g, ' ')}</span>
+                            <span className="text-gray-500">{odd.frequency}x ({odd.percentage}%)</span>
                           </div>
                         ))}
                       </div>
                     </div>
+                  </div>
+                )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                      {occurrence.details.map((detail, didx) => (
-                        <div 
-                          key={didx}
-                          className={`p-2 rounded text-xs ${
-                            detail.isOver35 ? 'bg-green-900/30 border border-green-500/30' :
-                            'bg-gray-900/50 border border-gray-700'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-semibold text-white">
-                              #{didx + 1} - {detail.hour}:{detail.minute.toString().padStart(2, '0')}
+                {/* Lista de Jogos Anteriores */}
+                <div>
+                  <button
+                    onClick={() => {
+                      const elem = document.getElementById(`games-${idx}`);
+                      elem.style.display = elem.style.display === 'none' ? 'block' : 'none';
+                    }}
+                    className="text-sm text-blue-400 hover:text-blue-300 mb-2"
+                  >
+                    {analysis.previousGamesCount} Jogos Anteriores (clique para expandir) ▼
+                  </button>
+                  
+                  <div id={`games-${idx}`} style={{display: 'none'}} className="space-y-2 max-h-[400px] overflow-y-auto">
+                    {analysis.previousGames.map((game, gidx) => (
+                      <div key={gidx} className={`p-3 rounded border ${
+                        game.isOver35 ? 'bg-green-900/20 border-green-500/30' :
+                        'bg-gray-900/30 border-gray-700'
+                      }`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <span className="text-sm font-semibold text-white">
+                              #{gidx + 1} - {game.hour}:{game.minute.toString().padStart(2, '0')}
                             </span>
-                            <span className={`font-bold ${detail.isOver35 ? 'text-green-400' : 'text-red-400'}`}>
-                              {detail.isOver35 ? '✓' : '✗'}
+                            <span className={`ml-2 text-xs px-2 py-1 rounded ${
+                              game.isOver35 ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
+                            }`}>
+                              {game.isOver35 ? 'Over 3.5 ✓' : 'Not Over'}
                             </span>
                           </div>
-                          <p className="text-gray-300">{detail.teams}</p>
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-gray-400">{detail.score}</span>
-                            <span className={`font-semibold ${
-                              detail.totalGoals > 3.5 ? 'text-green-400' : 'text-gray-400'
-                            }`}>
-                              {detail.totalGoals} gols
-                            </span>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-400">{game.timeCasa} vs {game.timeFora}</p>
+                            <p className="text-sm font-bold text-white">{game.placarFT} ({game.totalGolsFT} gols)</p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {historicalResults.occurrences.length === 0 && (
-            <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700 text-center">
-              <p className="text-gray-400">
-                Nenhuma ocorrência desta combinação foi encontrada nos últimos {historicalResults.daysAnalyzed} dias.
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Tente aumentar o período de análise ou selecione uma combinação diferente.
-              </p>
-            </div>
-          )}
+                        {/* Odds Green deste jogo */}
+                        {game.greenOdds.length > 0 && (
+                          <div className="mt-2 pt-2 border-t border-gray-700">
+                            <p className="text-xs text-gray-400 mb-1">
+                              Odds Green ({game.greenOddsCount}):
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                              {game.greenOdds.slice(0, 5).map((odd, oidx) => (
+                                <span key={oidx} className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded">
+                                  {odd.market.replace(/_/g, ' ')}
+                                </span>
+                              ))}
+                              {game.greenOdds.length > 5 && (
+                                <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
+                                  +{game.greenOdds.length - 5}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
     </div>
