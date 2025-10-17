@@ -133,8 +133,16 @@ const HomePage = () => {
 
             {/* Grid de Partidas e Rankings */}
             {selectedDate && filteredMatches.length > 0 ? (
-              <Tabs defaultValue="neural" className="space-y-6">
+              <Tabs defaultValue="blockSelector" className="space-y-6">
                 <TabsList className="bg-gray-900 border border-gray-800 flex-wrap h-auto">
+                  <TabsTrigger value="blockSelector" className="data-[state=active]:bg-orange-600 flex items-center gap-2">
+                    <Grid3x3 className="w-4 h-4" />
+                    Seletor de Blocos
+                  </TabsTrigger>
+                  <TabsTrigger value="table" className="data-[state=active]:bg-yellow-600 flex items-center gap-2">
+                    <Trophy className="w-4 h-4" />
+                    Tabela Classificação
+                  </TabsTrigger>
                   <TabsTrigger value="neural" className="data-[state=active]:bg-pink-600 flex items-center gap-2">
                     <Brain className="w-4 h-4" />
                     IA Neural Network
@@ -161,6 +169,17 @@ const HomePage = () => {
                     Padrões & Clusters
                   </TabsTrigger>
                 </TabsList>
+
+                <TabsContent value="blockSelector">
+                  <InteractiveBlockSelector 
+                    matches={filteredMatches}
+                    onBlockAnalyzed={(analysis) => console.log('Bloco analisado:', analysis)}
+                  />
+                </TabsContent>
+
+                <TabsContent value="table">
+                  <LeagueTable matches={filteredMatches} />
+                </TabsContent>
 
                 <TabsContent value="neural">
                   <NeuralNetworkPredictor 
