@@ -1133,9 +1133,18 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
                       <p className="text-xs text-gray-400 mb-2 font-semibold">Top Odds Green:</p>
                       <div className="space-y-1">
                         {analysis.patterns.topGreenOdds?.slice(0, 3).map((odd, oidx) => (
-                          <div key={oidx} className="flex items-center justify-between text-xs">
-                            <span className="text-green-400">{odd.market.replace(/_/g, ' ')}</span>
-                            <span className="text-gray-500">{odd.frequency}x ({odd.percentage}%)</span>
+                          <div key={oidx} className="text-xs">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-green-400">{odd.market.replace(/_/g, ' ')}</span>
+                              <span className="text-yellow-400 font-bold">{odd.avgOdd}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                              <span>{odd.frequency}x ({odd.percentage}%)</span>
+                              <span>•</span>
+                              <span>Min: {odd.minOdd}</span>
+                              <span>•</span>
+                              <span>Max: {odd.maxOdd}</span>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1186,13 +1195,14 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
                             </p>
                             <div className="flex flex-wrap gap-1">
                               {game.greenOdds.slice(0, 5).map((odd, oidx) => (
-                                <span key={oidx} className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded">
-                                  {odd.market.replace(/_/g, ' ')}
+                                <span key={oidx} className="text-xs bg-green-600/30 text-green-300 px-2 py-1 rounded flex items-center gap-1">
+                                  <span>{odd.market.replace(/_/g, ' ')}</span>
+                                  <span className="text-yellow-400 font-bold">@{odd.odd.toFixed(2)}</span>
                                 </span>
                               ))}
                               {game.greenOdds.length > 5 && (
                                 <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
-                                  +{game.greenOdds.length - 5}
+                                  +{game.greenOdds.length - 5} mais
                                 </span>
                               )}
                             </div>
