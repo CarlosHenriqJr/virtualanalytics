@@ -47,48 +47,113 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     }
   };
 
-  // Analisa bloco selecionado
-  const analyzeBlock = (cells) => {
-    if (cells.length === 0) return;
+  // Limpa seleção
+  const clearSelection = () => {
+    setSelectedCells([]);
+    setHistoricalResults(null);
+  };
 
-    const over35Matches = cells.filter(c => c.match.totalGolsFT > 3.5);
-    const over45Matches = cells.filter(c => c.match.totalGolsFT > 4.5);
+  // Analisa padrão histórico
+  const analyzeHistoricalPattern = () => {
+    if (selectedCells.length === 0) {
+      alert('Selecione pelo menos uma célula primeiro!');
+      return;
+    }
 
-    const analysis = {
-      id: Date.now(),
-      totalMatches: cells.length,
-      over35Count: over35Matches.length,
-      over45Count: over45Matches.length,
-      over35Rate: (over35Matches.length / cells.length) * 100,
-      over45Rate: (over45Matches.length / cells.length) * 100,
-      
-      // Horários
-      hours: [...new Set(cells.map(c => c.hour))],
-      minutes: [...new Set(cells.map(c => c.minute))],
-      
-      // Times envolvidos
-      teams: [...new Set(cells.flatMap(c => [c.match.timeCasa, c.match.timeFora]))],
-      
-      // Confrontos
-      confrontos: cells.map(c => `${c.match.timeCasa} vs ${c.match.timeFora}`),
-      
-      // Odds médias
-      avgOdd: cells.reduce((acc, c) => 
-        acc + (c.match.markets?.TotalGols_MaisDe_35 || 0), 0
-      ) / cells.length,
-      
-      // Padrão HT -> FT
-      htToFtPattern: cells.map(c => ({
-        ht: c.match.placarCasaHT + c.match.placarForaHT,
-        ft: c.match.totalGolsFT,
-        over35: c.match.totalGolsFT > 3.5
-      })),
-      
-      cells
-    };
+    setIsAnalyzing(true);
+    
+    try {
+      // Extrai o padrão de posições selecionadas (horário/minuto)
+      const pattern = selectedCells.map(c => ({
+        hour: c.hour,
+        minute: c.minute
+      }));
 
-    setAnalyzedBlocks([...analyzedBlocks, analysis]);
-    onBlockAnalyzed?.(analysis);
+      // Data atual selecionada
+      const currentDate = parse(selectedDate, 'dd/MM/yyyy', new Date());
+      
+      // Array para armazenar resultados históricos
+      const historicalOccurrences = [];
+      
+      // Itera pelos X dias anteriores
+      for (let i = 1; i <= daysToAnalyze; i++) {
+        const pastDate = subDays(currentDate, i);
+        const pastDateStr = format(pastDate, 'dd/MM/yyyy');
+        
+        // Busca partidas do dia anterior
+        const pastMatches = allMatchesData?.filter(m => m.date === pastDateStr) || [];
+        
+        if (pastMatches.length === 0) continue;
+
+        // Cria grid do dia anterior
+        const pastGrid = {};
+        pastMatches.forEach(match => {
+          const key = `${match.hour}-${match.minute}`;
+          pastGrid[key] = match;
+        });
+
+        // Verifica se o padrão existe neste dia
+        const patternMatches = pattern.map(p => {
+          const key = `${p.hour}-${p.minute}`;
+          return pastGrid[key];
+        }).filter(m => m); // Remove nulls
+
+        if (patternMatches.length > 0) {
+          // Conta quantas células são Over 3.5
+          const over35Count = patternMatches.filter(m => m.totalGolsFT > 3.5).length;
+          const totalInPattern = patternMatches.length;
+          const matchRate = (over35Count / pattern.length) * 100;
+          const isFullMatch = over35Count === pattern.length;
+
+          historicalOccurrences.push({
+            date: pastDateStr,
+            matches: patternMatches,
+            over35Count,
+            totalInPattern,
+            totalExpected: pattern.length,
+            matchRate,
+            isFullMatch,
+            details: patternMatches.map(m => ({
+              hour: m.hour,
+              minute: m.minute,
+              teams: `${m.timeCasa} vs ${m.timeFora}`,
+              score: m.placarFT,
+              totalGoals: m.totalGolsFT,
+              isOver35: m.totalGolsFT > 3.5,
+              odd: m.markets?.TotalGols_MaisDe_35 || 0
+            }))
+          });
+        }
+      }
+
+      // Calcula estatísticas gerais
+      const totalOccurrences = historicalOccurrences.length;
+      const fullMatches = historicalOccurrences.filter(o => o.isFullMatch).length;
+      const successRate = totalOccurrences > 0 ? (fullMatches / totalOccurrences) * 100 : 0;
+      const frequency = (totalOccurrences / daysToAnalyze) * 100;
+
+      const results = {
+        pattern,
+        patternSize: pattern.length,
+        daysAnalyzed: daysToAnalyze,
+        totalOccurrences,
+        fullMatches,
+        partialMatches: totalOccurrences - fullMatches,
+        successRate,
+        frequency,
+        occurrences: historicalOccurrences.sort((a, b) => 
+          parse(b.date, 'dd/MM/yyyy', new Date()) - parse(a.date, 'dd/MM/yyyy', new Date())
+        )
+      };
+
+      setHistoricalResults(results);
+      onBlockAnalyzed?.(results);
+    } catch (error) {
+      console.error('Erro ao analisar padrão histórico:', error);
+      alert('Erro ao analisar padrão. Verifique os dados.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   // Verifica se célula está na seleção
