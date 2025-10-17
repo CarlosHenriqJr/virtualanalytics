@@ -442,6 +442,117 @@ const NeuralNetworkPredictor = ({ allMatches, currentDate }) => {
         </div>
       </div>
 
+      {/* Controles de Salvar/Carregar */}
+      <Card className="bg-gray-900/50 border-gray-800 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Save className="w-6 h-6 text-blue-400" />
+          <h3 className="text-xl font-bold text-white">Gerenciar Modelo Treinado</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Informações do modelo salvo */}
+          {modelInfo && (
+            <Card className="bg-blue-900/20 border-blue-500/30 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Brain className="w-5 h-5 text-blue-400" />
+                <h4 className="font-bold text-white">Modelo Salvo Disponível</h4>
+              </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Salvo em:</span>
+                  <span className="text-white">
+                    {new Date(modelInfo.savedAt).toLocaleString('pt-BR')}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Dados de treino:</span>
+                  <span className="text-white">{modelInfo.trainingDataSize} sequências</span>
+                </div>
+                {modelInfo.lastLoss && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Loss final:</span>
+                    <span className="text-white">{modelInfo.lastLoss}</span>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
+          {/* Ações */}
+          <div className="space-y-3">
+            {!modelReady && modelInfo && (
+              <Button
+                onClick={loadModel}
+                disabled={isLoading}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                {isLoading ? (
+                  <>
+                    <Zap className="w-4 h-4 mr-2 animate-pulse" />
+                    Carregando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Carregar Modelo Salvo
+                  </>
+                )}
+              </Button>
+            )}
+
+            {modelReady && (
+              <>
+                <Button
+                  onClick={saveModel}
+                  disabled={isSaving}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  {isSaving ? (
+                    <>
+                      <Zap className="w-4 h-4 mr-2 animate-pulse" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Salvar no Navegador
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  onClick={exportModel}
+                  disabled={isSaving}
+                  variant="outline"
+                  className="w-full bg-gray-800 hover:bg-gray-700"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar Modelo
+                </Button>
+              </>
+            )}
+
+            {modelInfo && (
+              <Button
+                onClick={deleteModel}
+                variant="destructive"
+                className="w-full bg-red-900 hover:bg-red-800"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Deletar Modelo Salvo
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 bg-yellow-900/20 border border-yellow-500/30 rounded p-3">
+          <p className="text-sm text-yellow-200">
+            <strong>💡 Dica:</strong> Após treinar com muitos dados, salve o modelo no navegador. 
+            Na próxima vez que usar o site, basta carregar o modelo salvo sem precisar retreinar!
+          </p>
+        </div>
+      </Card>
+
       {/* Progresso de Treinamento */}
       {isTraining && (
         <Card className="bg-gray-900/50 border-purple-500/30 p-6">
