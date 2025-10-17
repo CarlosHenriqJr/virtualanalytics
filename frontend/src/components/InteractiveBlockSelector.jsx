@@ -285,104 +285,164 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         </div>
       </Card>
 
-      {/* Blocos Analisados */}
-      {analyzedBlocks.length > 0 && (
-        <Card className="bg-gray-900/50 border-gray-800 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <TrendingUp className="w-6 h-6 text-green-400" />
-              <h3 className="text-xl font-bold text-white">Blocos Analisados</h3>
-            </div>
-            <Button
-              onClick={() => setAnalyzedBlocks([])}
-              variant="outline"
-              size="sm"
-              className="bg-red-900/20 hover:bg-red-900/40"
-            >
-              Limpar Análises
-            </Button>
+      {/* Resultados da Análise Histórica */}
+      {historicalResults && (
+        <Card className="bg-gradient-to-br from-green-900/20 to-blue-900/20 border-green-500/30 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <TrendingUp className="w-6 h-6 text-green-400" />
+            <h3 className="text-xl font-bold text-white">Análise Histórica do Padrão</h3>
           </div>
 
-          <div className="space-y-4">
-            {analyzedBlocks.map((block, idx) => (
-              <div key={block.id} className="bg-gray-800/50 rounded-lg p-5 border border-gray-700">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-bold text-white">Bloco #{idx + 1}</h4>
-                  <div className="flex gap-3">
-                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      block.over35Rate > 60 ? 'bg-green-600' :
-                      block.over35Rate > 40 ? 'bg-yellow-600' :
-                      'bg-gray-600'
-                    } text-white`}>
-                      {block.over35Rate.toFixed(0)}% Over 3.5
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                      block.over45Rate > 50 ? 'bg-blue-600' :
-                      'bg-gray-600'
-                    } text-white`}>
-                      {block.over45Rate.toFixed(0)}% Over 4.5
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div className="bg-gray-900/50 rounded p-3">
-                    <p className="text-xs text-gray-400 mb-1">Total Jogos</p>
-                    <p className="text-2xl font-bold text-white">{block.totalMatches}</p>
-                  </div>
-                  <div className="bg-gray-900/50 rounded p-3">
-                    <p className="text-xs text-gray-400 mb-1">Over 3.5</p>
-                    <p className="text-2xl font-bold text-green-400">{block.over35Count}</p>
-                  </div>
-                  <div className="bg-gray-900/50 rounded p-3">
-                    <p className="text-xs text-gray-400 mb-1">Over 4.5</p>
-                    <p className="text-2xl font-bold text-blue-400">{block.over45Count}</p>
-                  </div>
-                  <div className="bg-gray-900/50 rounded p-3">
-                    <p className="text-xs text-gray-400 mb-1">Odd Média</p>
-                    <p className="text-2xl font-bold text-yellow-400">{block.avgOdd.toFixed(2)}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-gray-900/50 rounded p-3">
-                    <p className="text-sm text-gray-400 mb-2">Horários:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {block.hours.map(h => (
-                        <span key={h} className="px-2 py-1 bg-purple-900/30 text-purple-300 rounded text-xs">
-                          {h}h
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-900/50 rounded p-3">
-                    <p className="text-sm text-gray-400 mb-2">Times Envolvidos:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {block.teams.slice(0, 6).map((team, tidx) => (
-                        <span key={tidx} className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs">
-                          {team}
-                        </span>
-                      ))}
-                      {block.teams.length > 6 && (
-                        <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">
-                          +{block.teams.length - 6}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-4 bg-green-900/20 border border-green-500/30 rounded p-3">
-                  <p className="text-sm text-green-200">
-                    <strong>Insight:</strong> Este bloco tem {block.over35Rate > 60 ? 'alta' : block.over35Rate > 40 ? 'média' : 'baixa'} taxa de Over 3.5. 
-                    {block.over35Rate > 60 && ' Excelente para estratégias agressivas!'}
-                    {block.avgOdd < 3 && ' Odds baixas indicam favorecimento.'}
-                  </p>
-                </div>
+          {/* Estatísticas Principais */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-900/70 rounded-lg p-4 border border-gray-700">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="w-4 h-4 text-blue-400" />
+                <p className="text-xs text-gray-400">Dias Analisados</p>
               </div>
-            ))}
+              <p className="text-3xl font-bold text-white">{historicalResults.daysAnalyzed}</p>
+            </div>
+
+            <div className="bg-gray-900/70 rounded-lg p-4 border border-gray-700">
+              <div className="flex items-center gap-2 mb-2">
+                <Search className="w-4 h-4 text-purple-400" />
+                <p className="text-xs text-gray-400">Frequência</p>
+              </div>
+              <p className="text-3xl font-bold text-purple-400">
+                {historicalResults.frequency.toFixed(0)}%
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {historicalResults.totalOccurrences} de {historicalResults.daysAnalyzed} dias
+              </p>
+            </div>
+
+            <div className="bg-gray-900/70 rounded-lg p-4 border border-green-600/50">
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="w-4 h-4 text-green-400" />
+                <p className="text-xs text-gray-400">Taxa de Acerto</p>
+              </div>
+              <p className="text-3xl font-bold text-green-400">
+                {historicalResults.successRate.toFixed(0)}%
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {historicalResults.fullMatches} acertos completos
+              </p>
+            </div>
+
+            <div className="bg-gray-900/70 rounded-lg p-4 border border-gray-700">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-4 h-4 text-yellow-400" />
+                <p className="text-xs text-gray-400">Tamanho Padrão</p>
+              </div>
+              <p className="text-3xl font-bold text-yellow-400">
+                {historicalResults.patternSize}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">células selecionadas</p>
+            </div>
           </div>
+
+          {/* Interpretação */}
+          <div className={`p-4 rounded-lg border mb-6 ${
+            historicalResults.successRate >= 70 ? 'bg-green-900/30 border-green-500/50' :
+            historicalResults.successRate >= 50 ? 'bg-yellow-900/30 border-yellow-500/50' :
+            'bg-red-900/30 border-red-500/50'
+          }`}>
+            <p className="text-sm font-semibold mb-2 text-white">
+              {historicalResults.successRate >= 70 ? '✅ Padrão Forte!' :
+               historicalResults.successRate >= 50 ? '⚠️ Padrão Moderado' :
+               '❌ Padrão Fraco'}
+            </p>
+            <p className="text-sm text-gray-300">
+              {historicalResults.totalOccurrences === 0 ? (
+                `Este padrão não foi encontrado nos últimos ${historicalResults.daysAnalyzed} dias. Pode ser um padrão raro ou único.`
+              ) : (
+                <>
+                  Este padrão apareceu em <strong>{historicalResults.frequency.toFixed(1)}%</strong> dos dias analisados.
+                  {' '}Das {historicalResults.totalOccurrences} ocorrências, <strong>{historicalResults.fullMatches}</strong> tiveram 
+                  todas as células como Over 3.5 (<strong>{historicalResults.successRate.toFixed(1)}%</strong> de acerto).
+                  {historicalResults.successRate >= 70 && ' Excelente padrão para estratégias!'}
+                  {historicalResults.successRate < 50 && ' Considere revisar o padrão ou buscar correlações adicionais.'}
+                </>
+              )}
+            </p>
+          </div>
+
+          {/* Lista de Ocorrências */}
+          {historicalResults.occurrences.length > 0 && (
+            <div>
+              <h4 className="text-lg font-bold text-white mb-4">
+                Ocorrências Históricas ({historicalResults.occurrences.length})
+              </h4>
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                {historicalResults.occurrences.map((occurrence, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`bg-gray-800/50 rounded-lg p-4 border ${
+                      occurrence.isFullMatch ? 'border-green-500/50' : 'border-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-4 h-4 text-blue-400" />
+                        <span className="font-semibold text-white">{occurrence.date}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          occurrence.isFullMatch ? 'bg-green-600 text-white' :
+                          occurrence.matchRate >= 50 ? 'bg-yellow-600 text-white' :
+                          'bg-red-600 text-white'
+                        }`}>
+                          {occurrence.over35Count}/{occurrence.totalExpected} Over 3.5
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          ({occurrence.matchRate.toFixed(0)}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {occurrence.details.map((detail, didx) => (
+                        <div 
+                          key={didx}
+                          className={`p-2 rounded text-xs ${
+                            detail.isOver35 ? 'bg-green-900/30 border border-green-500/30' :
+                            'bg-gray-900/50 border border-gray-700'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-white">
+                              {detail.hour}:{detail.minute.toString().padStart(2, '0')}
+                            </span>
+                            <span className={`font-bold ${detail.isOver35 ? 'text-green-400' : 'text-red-400'}`}>
+                              {detail.isOver35 ? '✓' : '✗'}
+                            </span>
+                          </div>
+                          <p className="text-gray-300 mt-1">{detail.teams}</p>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-gray-400">{detail.score}</span>
+                            <span className="text-gray-400">
+                              {detail.totalGoals} gols
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {historicalResults.occurrences.length === 0 && (
+            <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700 text-center">
+              <p className="text-gray-400">
+                Nenhuma ocorrência deste padrão foi encontrada nos últimos {historicalResults.daysAnalyzed} dias.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Tente selecionar um padrão diferente ou aumentar o período de análise.
+              </p>
+            </div>
+          )}
         </Card>
       )}
     </div>
