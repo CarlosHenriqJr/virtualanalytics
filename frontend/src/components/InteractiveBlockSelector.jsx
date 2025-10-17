@@ -502,8 +502,8 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
   const findGlobalPatterns = (analyses) => {
     if (analyses.length === 0) return {};
 
-    // Agrupa todas as odds green
-    const globalOddFrequency = {};
+    // Agrupa todas as odds green com seus valores
+    const globalOddData = {};
     let totalGamesAnalyzed = 0;
 
     analyses.forEach(analysis => {
@@ -511,18 +511,30 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
       analysis.previousGames.forEach(game => {
         game.greenOdds.forEach(odd => {
           const key = odd.market;
-          globalOddFrequency[key] = (globalOddFrequency[key] || 0) + 1;
+          if (!globalOddData[key]) {
+            globalOddData[key] = {
+              count: 0,
+              totalOdd: 0,
+              odds: []
+            };
+          }
+          globalOddData[key].count += 1;
+          globalOddData[key].totalOdd += odd.odd;
+          globalOddData[key].odds.push(odd.odd);
         });
       });
     });
 
-    const commonGreenOdds = Object.entries(globalOddFrequency)
-      .sort((a, b) => b[1] - a[1])
+    const commonGreenOdds = Object.entries(globalOddData)
+      .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 10)
-      .map(([market, count]) => ({
+      .map(([market, data]) => ({
         market,
-        frequency: count,
-        percentage: ((count / totalGamesAnalyzed) * 100).toFixed(1),
+        frequency: data.count,
+        percentage: ((data.count / totalGamesAnalyzed) * 100).toFixed(1),
+        avgOdd: (data.totalOdd / data.count).toFixed(2),
+        minOdd: Math.min(...data.odds).toFixed(2),
+        maxOdd: Math.max(...data.odds).toFixed(2),
         appearsInCells: analyses.filter(a => 
           a.patterns.topGreenOdds?.some(o => o.market === market)
         ).length
