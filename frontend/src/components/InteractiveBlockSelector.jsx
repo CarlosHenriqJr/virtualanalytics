@@ -1,0 +1,330 @@
+import React, { useState, useMemo } from 'react';
+import { Target, TrendingUp, Award, Clock, Users } from 'lucide-react';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
+import MatchCell from './MatchCell';
+
+const InteractiveBlockSelector = ({ matches, onBlockAnalyzed }) => {
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState(null);
+  const [selectionEnd, setSelectionEnd] = useState(null);
+  const [selectedCells, setSelectedCells] = useState([]);
+  const [analyzedBlocks, setAnalyzedBlocks] = useState([]);
+
+  // Cria grid 24h x 20min
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const minuteSlots = Array.from({ length: 20 }, (_, i) => i * 3);
+
+  // Organiza partidas por hora e minuto
+  const matchGrid = useMemo(() => {
+    const grid = {};
+    matches.forEach(match => {
+      const key = `${match.hour}-${match.minute}`;
+      grid[key] = match;
+    });
+    return grid;
+  }, [matches]);
+
+  // Inicia seleção
+  const handleMouseDown = (hour, minute) => {
+    setIsSelecting(true);
+    setSelectionStart({ hour, minute });
+    setSelectionEnd({ hour, minute });
+  };
+
+  // Atualiza seleção
+  const handleMouseEnter = (hour, minute) => {
+    if (isSelecting) {
+      setSelectionEnd({ hour, minute });
+    }
+  };
+
+  // Finaliza seleção
+  const handleMouseUp = () => {
+    if (isSelecting && selectionStart && selectionEnd) {
+      const minHour = Math.min(selectionStart.hour, selectionEnd.hour);
+      const maxHour = Math.max(selectionStart.hour, selectionEnd.hour);
+      const minMinIdx = Math.min(
+        minuteSlots.indexOf(selectionStart.minute),
+        minuteSlots.indexOf(selectionEnd.minute)
+      );
+      const maxMinIdx = Math.max(
+        minuteSlots.indexOf(selectionStart.minute),
+        minuteSlots.indexOf(selectionEnd.minute)
+      );
+
+      const cells = [];
+      for (let h = minHour; h <= maxHour; h++) {
+        for (let mIdx = minMinIdx; mIdx <= maxMinIdx; mIdx++) {
+          const minute = minuteSlots[mIdx];
+          const match = matchGrid[`${h}-${minute}`];
+          if (match) {
+            cells.push({ hour: h, minute, match });
+          }
+        }
+      }
+
+      setSelectedCells(cells);
+      analyzeBlock(cells);
+    }
+    setIsSelecting(false);
+  };
+
+  // Analisa bloco selecionado
+  const analyzeBlock = (cells) => {
+    if (cells.length === 0) return;
+
+    const over35Matches = cells.filter(c => c.match.totalGolsFT > 3.5);
+    const over45Matches = cells.filter(c => c.match.totalGolsFT > 4.5);
+
+    const analysis = {
+      id: Date.now(),
+      totalMatches: cells.length,
+      over35Count: over35Matches.length,
+      over45Count: over45Matches.length,
+      over35Rate: (over35Matches.length / cells.length) * 100,
+      over45Rate: (over45Matches.length / cells.length) * 100,
+      
+      // Horários
+      hours: [...new Set(cells.map(c => c.hour))],
+      minutes: [...new Set(cells.map(c => c.minute))],
+      
+      // Times envolvidos
+      teams: [...new Set(cells.flatMap(c => [c.match.timeCasa, c.match.timeFora]))],
+      
+      // Confrontos
+      confrontos: cells.map(c => `${c.match.timeCasa} vs ${c.match.timeFora}`),
+      
+      // Odds médias
+      avgOdd: cells.reduce((acc, c) => 
+        acc + (c.match.markets?.TotalGols_MaisDe_35 || 0), 0
+      ) / cells.length,
+      
+      // Padrão HT -> FT
+      htToFtPattern: cells.map(c => ({
+        ht: c.match.placarCasaHT + c.match.placarForaHT,
+        ft: c.match.totalGolsFT,
+        over35: c.match.totalGolsFT > 3.5
+      })),
+      
+      cells
+    };
+
+    setAnalyzedBlocks([...analyzedBlocks, analysis]);
+    onBlockAnalyzed?.(analysis);
+  };
+
+  // Verifica se célula está na seleção
+  const isCellInSelection = (hour, minute) => {
+    if (!isSelecting || !selectionStart || !selectionEnd) return false;
+
+    const minHour = Math.min(selectionStart.hour, selectionEnd.hour);
+    const maxHour = Math.max(selectionStart.hour, selectionEnd.hour);
+    const minMinIdx = Math.min(
+      minuteSlots.indexOf(selectionStart.minute),
+      minuteSlots.indexOf(selectionEnd.minute)
+    );
+    const maxMinIdx = Math.max(
+      minuteSlots.indexOf(selectionStart.minute),
+      minuteSlots.indexOf(selectionEnd.minute)
+    );
+    const minIdx = minuteSlots.indexOf(minute);
+
+    return hour >= minHour && hour <= maxHour && minIdx >= minMinIdx && minIdx <= maxMinIdx;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Instruções */}
+      <Card className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-blue-500/30 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Target className="w-6 h-6 text-blue-400" />
+          <h3 className="text-xl font-bold text-white">Seletor de Blocos Interativo</h3>
+        </div>
+        <p className="text-gray-300 mb-3">
+          Arraste o mouse sobre o grid para selecionar blocos de jogos e analisá-los:
+        </p>
+        <div className="space-y-2 text-sm text-gray-400">
+          <p>• <strong>Clique e arraste</strong> para desenhar um retângulo sobre os jogos</p>
+          <p>• O sistema analisará automaticamente o bloco selecionado</p>
+          <p>• Veja estatísticas de Over 3.5, Over 4.5, times envolvidos e padrões</p>
+        </div>
+      </Card>
+
+      {/* Grid Interativo */}
+      <Card className="bg-gray-900/50 border-gray-800 p-4">
+        <div className="overflow-x-auto">
+          <div 
+            className="inline-block"
+            onMouseLeave={() => {
+              if (isSelecting) {
+                setIsSelecting(false);
+              }
+            }}
+          >
+            {/* Header */}
+            <div className="flex sticky top-0 z-10 bg-gray-950">
+              <div className="w-[60px] flex-shrink-0 border-r border-gray-800 bg-gray-950 flex items-center justify-center text-xs font-semibold text-gray-400">
+                Hora
+              </div>
+              {minuteSlots.map(minute => (
+                <div
+                  key={minute}
+                  className="w-[50px] flex-shrink-0 border-r border-gray-800 flex items-center justify-center text-xs text-gray-400 font-medium"
+                >
+                  :{minute.toString().padStart(2, '0')}
+                </div>
+              ))}
+            </div>
+
+            {/* Grid */}
+            {hours.map(hour => (
+              <div key={hour} className="flex">
+                <div className="w-[60px] flex-shrink-0 border-r border-t border-gray-800 bg-gray-950 flex items-center justify-center text-sm font-semibold text-gray-300">
+                  {hour.toString().padStart(2, '0')}h
+                </div>
+                
+                {minuteSlots.map(minute => {
+                  const match = matchGrid[`${hour}-${minute}`];
+                  const isSelected = isCellInSelection(hour, minute);
+                  const isOver35 = match && match.totalGolsFT > 3.5;
+                  const isOver45 = match && match.totalGolsFT > 4.5;
+
+                  return (
+                    <div
+                      key={`${hour}-${minute}`}
+                      className={`w-[50px] h-[50px] flex-shrink-0 border-r border-t border-gray-800 cursor-crosshair transition-all ${
+                        isSelected ? 'bg-blue-500/30 ring-2 ring-blue-400' : ''
+                      }`}
+                      onMouseDown={() => handleMouseDown(hour, minute)}
+                      onMouseEnter={() => handleMouseEnter(hour, minute)}
+                      onMouseUp={handleMouseUp}
+                    >
+                      {match && (
+                        <div className={`w-full h-full p-1 text-[9px] leading-tight flex flex-col items-center justify-center ${
+                          isOver45 ? 'bg-blue-600/40 border-2 border-blue-400' :
+                          isOver35 ? 'bg-green-600/40 border-2 border-green-400' :
+                          'bg-gray-800'
+                        }`}>
+                          <div className="font-semibold text-white text-center">
+                            {match.timeCasa.substring(0, 3)} x {match.timeFora.substring(0, 3)}
+                          </div>
+                          <div className="font-bold text-green-400 text-[10px]">
+                            {match.placarFT}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+
+      {/* Blocos Analisados */}
+      {analyzedBlocks.length > 0 && (
+        <Card className="bg-gray-900/50 border-gray-800 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <TrendingUp className="w-6 h-6 text-green-400" />
+              <h3 className="text-xl font-bold text-white">Blocos Analisados</h3>
+            </div>
+            <Button
+              onClick={() => setAnalyzedBlocks([])}
+              variant="outline"
+              size="sm"
+              className="bg-red-900/20 hover:bg-red-900/40"
+            >
+              Limpar Análises
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            {analyzedBlocks.map((block, idx) => (
+              <div key={block.id} className="bg-gray-800/50 rounded-lg p-5 border border-gray-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-bold text-white">Bloco #{idx + 1}</h4>
+                  <div className="flex gap-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                      block.over35Rate > 60 ? 'bg-green-600' :
+                      block.over35Rate > 40 ? 'bg-yellow-600' :
+                      'bg-gray-600'
+                    } text-white`}>
+                      {block.over35Rate.toFixed(0)}% Over 3.5
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                      block.over45Rate > 50 ? 'bg-blue-600' :
+                      'bg-gray-600'
+                    } text-white`}>
+                      {block.over45Rate.toFixed(0)}% Over 4.5
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                  <div className="bg-gray-900/50 rounded p-3">
+                    <p className="text-xs text-gray-400 mb-1">Total Jogos</p>
+                    <p className="text-2xl font-bold text-white">{block.totalMatches}</p>
+                  </div>
+                  <div className="bg-gray-900/50 rounded p-3">
+                    <p className="text-xs text-gray-400 mb-1">Over 3.5</p>
+                    <p className="text-2xl font-bold text-green-400">{block.over35Count}</p>
+                  </div>
+                  <div className="bg-gray-900/50 rounded p-3">
+                    <p className="text-xs text-gray-400 mb-1">Over 4.5</p>
+                    <p className="text-2xl font-bold text-blue-400">{block.over45Count}</p>
+                  </div>
+                  <div className="bg-gray-900/50 rounded p-3">
+                    <p className="text-xs text-gray-400 mb-1">Odd Média</p>
+                    <p className="text-2xl font-bold text-yellow-400">{block.avgOdd.toFixed(2)}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-900/50 rounded p-3">
+                    <p className="text-sm text-gray-400 mb-2">Horários:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {block.hours.map(h => (
+                        <span key={h} className="px-2 py-1 bg-purple-900/30 text-purple-300 rounded text-xs">
+                          {h}h
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-900/50 rounded p-3">
+                    <p className="text-sm text-gray-400 mb-2">Times Envolvidos:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {block.teams.slice(0, 6).map((team, tidx) => (
+                        <span key={tidx} className="px-2 py-1 bg-blue-900/30 text-blue-300 rounded text-xs">
+                          {team}
+                        </span>
+                      ))}
+                      {block.teams.length > 6 && (
+                        <span className="px-2 py-1 bg-gray-700 text-gray-300 rounded text-xs">
+                          +{block.teams.length - 6}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 bg-green-900/20 border border-green-500/30 rounded p-3">
+                  <p className="text-sm text-green-200">
+                    <strong>Insight:</strong> Este bloco tem {block.over35Rate > 60 ? 'alta' : block.over35Rate > 40 ? 'média' : 'baixa'} taxa de Over 3.5. 
+                    {block.over35Rate > 60 && ' Excelente para estratégias agressivas!'}
+                    {block.avgOdd < 3 && ' Odds baixas indicam favorecimento.'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default InteractiveBlockSelector;
