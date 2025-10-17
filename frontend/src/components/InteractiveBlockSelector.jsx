@@ -60,7 +60,193 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     setHistoricalResults(null);
   };
 
-  // Analisa jogos anteriores de cada Over 3.5 selecionado
+  // Analisa probabilidade de entrada baseada em padrão
+  const analyzeEntryPattern = () => {
+    if (selectedCells.length === 0) {
+      alert('Selecione células primeiro!');
+      return;
+    }
+
+    // Separa células por tipo
+    const patternCells = selectedCells.filter(c => {
+      const key = `${c.hour}-${c.minute}`;
+      return cellTypes[key] === 'pattern';
+    });
+
+    const entryCells = selectedCells.filter(c => {
+      const key = `${c.hour}-${c.minute}`;
+      return cellTypes[key] === 'entry';
+    });
+
+    if (patternCells.length === 0) {
+      alert('Selecione pelo menos 1 célula como PADRÃO!');
+      return;
+    }
+
+    if (entryCells.length === 0) {
+      alert('Selecione pelo menos 1 célula como ENTRADA!');
+      return;
+    }
+
+    setIsAnalyzing(true);
+
+    try {
+      console.log(`Analisando padrão de ${patternCells.length} células e ${entryCells.length} entradas`);
+
+      // Extrai o padrão base (sequência de Over 3.5)
+      const basePattern = patternCells.map(c => c.match.totalGolsFT > 3.5);
+      const basePatternString = basePattern.map(p => p ? '1' : '0').join('');
+
+      // Data atual
+      let currentDate;
+      try {
+        currentDate = parse(selectedDate, 'dd/MM/yyyy', new Date());
+        if (!isValid(currentDate)) {
+          currentDate = parse(selectedDate, 'yyyy-MM-dd', new Date());
+        }
+      } catch {
+        currentDate = new Date(selectedDate);
+      }
+
+      if (!isValid(currentDate)) {
+        alert('Erro ao processar a data');
+        setIsAnalyzing(false);
+        return;
+      }
+
+      // Busca todas as partidas do dia
+      const dateStr1 = format(currentDate, 'dd/MM/yyyy');
+      const dateStr2 = format(currentDate, 'yyyy-MM-dd');
+      
+      const dayMatches = allMatchesData?.filter(m => 
+        m.date === dateStr1 || m.date === dateStr2
+      ) || [];
+
+      const sortedMatches = [...dayMatches].sort((a, b) => {
+        if (a.hour !== b.hour) return a.hour - b.hour;
+        return a.minute - b.minute;
+      });
+
+      // Para cada célula de entrada, analisa o contexto
+      const entryAnalyses = [];
+
+      for (const entryCell of entryCells) {
+        // Encontra o índice da entrada
+        const entryIndex = sortedMatches.findIndex(m =>
+          m.hour === entryCell.hour && m.minute === entryCell.minute
+        );
+
+        if (entryIndex === -1) continue;
+
+        // Verifica se há o padrão antes da entrada
+        const startIdx = entryIndex - patternCells.length;
+        if (startIdx < 0) continue;
+
+        const precedingGames = sortedMatches.slice(startIdx, entryIndex);
+        const precedingPattern = precedingGames.map(m => m.totalGolsFT > 3.5);
+        const precedingString = precedingPattern.map(p => p ? '1' : '0').join('');
+
+        // Pega os 5 jogos a partir da entrada (incluindo ela)
+        const next5Games = sortedMatches.slice(entryIndex, entryIndex + 5);
+
+        entryAnalyses.push({
+          entryCell,
+          entryPosition: `${entryCell.hour}:${entryCell.minute.toString().padStart(2, '0')}`,
+          precedingPattern,
+          precedingString,
+          matchesBasePattern: precedingString === basePatternString,
+          next5Games: next5Games.map((game, idx) => ({
+            position: idx,
+            hour: game.hour,
+            minute: game.minute,
+            teams: `${game.timeCasa} vs ${game.timeFora}`,
+            score: game.placarFT,
+            totalGoals: game.totalGolsFT,
+            isOver35: game.totalGolsFT > 3.5,
+            isOver45: game.totalGolsFT > 4.5
+          }))
+        });
+      }
+
+      // Busca histórico: quando esse padrão apareceu, o que aconteceu nos próximos 5 jogos?
+      const historicalOccurrences = [];
+
+      // Percorre todos os jogos do sortedMatches
+      for (let i = patternCells.length; i < sortedMatches.length - 5; i++) {
+        // Verifica se há o padrão aqui
+        const precedingGames = sortedMatches.slice(i - patternCells.length, i);
+        const precedingPattern = precedingGames.map(m => m.totalGolsFT > 3.5);
+        const precedingString = precedingPattern.map(p => p ? '1' : '0').join('');
+
+        if (precedingString === basePatternString) {
+          // Padrão encontrado! Pega os próximos 5 jogos
+          const next5 = sortedMatches.slice(i, i + 5);
+          
+          historicalOccurrences.push({
+            foundAtIndex: i,
+            foundAtPosition: `${sortedMatches[i].hour}:${sortedMatches[i].minute.toString().padStart(2, '0')}`,
+            next5Games: next5.map((game, idx) => ({
+              position: idx,
+              hour: game.hour,
+              minute: game.minute,
+              teams: `${game.timeCasa} vs ${game.timeFora}`,
+              score: game.placarFT,
+              totalGoals: game.totalGolsFT,
+              isOver35: game.totalGolsFT > 3.5,
+              isOver45: game.totalGolsFT > 4.5
+            }))
+          });
+        }
+      }
+
+      // Calcula probabilidades para cada posição (0-4)
+      const probabilities = [];
+      for (let pos = 0; pos < 5; pos++) {
+        const totalOccurrences = historicalOccurrences.filter(occ => occ.next5Games.length > pos).length;
+        const over35Count = historicalOccurrences.filter(occ => 
+          occ.next5Games.length > pos && occ.next5Games[pos].isOver35
+        ).length;
+        const over45Count = historicalOccurrences.filter(occ =>
+          occ.next5Games.length > pos && occ.next5Games[pos].isOver45
+        ).length;
+
+        probabilities.push({
+          position: pos,
+          label: pos === 0 ? 'Entrada' : `+${pos} jogos`,
+          totalOccurrences,
+          over35Count,
+          over35Probability: totalOccurrences > 0 ? (over35Count / totalOccurrences) * 100 : 0,
+          over45Count,
+          over45Probability: totalOccurrences > 0 ? (over45Count / totalOccurrences) * 100 : 0
+        });
+      }
+
+      const results = {
+        type: 'entry_pattern',
+        basePattern,
+        basePatternString,
+        patternCells: patternCells.map(c => ({
+          position: `${c.hour}:${c.minute.toString().padStart(2, '0')}`,
+          teams: `${c.match.timeCasa} vs ${c.match.timeFora}`,
+          isOver35: c.match.totalGolsFT > 3.5
+        })),
+        entryAnalyses,
+        historicalOccurrences,
+        probabilities,
+        totalHistoricalOccurrences: historicalOccurrences.length,
+        analysisQuality: historicalOccurrences.length >= 5 ? 'high' : historicalOccurrences.length >= 2 ? 'medium' : 'low'
+      };
+
+      setHistoricalResults(results);
+      onBlockAnalyzed?.(results);
+
+    } catch (error) {
+      console.error('Erro ao analisar padrão de entrada:', error);
+      alert('Erro ao analisar. Verifique os dados.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
   const analyzeHistoricalPattern = () => {
     if (selectedCells.length === 0) {
       alert('Selecione pelo menos uma célula primeiro!');
