@@ -753,150 +753,236 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         <Card className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 border-purple-500/30 p-6">
           <div className="flex items-center gap-3 mb-6">
             <Target className="w-6 h-6 text-purple-400" />
-            <h3 className="text-xl font-bold text-white">Probabilidade de Entrada Baseada em Padrão</h3>
+            <h3 className="text-xl font-bold text-white">Análise de Probabilidade de Entrada</h3>
           </div>
 
-          {/* Resumo do Padrão */}
-          <div className="mb-6 p-4 bg-gray-900/70 rounded-lg border border-yellow-500/30">
-            <p className="text-sm text-gray-400 mb-2">Padrão Base Identificado:</p>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {historicalResults.patternCells.map((cell, idx) => (
-                <div key={idx} className={`px-3 py-2 rounded ${
-                  cell.isOver35 ? 'bg-yellow-600 text-white' : 'bg-yellow-800 text-white'
-                } font-semibold text-sm`}>
-                  {idx + 1}. {cell.position} - {cell.isOver35 ? 'Over 3.5 ✓' : 'Not Over ✗'}
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-yellow-400">
-              Código: {historicalResults.basePatternString} 
-              <span className="ml-2 text-gray-500">(1 = Over 3.5, 0 = Not Over)</span>
-            </p>
-            <p className="text-sm text-white mt-2">
-              Ocorrências encontradas: <strong className="text-green-400">{historicalResults.totalHistoricalOccurrences}</strong>
-            </p>
-          </div>
-
-          {/* Probabilidades por Posição */}
-          <div className="mb-6 p-4 bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-500/30 rounded-lg">
-            <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Award className="w-5 h-5 text-green-400" />
-              Probabilidade de Acerto (Entrada + 4 Jogos Seguintes)
-            </h4>
-            <p className="text-sm text-gray-300 mb-4">
-              Quando o padrão <span className="text-yellow-400 font-bold">{historicalResults.basePatternString}</span> apareceu,
-              estas foram as probabilidades nos próximos 5 jogos:
-            </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-              {historicalResults.probabilities.map((prob, idx) => (
-                <div key={idx} className={`p-4 rounded-lg border ${
-                  idx === 0 ? 'bg-purple-900/50 border-purple-500 ring-2 ring-purple-400' :
-                  'bg-gray-800/50 border-gray-700'
-                }`}>
-                  <div className="text-center">
-                    <p className="text-xs text-gray-400 mb-1">
-                      {prob.label}
-                      {idx === 0 && ' 🎯'}
-                    </p>
-                    <p className={`text-3xl font-bold mb-2 ${
-                      prob.over35Probability >= 70 ? 'text-green-400' :
-                      prob.over35Probability >= 50 ? 'text-yellow-400' :
-                      'text-red-400'
-                    }`}>
-                      {prob.over35Probability.toFixed(0)}%
-                    </p>
-                    <div className="text-xs text-gray-500 space-y-1">
-                      <p>Over 3.5: {prob.over35Count}/{prob.totalOccurrences}</p>
-                      <p>Over 4.5: {prob.over45Probability.toFixed(0)}%</p>
+          {/* Grid de Visualização do Padrão */}
+          <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Padrão Selecionado */}
+            <div className="p-4 bg-gray-900/70 rounded-lg border border-yellow-500/30">
+              <p className="text-sm font-semibold text-yellow-400 mb-3">Padrão Base (Células PADRÃO)</p>
+              <div className="space-y-2">
+                {historicalResults.patternCells.map((cell, idx) => (
+                  <div key={idx} className={`p-3 rounded ${
+                    cell.isOver35 ? 'bg-green-900/40 border border-green-500/50' : 'bg-gray-800/60 border border-gray-700'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-semibold">#{idx + 1} - {cell.position}</span>
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        cell.isOver35 ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
+                      }`}>
+                        {cell.isOver35 ? 'Over 3.5 ✓' : 'Not Over ✗'}
+                      </span>
                     </div>
+                    <p className="text-xs text-gray-400 mt-1">{cell.teams}</p>
                   </div>
-                  
-                  {/* Barra de probabilidade */}
-                  <div className="mt-2 h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${
-                        prob.over35Probability >= 70 ? 'bg-green-500' :
-                        prob.over35Probability >= 50 ? 'bg-yellow-500' :
-                        'bg-red-500'
-                      }`}
-                      style={{width: `${prob.over35Probability}%`}}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <p className="text-xs text-yellow-400 mt-3">
+                Código do Padrão: <span className="font-mono font-bold">{historicalResults.basePatternString}</span>
+                <span className="ml-2 text-gray-500">(1=Over 3.5, 0=Not Over)</span>
+              </p>
             </div>
 
-            {/* Interpretação */}
-            <div className={`mt-4 p-3 rounded border ${
-              historicalResults.probabilities[0]?.over35Probability >= 70 ? 'bg-green-900/30 border-green-500/50' :
-              historicalResults.probabilities[0]?.over35Probability >= 50 ? 'bg-yellow-900/30 border-yellow-500/50' :
-              'bg-red-900/30 border-red-500/50'
-            }`}>
-              <p className="text-sm text-white font-semibold">
-                {historicalResults.probabilities[0]?.over35Probability >= 70 ? '✅ Alta Probabilidade de Acerto na Entrada!' :
-                 historicalResults.probabilities[0]?.over35Probability >= 50 ? '⚠️ Probabilidade Moderada' :
-                 '❌ Baixa Probabilidade'}
-              </p>
-              <p className="text-xs text-gray-300 mt-1">
-                {historicalResults.totalHistoricalOccurrences < 3 && 
-                  'Atenção: Poucas ocorrências históricas. Resultado pode não ser estatisticamente significativo.'
-                }
-                {historicalResults.probabilities[0]?.over35Probability >= 70 &&
-                  'Baseado em dados históricos, este é um bom ponto de entrada!'
-                }
-              </p>
+            {/* Estatísticas Gerais */}
+            <div className="p-4 bg-gray-900/70 rounded-lg border border-blue-500/30">
+              <p className="text-sm font-semibold text-blue-400 mb-3">Estatísticas da Análise</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-gray-800/50 rounded">
+                  <p className="text-xs text-gray-400">Ocorrências Encontradas</p>
+                  <p className="text-2xl font-bold text-white">{historicalResults.totalHistoricalOccurrences}</p>
+                </div>
+                <div className="p-3 bg-gray-800/50 rounded">
+                  <p className="text-xs text-gray-400">Qualidade</p>
+                  <p className={`text-xl font-bold ${
+                    historicalResults.analysisQuality === 'high' ? 'text-green-400' :
+                    historicalResults.analysisQuality === 'medium' ? 'text-yellow-400' :
+                    'text-red-400'
+                  }`}>
+                    {historicalResults.analysisQuality === 'high' ? 'Alta ✓' :
+                     historicalResults.analysisQuality === 'medium' ? 'Média ~' :
+                     'Baixa ✗'}
+                  </p>
+                </div>
+              </div>
+              
+              {historicalResults.totalHistoricalOccurrences > 0 && (
+                <div className="mt-3 p-3 bg-blue-900/30 rounded border border-blue-500/30">
+                  <p className="text-xs text-blue-200">
+                    ✓ Dados suficientes para análise confiável
+                  </p>
+                </div>
+              )}
+              
+              {historicalResults.totalHistoricalOccurrences === 0 && (
+                <div className="mt-3 p-3 bg-red-900/30 rounded border border-red-500/30">
+                  <p className="text-xs text-red-200">
+                    ⚠ Nenhuma ocorrência encontrada. Tente um padrão diferente.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Detalhes das Ocorrências Históricas */}
-          {historicalResults.historicalOccurrences.length > 0 && (
-            <div>
-              <h4 className="text-lg font-bold text-white mb-3">
-                Ocorrências Históricas do Padrão ({historicalResults.historicalOccurrences.length})
+          {/* Tabela de Probabilidades */}
+          {historicalResults.totalHistoricalOccurrences > 0 && (
+            <div className="mb-6 p-4 bg-gradient-to-br from-green-900/20 to-purple-900/20 border border-green-500/30 rounded-lg">
+              <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Award className="w-5 h-5 text-green-400" />
+                Probabilidades de Acerto (Entrada + Próximos 4 Jogos)
               </h4>
-              <div className="space-y-3 max-h-[500px] overflow-y-auto">
+              
+              <p className="text-sm text-gray-300 mb-4">
+                Quando o padrão <span className="text-yellow-400 font-mono font-bold">{historicalResults.basePatternString}</span> apareceu 
+                historicamente, estas foram as probabilidades de Over 3.5:
+              </p>
+
+              {/* Grid de Probabilidades */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-800">
+                      <th className="border border-gray-700 p-3 text-left text-white">Posição</th>
+                      <th className="border border-gray-700 p-3 text-center text-white">Probabilidade Over 3.5</th>
+                      <th className="border border-gray-700 p-3 text-center text-white">Acertos</th>
+                      <th className="border border-gray-700 p-3 text-center text-white">Probabilidade Over 4.5</th>
+                      <th className="border border-gray-700 p-3 text-center text-white">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historicalResults.probabilities.map((prob, idx) => (
+                      <tr key={idx} className={`${
+                        idx === 0 ? 'bg-purple-900/50' : idx % 2 === 0 ? 'bg-gray-800/30' : 'bg-gray-800/10'
+                      } hover:bg-gray-700/50 transition-colors`}>
+                        <td className="border border-gray-700 p-3">
+                          <div className="flex items-center gap-2">
+                            {idx === 0 && <span className="text-xl">🎯</span>}
+                            <span className={`font-semibold ${idx === 0 ? 'text-purple-300' : 'text-white'}`}>
+                              {prob.label}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="border border-gray-700 p-3 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className={`text-2xl font-bold ${
+                              prob.over35Probability >= 70 ? 'text-green-400' :
+                              prob.over35Probability >= 50 ? 'text-yellow-400' :
+                              'text-red-400'
+                            }`}>
+                              {prob.over35Probability.toFixed(1)}%
+                            </span>
+                            <div className="w-full h-2 bg-gray-700 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full ${
+                                  prob.over35Probability >= 70 ? 'bg-green-500' :
+                                  prob.over35Probability >= 50 ? 'bg-yellow-500' :
+                                  'bg-red-500'
+                                }`}
+                                style={{width: `${prob.over35Probability}%`}}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="border border-gray-700 p-3 text-center">
+                          <span className="text-white font-mono">{prob.over35Count}/{prob.totalOccurrences}</span>
+                        </td>
+                        <td className="border border-gray-700 p-3 text-center">
+                          <span className={`font-semibold ${
+                            prob.over45Probability >= 50 ? 'text-blue-400' : 'text-gray-400'
+                          }`}>
+                            {prob.over45Probability.toFixed(1)}%
+                          </span>
+                        </td>
+                        <td className="border border-gray-700 p-3 text-center">
+                          <span className={`px-2 py-1 rounded text-xs font-bold ${
+                            prob.over35Probability >= 70 ? 'bg-green-600 text-white' :
+                            prob.over35Probability >= 50 ? 'bg-yellow-600 text-white' :
+                            'bg-red-600 text-white'
+                          }`}>
+                            {prob.over35Probability >= 70 ? 'Excelente ✓' :
+                             prob.over35Probability >= 50 ? 'Moderado ~' :
+                             'Baixo ✗'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Recomendação */}
+              <div className={`mt-4 p-4 rounded-lg border ${
+                historicalResults.probabilities[0]?.over35Probability >= 70 ? 'bg-green-900/30 border-green-500/50' :
+                historicalResults.probabilities[0]?.over35Probability >= 50 ? 'bg-yellow-900/30 border-yellow-500/50' :
+                'bg-red-900/30 border-red-500/50'
+              }`}>
+                <p className="text-sm font-bold text-white mb-2">
+                  {historicalResults.probabilities[0]?.over35Probability >= 70 ? '✅ RECOMENDAÇÃO: Alta Probabilidade!' :
+                   historicalResults.probabilities[0]?.over35Probability >= 50 ? '⚠️ ATENÇÃO: Probabilidade Moderada' :
+                   '❌ CUIDADO: Baixa Probabilidade'}
+                </p>
+                <p className="text-xs text-gray-300">
+                  {historicalResults.probabilities[0]?.over35Probability >= 70 && 
+                    'Baseado nos dados históricos, este é um excelente ponto de entrada com alta probabilidade de acerto.'
+                  }
+                  {historicalResults.probabilities[0]?.over35Probability >= 50 && historicalResults.probabilities[0]?.over35Probability < 70 &&
+                    'A probabilidade é moderada. Considere outros fatores antes de tomar a decisão de entrada.'
+                  }
+                  {historicalResults.probabilities[0]?.over35Probability < 50 &&
+                    'A probabilidade histórica é baixa. Recomenda-se cautela ou buscar outro padrão com melhores indicadores.'
+                  }
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Ocorrências Históricas (Colapsável) */}
+          {historicalResults.historicalOccurrences.length > 0 && (
+            <div className="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+              <button
+                onClick={() => {
+                  const elem = document.getElementById('historical-occurrences');
+                  if (elem) elem.style.display = elem.style.display === 'none' ? 'block' : 'none';
+                }}
+                className="w-full text-left flex items-center justify-between text-white font-semibold hover:text-blue-400 transition-colors"
+              >
+                <span>Ocorrências Históricas Detalhadas ({historicalResults.historicalOccurrences.length})</span>
+                <span>▼</span>
+              </button>
+              
+              <div id="historical-occurrences" style={{display: 'none'}} className="mt-4 space-y-3 max-h-[500px] overflow-y-auto">
                 {historicalResults.historicalOccurrences.map((occ, idx) => (
                   <div key={idx} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                    <p className="text-sm text-gray-400 mb-2">
-                      Ocorrência #{idx + 1} - Entrada em: <span className="text-white font-semibold">{occ.foundAtPosition}</span>
+                    <p className="text-sm text-gray-400 mb-3">
+                      <span className="text-white font-semibold">Ocorrência #{idx + 1}</span> - Entrada identificada em: 
+                      <span className="text-purple-400 font-semibold ml-1">{occ.foundAtPosition}</span>
                     </p>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
                       {occ.next5Games.map((game, gidx) => (
-                        <div key={gidx} className={`p-2 rounded text-xs ${
-                          gidx === 0 ? 'bg-purple-900/30 border border-purple-500/50' :
-                          game.isOver35 ? 'bg-green-900/30 border border-green-500/30' :
-                          'bg-gray-900/50 border border-gray-700'
+                        <div key={gidx} className={`p-3 rounded text-xs border ${
+                          gidx === 0 ? 'bg-purple-900/30 border-purple-500/50 ring-2 ring-purple-400' :
+                          game.isOver35 ? 'bg-green-900/30 border-green-500/30' :
+                          'bg-gray-900/50 border-gray-700'
                         }`}>
-                          <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center justify-between mb-2">
                             <span className="font-semibold text-white">
-                              {gidx === 0 ? '🎯' : `+${gidx}`}
+                              {gidx === 0 ? '🎯 Entrada' : `+${gidx}`}
                             </span>
                             <span className={`font-bold ${game.isOver35 ? 'text-green-400' : 'text-red-400'}`}>
                               {game.isOver35 ? '✓' : '✗'}
                             </span>
                           </div>
-                          <p className="text-gray-400">{game.hour}:{game.minute.toString().padStart(2, '0')}</p>
-                          <p className="text-gray-300 truncate">{game.teams}</p>
-                          <p className="font-bold text-white">{game.score}</p>
+                          <p className="text-gray-400 font-mono">{game.hour}:{game.minute.toString().padStart(2, '0')}</p>
+                          <p className="text-gray-300 truncate text-[10px] mt-1" title={game.teams}>{game.teams}</p>
+                          <p className="font-bold text-white mt-1">{game.score}</p>
+                          <p className="text-xs text-gray-500">{game.totalGoals} gols</p>
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {historicalResults.historicalOccurrences.length === 0 && (
-            <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700 text-center">
-              <p className="text-gray-400">
-                Este padrão não foi encontrado nos dados disponíveis.
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Tente selecionar um padrão diferente ou adicionar mais dados históricos.
-              </p>
             </div>
           )}
         </Card>
