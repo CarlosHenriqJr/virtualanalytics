@@ -63,11 +63,11 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     setIsAnalyzing(true);
     
     try {
-      // Extrai o padrão de posições selecionadas (horário/minuto)
-      const pattern = selectedCells.map(c => ({
-        hour: c.hour,
-        minute: c.minute
-      }));
+      // Extrai o padrão de Over 3.5 das células selecionadas (true/false)
+      const pattern = selectedCells.map(c => c.match.totalGolsFT > 3.5);
+      const patternString = pattern.map(p => p ? '1' : '0').join('');
+      
+      console.log('Buscando padrão:', pattern, 'String:', patternString);
 
       // Data atual selecionada - tenta diferentes formatos
       let currentDate;
@@ -106,44 +106,44 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         
         if (pastMatches.length === 0) continue;
 
-        // Cria grid do dia anterior
-        const pastGrid = {};
-        pastMatches.forEach(match => {
-          const key = `${match.hour}-${match.minute}`;
-          pastGrid[key] = match;
+        // Ordena partidas por hora e minuto para criar sequências
+        const sortedMatches = [...pastMatches].sort((a, b) => {
+          if (a.hour !== b.hour) return a.hour - b.hour;
+          return a.minute - b.minute;
         });
 
-        // Verifica se o padrão existe neste dia
-        const patternMatches = pattern.map(p => {
-          const key = `${p.hour}-${p.minute}`;
-          return pastGrid[key];
-        }).filter(m => m); // Remove nulls
+        // Busca o padrão em todas as sequências possíveis
+        for (let startIdx = 0; startIdx <= sortedMatches.length - pattern.length; startIdx++) {
+          const sequence = sortedMatches.slice(startIdx, startIdx + pattern.length);
+          const sequencePattern = sequence.map(m => m.totalGolsFT > 3.5);
+          const sequenceString = sequencePattern.map(p => p ? '1' : '0').join('');
+          
+          // Verifica se o padrão coincide
+          if (sequenceString === patternString) {
+            const over35Count = sequencePattern.filter(p => p).length;
+            const matchRate = (over35Count / pattern.length) * 100;
+            const isFullMatch = over35Count === pattern.length;
 
-        if (patternMatches.length > 0) {
-          // Conta quantas células são Over 3.5
-          const over35Count = patternMatches.filter(m => m.totalGolsFT > 3.5).length;
-          const totalInPattern = patternMatches.length;
-          const matchRate = (over35Count / pattern.length) * 100;
-          const isFullMatch = over35Count === pattern.length;
-
-          historicalOccurrences.push({
-            date: pastDateStr1,
-            matches: patternMatches,
-            over35Count,
-            totalInPattern,
-            totalExpected: pattern.length,
-            matchRate,
-            isFullMatch,
-            details: patternMatches.map(m => ({
-              hour: m.hour,
-              minute: m.minute,
-              teams: `${m.timeCasa} vs ${m.timeFora}`,
-              score: m.placarFT,
-              totalGoals: m.totalGolsFT,
-              isOver35: m.totalGolsFT > 3.5,
-              odd: m.markets?.TotalGols_MaisDe_35 || 0
-            }))
-          });
+            historicalOccurrences.push({
+              date: pastDateStr1,
+              matches: sequence,
+              over35Count,
+              totalInPattern: pattern.length,
+              totalExpected: pattern.length,
+              matchRate,
+              isFullMatch,
+              patternMatch: true,
+              details: sequence.map(m => ({
+                hour: m.hour,
+                minute: m.minute,
+                teams: `${m.timeCasa} vs ${m.timeFora}`,
+                score: m.placarFT,
+                totalGoals: m.totalGolsFT,
+                isOver35: m.totalGolsFT > 3.5,
+                odd: m.markets?.TotalGols_MaisDe_35 || 0
+              }))
+            });
+          }
         }
       }
 
@@ -151,10 +151,15 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
       const totalOccurrences = historicalOccurrences.length;
       const fullMatches = historicalOccurrences.filter(o => o.isFullMatch).length;
       const successRate = totalOccurrences > 0 ? (fullMatches / totalOccurrences) * 100 : 0;
-      const frequency = (totalOccurrences / daysToAnalyze) * 100;
+      const frequency = totalOccurrences > 0 ? (totalOccurrences / daysToAnalyze) * 100 : 0;
 
       const results = {
-        pattern,
+        pattern: pattern.map((isOver, idx) => ({
+          position: idx + 1,
+          isOver35: isOver,
+          originalCell: selectedCells[idx]
+        })),
+        patternString,
         patternSize: pattern.length,
         daysAnalyzed: daysToAnalyze,
         totalOccurrences,
