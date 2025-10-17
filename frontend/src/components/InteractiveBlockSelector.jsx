@@ -9,6 +9,8 @@ import { ptBR } from 'date-fns/locale';
 
 const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlockAnalyzed }) => {
   const [selectedCells, setSelectedCells] = useState([]);
+  const [cellTypes, setCellTypes] = useState({}); // 'pattern' ou 'entry'
+  const [selectionMode, setSelectionMode] = useState('pattern'); // 'pattern' ou 'entry'
   const [analyzedBlocks, setAnalyzedBlocks] = useState([]);
   const [previousGamesToAnalyze, setPreviousGamesToAnalyze] = useState(10);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
