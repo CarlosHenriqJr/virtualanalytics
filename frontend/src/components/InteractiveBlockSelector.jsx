@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Target, TrendingUp, Award, Clock, Users } from 'lucide-react';
+import { Target, TrendingUp, Award, Clock, Users, Search, Calendar } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import MatchCell from './MatchCell';
+import { parse, subDays, format, isValid } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-const InteractiveBlockSelector = ({ matches, onBlockAnalyzed }) => {
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectionStart, setSelectionStart] = useState(null);
-  const [selectionEnd, setSelectionEnd] = useState(null);
+const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlockAnalyzed }) => {
   const [selectedCells, setSelectedCells] = useState([]);
   const [analyzedBlocks, setAnalyzedBlocks] = useState([]);
+  const [daysToAnalyze, setDaysToAnalyze] = useState(7);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [historicalResults, setHistoricalResults] = useState(null);
 
   // Cria grid 24h x 20min
   const hours = Array.from({ length: 24 }, (_, i) => i);
