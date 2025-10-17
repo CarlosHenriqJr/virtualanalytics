@@ -242,9 +242,23 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         {/* Indicador de seleção */}
         {selectedCells.length > 0 && (
           <div className="mt-3 p-3 bg-blue-900/30 border border-blue-500/30 rounded">
-            <p className="text-sm text-blue-200">
-              <strong>{selectedCells.length} célula(s) selecionada(s)</strong> - 
-              Posições: {selectedCells.map(c => `${c.hour}:${c.minute.toString().padStart(2, '0')}`).join(', ')}
+            <p className="text-sm text-blue-200 mb-2">
+              <strong>{selectedCells.length} célula(s) selecionada(s)</strong>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {selectedCells.map((cell, idx) => {
+                const isOver35 = cell.match.totalGolsFT > 3.5;
+                return (
+                  <div key={idx} className={`px-2 py-1 rounded text-xs font-semibold ${
+                    isOver35 ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
+                  }`}>
+                    {idx + 1}. {cell.hour}:{cell.minute.toString().padStart(2, '0')} - {isOver35 ? 'Over 3.5 ✓' : 'Not Over ✗'}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-blue-300 mt-2">
+              Padrão: {selectedCells.map(c => c.match.totalGolsFT > 3.5 ? '🟢' : '🔴').join(' ')}
             </p>
           </div>
         )}
