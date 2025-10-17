@@ -709,15 +709,19 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
                 
                 {minuteSlots.map(minute => {
                   const match = matchGrid[`${hour}-${minute}`];
+                  const cellKey = `${hour}-${minute}`;
                   const isSelected = isCellSelected(hour, minute);
+                  const cellType = cellTypes[cellKey];
                   const isOver35 = match && match.totalGolsFT > 3.5;
                   const isOver45 = match && match.totalGolsFT > 4.5;
 
                   return (
                     <div
-                      key={`${hour}-${minute}`}
+                      key={cellKey}
                       className={`w-[50px] h-[50px] flex-shrink-0 border-r border-t border-gray-800 cursor-pointer transition-all ${
-                        isSelected ? 'ring-4 ring-blue-400 ring-inset' : ''
+                        isSelected && cellType === 'pattern' ? 'ring-4 ring-yellow-400 ring-inset' :
+                        isSelected && cellType === 'entry' ? 'ring-4 ring-purple-400 ring-inset' :
+                        ''
                       } ${match ? 'hover:ring-2 hover:ring-blue-300' : ''}`}
                       onClick={() => handleCellClick(hour, minute)}
                     >
