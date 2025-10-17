@@ -588,7 +588,7 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         {/* Controles */}
         <div className="mt-4 flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className="text-xs text-gray-400 mb-1 block">Jogos anteriores para analisar (cada célula Over 3.5):</label>
+            <label className="text-xs text-gray-400 mb-1 block">Jogos anteriores (modo Over 3.5):</label>
             <Input
               type="number"
               min="1"
@@ -599,6 +599,14 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
               placeholder="Ex: 5, 10, 20"
             />
           </div>
+          <Button
+            onClick={analyzeEntryPattern}
+            disabled={selectedCells.length === 0 || isAnalyzing}
+            className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400"
+          >
+            <Target className="w-4 h-4 mr-2" />
+            {isAnalyzing ? 'Analisando...' : 'Analisar Probabilidade de Entrada'}
+          </Button>
           <Button
             onClick={analyzeHistoricalPattern}
             disabled={selectedCells.length === 0 || isAnalyzing}
