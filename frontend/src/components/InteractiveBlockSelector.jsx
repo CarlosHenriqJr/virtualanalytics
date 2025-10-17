@@ -225,14 +225,7 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
       {/* Grid Interativo */}
       <Card className="bg-gray-900/50 border-gray-800 p-4">
         <div className="overflow-x-auto">
-          <div 
-            className="inline-block"
-            onMouseLeave={() => {
-              if (isSelecting) {
-                setIsSelecting(false);
-              }
-            }}
-          >
+          <div className="inline-block">
             {/* Header */}
             <div className="flex sticky top-0 z-10 bg-gray-950">
               <div className="w-[60px] flex-shrink-0 border-r border-gray-800 bg-gray-950 flex items-center justify-center text-xs font-semibold text-gray-400">
@@ -257,19 +250,17 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
                 
                 {minuteSlots.map(minute => {
                   const match = matchGrid[`${hour}-${minute}`];
-                  const isSelected = isCellInSelection(hour, minute);
+                  const isSelected = isCellSelected(hour, minute);
                   const isOver35 = match && match.totalGolsFT > 3.5;
                   const isOver45 = match && match.totalGolsFT > 4.5;
 
                   return (
                     <div
                       key={`${hour}-${minute}`}
-                      className={`w-[50px] h-[50px] flex-shrink-0 border-r border-t border-gray-800 cursor-crosshair transition-all ${
-                        isSelected ? 'bg-blue-500/30 ring-2 ring-blue-400' : ''
-                      }`}
-                      onMouseDown={() => handleMouseDown(hour, minute)}
-                      onMouseEnter={() => handleMouseEnter(hour, minute)}
-                      onMouseUp={handleMouseUp}
+                      className={`w-[50px] h-[50px] flex-shrink-0 border-r border-t border-gray-800 cursor-pointer transition-all ${
+                        isSelected ? 'ring-4 ring-blue-400 ring-inset' : ''
+                      } ${match ? 'hover:ring-2 hover:ring-blue-300' : ''}`}
+                      onClick={() => handleCellClick(hour, minute)}
                     >
                       {match && (
                         <div className={`w-full h-full p-1 text-[9px] leading-tight flex flex-col items-center justify-center ${
