@@ -167,16 +167,59 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
       <Card className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-blue-500/30 p-6">
         <div className="flex items-center gap-3 mb-4">
           <Target className="w-6 h-6 text-blue-400" />
-          <h3 className="text-xl font-bold text-white">Seletor de Blocos Interativo</h3>
+          <h3 className="text-xl font-bold text-white">Seletor de Blocos - Análise Histórica</h3>
         </div>
         <p className="text-gray-300 mb-3">
-          Arraste o mouse sobre o grid para selecionar blocos de jogos e analisá-los:
+          Selecione células Over 3.5 e descubra com que frequência esse padrão se repete em dias anteriores:
         </p>
         <div className="space-y-2 text-sm text-gray-400">
-          <p>• <strong>Clique e arraste</strong> para desenhar um retângulo sobre os jogos</p>
-          <p>• O sistema analisará automaticamente o bloco selecionado</p>
-          <p>• Veja estatísticas de Over 3.5, Over 4.5, times envolvidos e padrões</p>
+          <p>• <strong>Clique em cada célula</strong> para adicionar/remover do padrão</p>
+          <p>• Escolha quantos dias anteriores deseja analisar</p>
+          <p>• Veja a frequência e taxa de acerto do padrão histórico</p>
+          <p>• Células selecionadas ficam destacadas em azul</p>
         </div>
+
+        {/* Controles */}
+        <div className="mt-4 flex flex-wrap gap-3 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <label className="text-xs text-gray-400 mb-1 block">Dias anteriores para análise:</label>
+            <Input
+              type="number"
+              min="1"
+              max="90"
+              value={daysToAnalyze}
+              onChange={(e) => setDaysToAnalyze(Math.max(1, Math.min(90, parseInt(e.target.value) || 7)))}
+              className="bg-gray-800 border-gray-700 text-white"
+              placeholder="Ex: 7, 15, 30"
+            />
+          </div>
+          <Button
+            onClick={analyzeHistoricalPattern}
+            disabled={selectedCells.length === 0 || isAnalyzing}
+            className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
+          >
+            <Search className="w-4 h-4 mr-2" />
+            {isAnalyzing ? 'Analisando...' : 'Analisar Padrão'}
+          </Button>
+          <Button
+            onClick={clearSelection}
+            disabled={selectedCells.length === 0}
+            variant="outline"
+            className="bg-red-900/20 hover:bg-red-900/40 border-red-500/30"
+          >
+            Limpar Seleção
+          </Button>
+        </div>
+
+        {/* Indicador de seleção */}
+        {selectedCells.length > 0 && (
+          <div className="mt-3 p-3 bg-blue-900/30 border border-blue-500/30 rounded">
+            <p className="text-sm text-blue-200">
+              <strong>{selectedCells.length} célula(s) selecionada(s)</strong> - 
+              Posições: {selectedCells.map(c => `${c.hour}:${c.minute.toString().padStart(2, '0')}`).join(', ')}
+            </p>
+          </div>
+        )}
       </Card>
 
       {/* Grid Interativo */}
