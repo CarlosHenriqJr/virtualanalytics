@@ -53,7 +53,7 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     setHistoricalResults(null);
   };
 
-  // Analisa padrão histórico
+  // Analisa jogos anteriores de cada Over 3.5 selecionado
   const analyzeHistoricalPattern = () => {
     if (selectedCells.length === 0) {
       alert('Selecione pelo menos uma célula primeiro!');
@@ -63,19 +63,22 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     setIsAnalyzing(true);
     
     try {
-      // Extrai o padrão de Over 3.5 das células selecionadas (true/false)
-      const pattern = selectedCells.map(c => c.match.totalGolsFT > 3.5);
-      const patternString = pattern.map(p => p ? '1' : '0').join('');
+      // Filtra apenas células Over 3.5
+      const over35Cells = selectedCells.filter(c => c.match.totalGolsFT > 3.5);
       
-      console.log('Buscando padrão:', pattern, 'String:', patternString);
+      if (over35Cells.length === 0) {
+        alert('Selecione pelo menos uma célula Over 3.5 para análise!');
+        setIsAnalyzing(false);
+        return;
+      }
 
-      // Data atual selecionada - tenta diferentes formatos
+      console.log(`Analisando ${previousGamesToAnalyze} jogos anteriores para ${over35Cells.length} células Over 3.5`);
+
+      // Data atual selecionada
       let currentDate;
       try {
-        // Tenta formato dd/MM/yyyy
         currentDate = parse(selectedDate, 'dd/MM/yyyy', new Date());
         if (!isValid(currentDate)) {
-          // Tenta formato yyyy-MM-dd
           currentDate = parse(selectedDate, 'yyyy-MM-dd', new Date());
         }
       } catch {
@@ -87,91 +90,104 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         setIsAnalyzing(false);
         return;
       }
-      
-      // Array para armazenar resultados históricos
-      const historicalOccurrences = [];
-      
-      // Itera pelos X dias anteriores
-      for (let i = 1; i <= daysToAnalyze; i++) {
-        const pastDate = subDays(currentDate, i);
-        
-        // Tenta ambos os formatos de data para comparação
-        const pastDateStr1 = format(pastDate, 'dd/MM/yyyy');
-        const pastDateStr2 = format(pastDate, 'yyyy-MM-dd');
-        
-        // Busca partidas do dia anterior (ambos os formatos)
-        const pastMatches = allMatchesData?.filter(m => 
-          m.date === pastDateStr1 || m.date === pastDateStr2
-        ) || [];
-        
-        if (pastMatches.length === 0) continue;
 
-        // Ordena partidas por hora e minuto para criar sequências
-        const sortedMatches = [...pastMatches].sort((a, b) => {
-          if (a.hour !== b.hour) return a.hour - b.hour;
-          return a.minute - b.minute;
-        });
+      const dateStr1 = format(currentDate, 'dd/MM/yyyy');
+      const dateStr2 = format(currentDate, 'yyyy-MM-dd');
+      
+      // Busca todas as partidas do dia atual
+      const dayMatches = allMatchesData?.filter(m => 
+        m.date === dateStr1 || m.date === dateStr2
+      ) || [];
+      
+      // Ordena partidas por hora e minuto
+      const sortedMatches = [...dayMatches].sort((a, b) => {
+        if (a.hour !== b.hour) return a.hour - b.hour;
+        return a.minute - b.minute;
+      });
 
-        // Busca o padrão em todas as sequências possíveis
-        for (let startIdx = 0; startIdx <= sortedMatches.length - pattern.length; startIdx++) {
-          const sequence = sortedMatches.slice(startIdx, startIdx + pattern.length);
-          const sequencePattern = sequence.map(m => m.totalGolsFT > 3.5);
-          const sequenceString = sequencePattern.map(p => p ? '1' : '0').join('');
+      // Análise de cada célula Over 3.5
+      const cellAnalyses = [];
+      
+      for (const cell of over35Cells) {
+        // Encontra o índice deste jogo na lista ordenada
+        const matchIndex = sortedMatches.findIndex(m => 
+          m.hour === cell.hour && m.minute === cell.minute
+        );
+        
+        if (matchIndex === -1) continue;
+
+        // Pega os X jogos anteriores
+        const startIndex = Math.max(0, matchIndex - previousGamesToAnalyze);
+        const previousMatches = sortedMatches.slice(startIndex, matchIndex);
+        
+        if (previousMatches.length === 0) continue;
+
+        // Analisa cada jogo anterior
+        const previousGamesAnalysis = previousMatches.map(prevMatch => {
+          // Identifica todas as odds disponíveis
+          const allOdds = [];
+          const greenOdds = []; // Odds que venceram
           
-          // Verifica se o padrão coincide
-          if (sequenceString === patternString) {
-            const over35Count = sequencePattern.filter(p => p).length;
-            const matchRate = (over35Count / pattern.length) * 100;
-            const isFullMatch = over35Count === pattern.length;
-
-            historicalOccurrences.push({
-              date: pastDateStr1,
-              matches: sequence,
-              over35Count,
-              totalInPattern: pattern.length,
-              totalExpected: pattern.length,
-              matchRate,
-              isFullMatch,
-              patternMatch: true,
-              details: sequence.map(m => ({
-                hour: m.hour,
-                minute: m.minute,
-                teams: `${m.timeCasa} vs ${m.timeFora}`,
-                score: m.placarFT,
-                totalGoals: m.totalGolsFT,
-                isOver35: m.totalGolsFT > 3.5,
-                odd: m.markets?.TotalGols_MaisDe_35 || 0
-              }))
+          if (prevMatch.markets) {
+            // Análise de cada mercado
+            Object.keys(prevMatch.markets).forEach(marketKey => {
+              const oddValue = prevMatch.markets[marketKey];
+              const isGreen = checkIfOddIsGreen(marketKey, prevMatch);
+              
+              allOdds.push({
+                market: marketKey,
+                odd: oddValue,
+                isGreen
+              });
+              
+              if (isGreen) {
+                greenOdds.push({
+                  market: marketKey,
+                  odd: oddValue
+                });
+              }
             });
           }
-        }
+
+          return {
+            hour: prevMatch.hour,
+            minute: prevMatch.minute,
+            timeCasa: prevMatch.timeCasa,
+            timeFora: prevMatch.timeFora,
+            placarHT: prevMatch.placarHT,
+            placarFT: prevMatch.placarFT,
+            totalGolsFT: prevMatch.totalGolsFT,
+            isOver35: prevMatch.totalGolsFT > 3.5,
+            isOver45: prevMatch.totalGolsFT > 4.5,
+            allOdds,
+            greenOdds,
+            greenOddsCount: greenOdds.length
+          };
+        });
+
+        // Busca padrões nos jogos anteriores
+        const patterns = findPatternsInPreviousGames(previousGamesAnalysis);
+
+        cellAnalyses.push({
+          cellPosition: `${cell.hour}:${cell.minute.toString().padStart(2, '0')}`,
+          cellTeams: `${cell.match.timeCasa} vs ${cell.match.timeFora}`,
+          cellScore: cell.match.placarFT,
+          cellTotalGoals: cell.match.totalGolsFT,
+          previousGamesCount: previousGamesAnalysis.length,
+          previousGames: previousGamesAnalysis,
+          patterns
+        });
       }
 
-      // Calcula estatísticas gerais
-      const totalOccurrences = historicalOccurrences.length;
-      const fullMatches = historicalOccurrences.filter(o => o.isFullMatch).length;
-      const successRate = totalOccurrences > 0 ? (fullMatches / totalOccurrences) * 100 : 0;
-      const frequency = totalOccurrences > 0 ? (totalOccurrences / daysToAnalyze) * 100 : 0;
+      // Busca padrões globais entre todas as análises
+      const globalPatterns = findGlobalPatterns(cellAnalyses);
 
       const results = {
-        pattern: pattern.map((isOver, idx) => ({
-          position: idx + 1,
-          isOver35: isOver,
-          originalCell: selectedCells[idx]
-        })),
-        patternString,
-        patternSize: pattern.length,
-        daysAnalyzed: daysToAnalyze,
-        totalOccurrences,
-        fullMatches,
-        partialMatches: totalOccurrences - fullMatches,
-        successRate,
-        frequency,
-        occurrences: historicalOccurrences.sort((a, b) => {
-          const dateA = parse(a.date, 'dd/MM/yyyy', new Date());
-          const dateB = parse(b.date, 'dd/MM/yyyy', new Date());
-          return dateB - dateA;
-        })
+        selectedOver35Count: over35Cells.length,
+        previousGamesToAnalyze,
+        cellAnalyses,
+        globalPatterns,
+        analysisDate: dateStr1
       };
 
       setHistoricalResults(results);
@@ -182,6 +198,148 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  // Verifica se uma odd específica foi "green" (venceu)
+  const checkIfOddIsGreen = (marketKey, match) => {
+    const totalGoals = match.totalGolsFT;
+    const placarCasa = match.placarCasaFT;
+    const placarFora = match.placarForaFT;
+    
+    // Total de Gols
+    if (marketKey.includes('TotalGols_MaisDe_35')) return totalGoals > 3.5;
+    if (marketKey.includes('TotalGols_MaisDe_45')) return totalGoals > 4.5;
+    if (marketKey.includes('TotalGols_MaisDe_25')) return totalGoals > 2.5;
+    if (marketKey.includes('TotalGols_MenosDe_35')) return totalGoals < 3.5;
+    if (marketKey.includes('TotalGols_MenosDe_25')) return totalGoals < 2.5;
+    
+    // Ambas Marcam
+    if (marketKey.includes('AmbasMarcam')) return placarCasa > 0 && placarFora > 0;
+    
+    // Vencedor
+    if (marketKey.includes('Vencedor') || marketKey.includes('VencedorFT')) {
+      if (marketKey.includes('Casa')) return placarCasa > placarFora;
+      if (marketKey.includes('Visitante')) return placarFora > placarCasa;
+      if (marketKey.includes('Empate')) return placarCasa === placarFora;
+    }
+    
+    // Resultado Correto
+    if (marketKey.includes('ResultadoCorreto')) {
+      const scoreInMarket = marketKey.match(/(\d+)x(\d+)/);
+      if (scoreInMarket) {
+        return placarCasa === parseInt(scoreInMarket[1]) && placarFora === parseInt(scoreInMarket[2]);
+      }
+    }
+    
+    return false;
+  };
+
+  // Encontra padrões nos jogos anteriores de uma célula
+  const findPatternsInPreviousGames = (games) => {
+    if (games.length === 0) return {};
+
+    // Padrão de odds green mais frequentes
+    const oddFrequency = {};
+    games.forEach(game => {
+      game.greenOdds.forEach(odd => {
+        const key = odd.market;
+        oddFrequency[key] = (oddFrequency[key] || 0) + 1;
+      });
+    });
+
+    const topGreenOdds = Object.entries(oddFrequency)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([market, count]) => ({
+        market,
+        frequency: count,
+        percentage: ((count / games.length) * 100).toFixed(1)
+      }));
+
+    // Padrão de placares
+    const scorePatterns = {};
+    games.forEach(game => {
+      const key = game.placarFT;
+      scorePatterns[key] = (scorePatterns[key] || 0) + 1;
+    });
+
+    const topScores = Object.entries(scorePatterns)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([score, count]) => ({
+        score,
+        frequency: count,
+        percentage: ((count / games.length) * 100).toFixed(1)
+      }));
+
+    // Padrão de times
+    const teamsFrequency = {};
+    games.forEach(game => {
+      [game.timeCasa, game.timeFora].forEach(team => {
+        teamsFrequency[team] = (teamsFrequency[team] || 0) + 1;
+      });
+    });
+
+    const topTeams = Object.entries(teamsFrequency)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([team, count]) => ({
+        team,
+        frequency: count
+      }));
+
+    // Estatísticas gerais
+    const over35Count = games.filter(g => g.isOver35).length;
+    const over45Count = games.filter(g => g.isOver45).length;
+    const avgGoals = (games.reduce((sum, g) => sum + g.totalGolsFT, 0) / games.length).toFixed(2);
+
+    return {
+      topGreenOdds,
+      topScores,
+      topTeams,
+      over35Count,
+      over35Percentage: ((over35Count / games.length) * 100).toFixed(1),
+      over45Count,
+      over45Percentage: ((over45Count / games.length) * 100).toFixed(1),
+      avgGoals
+    };
+  };
+
+  // Encontra padrões globais entre todas as células analisadas
+  const findGlobalPatterns = (analyses) => {
+    if (analyses.length === 0) return {};
+
+    // Agrupa todas as odds green
+    const globalOddFrequency = {};
+    let totalGamesAnalyzed = 0;
+
+    analyses.forEach(analysis => {
+      totalGamesAnalyzed += analysis.previousGames.length;
+      analysis.previousGames.forEach(game => {
+        game.greenOdds.forEach(odd => {
+          const key = odd.market;
+          globalOddFrequency[key] = (globalOddFrequency[key] || 0) + 1;
+        });
+      });
+    });
+
+    const commonGreenOdds = Object.entries(globalOddFrequency)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([market, count]) => ({
+        market,
+        frequency: count,
+        percentage: ((count / totalGamesAnalyzed) * 100).toFixed(1),
+        appearsInCells: analyses.filter(a => 
+          a.patterns.topGreenOdds?.some(o => o.market === market)
+        ).length
+      }));
+
+    return {
+      totalGamesAnalyzed,
+      commonGreenOdds,
+      analysisQuality: totalGamesAnalyzed >= previousGamesToAnalyze * analyses.length * 0.8 ? 'high' : 'medium'
+    };
   };
 
   // Verifica se célula está selecionada
