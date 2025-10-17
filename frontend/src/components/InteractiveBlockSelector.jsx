@@ -10,7 +10,7 @@ import { ptBR } from 'date-fns/locale';
 const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlockAnalyzed }) => {
   const [selectedCells, setSelectedCells] = useState([]);
   const [analyzedBlocks, setAnalyzedBlocks] = useState([]);
-  const [daysToAnalyze, setDaysToAnalyze] = useState(7);
+  const [previousGamesToAnalyze, setPreviousGamesToAnalyze] = useState(10);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [historicalResults, setHistoricalResults] = useState(null);
 
