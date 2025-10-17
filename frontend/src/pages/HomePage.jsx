@@ -173,7 +173,9 @@ const HomePage = () => {
                 <TabsContent value="blockSelector">
                   <InteractiveBlockSelector 
                     matches={filteredMatches}
-                    onBlockAnalyzed={(analysis) => console.log('Bloco analisado:', analysis)}
+                    allMatchesData={matches}
+                    selectedDate={selectedDate ? format(selectedDate, 'dd/MM/yyyy') : null}
+                    onBlockAnalyzed={(analysis) => console.log('Padrão analisado:', analysis)}
                   />
                 </TabsContent>
 
