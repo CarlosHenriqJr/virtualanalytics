@@ -1,0 +1,86 @@
+<analysis>
+The previous AI engineer developed a responsive virtual football analysis website with a React frontend, FastAPI backend, and MongoDB. The initial focus was on frontend mock data implementation, including a modern DatePicker, a 24-hour match grid, HT score toggling, market filters (Over 3.5, Over 4.5), match detail modals, and daily rankings. The AI successfully implemented these features in Portuguese, adhering to specific design guidelines. Critical bug fixes included resolving a filter color override.
+
+Subsequent development addressed user requests for handling large data files, implementing Gzip JSON and chunked file uploads. Advanced predictive features were then introduced, starting with a DatePicker correction, general predictive analysis, and pattern detection. This evolved into a next-day prediction system focused on Over 3.5 markets, incorporating odds frequency and payment rates. A Neural Network (TensorFlow.js) was integrated for pattern learning, with model save/load functionality. The last tasks involved creating components for interactive block drawing and a league table, which are currently being integrated and compiled.
+</analysis>
+
+<product_requirements>
+The user requested a responsive, modern virtual football analysis website in Portuguese, using  data. Key features include:
+1.  **Date Selector**: A modern DatePicker (Shadcn/ui) to display match days, formatted as DD de Mês de AAAA, showing the selected month/year upon opening.
+2.  **Match Grid**: A fixed 24x20 grid (40x40px cells, initially 50x30px, expanding to 50x40px with HT) displaying TimeCasa x TimeFora and Placar Final: X-Y. Matches occur at 3-minute intervals.
+3.  **HT Toggle**: A Mostrar HT button to toggle 1st-half scores.
+4.  **Market Filters**: Buttons for Over 3.5 (green if totalGolsFT > 3.5), Over 4.5 (blue if totalGolsFT > 4.5), and Limpar Filtros (orange) with dynamic legends.
+5.  **Match Details Modal**: On cell click, display full match details (teams, HT/FT, markets, odds), highlighting winning markets in green.
+6.  **Daily Rankings**: Top 10 teams for Over 3.5 and Over 4.5 (by games with >=4 or >=5 goals, respectively) for the *selected day*.
+7.  **Top 5 Over Panel**: Top 5 teams with most Over 3.5 matches for the *selected day*.
+8.  **Data Handling**: Initial  upload, then support for large JSON data via Gzip compression and chunked file uploads to avoid memory issues.
+9.  **Advanced Analysis**:
+    *   **Predictive Analysis**: Predict top 3 teams in rankings.
+    *   **Pattern Analysis**: Understand why Over 3.5 Tetris-like blocks form (correlation with odds, scores, teams).
+    *   **Next-Day Prediction**: Predict next day's Over 3.5 behavior based on historical odds frequency, payment rates, biased teams, and probabilities.
+    *   **Neural Network**: Implement a TensorFlow.js-based Neural Network for learning patterns, with functionality to save and load trained models in the browser.
+    *   **Interactive Block Drawing**: Allow users to draw Over 3.5/4.5 blocks on the grid for directed study (hour, minute, teams, confrontations).
+    *   **League Table**: A daily championship-like table with Pontos, QTD de Jogos, Vitória, Derrotas, Empates, Saldo de gols, quantidade de over 3.5 and quantidade de 4.5.
+</product_requirements>
+
+<key_technical_concepts>
+-   **React**: Frontend framework for building UI.
+-   **Shadcn/ui & Tailwind CSS**: Component library and utility-first CSS for styling.
+-   **Date-fns**: JavaScript date utility library for date manipulation and formatting.
+-   **Axios**: Promise-based HTTP client for API requests.
+-   **Pako**: JavaScript library for Gzip compression/decompression.
+-   **TensorFlow.js**: Machine learning library for training and deploying models in the browser.
+-   **Local Storage**: Used for saving and loading trained Neural Network models.
+-   **Chunked File Processing**: Strategy to handle large files by processing them in smaller parts.
+</key_technical_concepts>
+
+<code_architecture>
+The application follows a standard React frontend and FastAPI backend structure, although most development has focused on the frontend so far.
+
+
+
+**Key Frontend Files and Changes:**
+
+*   : Main application entry point, configured with  to handle routes, currently rendering .
+*   : The primary page component that orchestrates all other components. It now includes  for navigation between , , , , , , , and .
+*   : Created to hold the  data in a structured JavaScript array. This is the primary data source for the frontend.
+*   : Handles uploading , JSON, Gzip-compressed JSON (), and supports chunked uploads. It uses  for decompression and a  component to indicate upload status.
+*   : Displays the 24x20 match grid. It takes , , ,  as props.
+*   : Represents a single cell in the . Displays team names and final score. Dynamically adjusts size for HT display. Corrected to apply filter colors correctly without being overridden by default background.
+*   : Contains buttons for , , and .
+*   : A modal (Shadcn ) that displays detailed information for a clicked match, including HT/FT scores, markets, odds, and highlights winning markets.
+*   : Displays daily rankings for Over 3.5 and Over 4.5 based on the selected date.
+*   : Presents insights into patterns like Horários com mais Over 3.5 and Correlação Odds/Resultados.
+*   : Designed to identify and predict specific sequential blocks of Over 3.5 matches.
+*   : This component was extensively refactored to focus exclusively on Over 3.5 predictions for the next day, analyzing historical odds, payment rates, and predicting biased teams.
+*   : Implements a Neural Network (LSTM using TensorFlow.js) for learning and predicting patterns. Includes UI for training, saving, and loading models from local storage. Requires sufficient historical data (min 10 games) for training.
+*   : (Newly created) Intended for user-defined block drawing on the grid for focused pattern study.
+*   : (Newly created) Designed to display a daily league-style table with points, game stats, and Over 3.5/4.5 counts.
+*   : Modified to remove  as per design guidelines.
+*   : Adjusted for dark theme styling.
+*   :  and  were added as dependencies.
+*   : Created and updated to explain how to use Gzip compressed JSON and how to split large files into chunks for upload.
+
+**Backend Files (Initial Setup, not actively modified in trajectory):**
+
+*   : FastAPI application with  prefix for routes. Includes basic  and  endpoints, MongoDB connection (Motor), CORS middleware, and logging.
+*   : Lists Python dependencies for the FastAPI backend.
+</code_architecture>
+
+<pending_tasks>
+-   Complete the implementation and testing of the  component for drawing Over 3.5/4.5 blocks.
+-   Complete the implementation and testing of the  component with daily championship-like statistics.
+-   Ensure all newly integrated components (, ) are fully functional and visually consistent.
+</pending_tasks>
+
+<current_work>
+Immediately before this summary request, the AI engineer was focused on implementing two new features:
+1.  **Interactive Block Drawing**: To allow users to manually define and study Over 3.5/4.5 patterns on the match grid. The  component was created for this purpose.
+2.  **Daily League Table**: To provide a championship-style leaderboard, tracking points, game counts, wins, losses, draws, goal difference, and Over 3.5/4.5 counts for teams on the selected day. The  component was created for this.
+
+Both  and  have been successfully created and integrated into the  as new tabs. The last action taken by the AI was to initiate a compilation check (). This indicates that the code for these new components and their integration points has been written, but their functionality and visual presentation on the frontend have not yet been tested via screenshots or user interaction. The system is in a state where these new components are theoretically integrated and compiling, awaiting functional testing.
+</current_work>
+
+<optional_next_step>
+Check for compilation errors for the newly integrated components.
+</optional_next_step>
