@@ -989,7 +989,7 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
       )}
 
       {/* Resultados da Análise de Jogos Anteriores */}
-      {historicalResults && (
+      {historicalResults && historicalResults.type !== 'entry_pattern' && historicalResults.globalPatterns && (
         <Card className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border-purple-500/30 p-6">
           <div className="flex items-center gap-3 mb-6">
             <TrendingUp className="w-6 h-6 text-purple-400" />
