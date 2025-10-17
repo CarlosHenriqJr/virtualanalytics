@@ -431,22 +431,34 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
   const findPatternsInPreviousGames = (games) => {
     if (games.length === 0) return {};
 
-    // Padrão de odds green mais frequentes
-    const oddFrequency = {};
+    // Padrão de odds green mais frequentes com valores
+    const oddData = {};
     games.forEach(game => {
       game.greenOdds.forEach(odd => {
         const key = odd.market;
-        oddFrequency[key] = (oddFrequency[key] || 0) + 1;
+        if (!oddData[key]) {
+          oddData[key] = {
+            count: 0,
+            totalOdd: 0,
+            odds: []
+          };
+        }
+        oddData[key].count += 1;
+        oddData[key].totalOdd += odd.odd;
+        oddData[key].odds.push(odd.odd);
       });
     });
 
-    const topGreenOdds = Object.entries(oddFrequency)
-      .sort((a, b) => b[1] - a[1])
+    const topGreenOdds = Object.entries(oddData)
+      .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 5)
-      .map(([market, count]) => ({
+      .map(([market, data]) => ({
         market,
-        frequency: count,
-        percentage: ((count / games.length) * 100).toFixed(1)
+        frequency: data.count,
+        percentage: ((data.count / games.length) * 100).toFixed(1),
+        avgOdd: (data.totalOdd / data.count).toFixed(2),
+        minOdd: Math.min(...data.odds).toFixed(2),
+        maxOdd: Math.max(...data.odds).toFixed(2)
       }));
 
     // Padrão de placares
