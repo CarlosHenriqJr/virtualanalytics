@@ -17,8 +17,143 @@ const NeuralNetworkPredictor = ({ allMatches, currentDate }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Prepara dados de treinamento
-  const trainingData = useMemo(() => {
+  // Tenta carregar modelo salvo ao montar componente
+  useEffect(() => {
+    checkSavedModel();
+  }, []);
+
+  // Verifica se há modelo salvo
+  const checkSavedModel = async () => {
+    try {
+      const savedInfo = localStorage.getItem('nn-model-info');
+      if (savedInfo) {
+        setModelInfo(JSON.parse(savedInfo));
+      }
+    } catch (error) {
+      console.error('Erro ao verificar modelo salvo:', error);
+    }
+  };
+
+  // Salva modelo no IndexedDB
+  const saveModel = async () => {
+    if (!model || !modelReady) return;
+
+    setIsSaving(true);
+    try {
+      await model.save('indexeddb://over35-predictor-model');
+      
+      const info = {
+        savedAt: new Date().toISOString(),
+        trainingDataSize: trainingData?.sequences.length || 0,
+        lastLoss: trainingLoss,
+        version: '1.0'
+      };
+      
+      localStorage.setItem('nn-model-info', JSON.stringify(info));
+      setModelInfo(info);
+
+      toast({
+        title: "✅ Modelo Salvo!",
+        description: "Modelo treinado salvo no navegador com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar modelo:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar o modelo.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Carrega modelo do IndexedDB
+  const loadModel = async () => {
+    setIsLoading(true);
+    try {
+      const loadedModel = await tf.loadLayersModel('indexeddb://over35-predictor-model');
+      setModel(loadedModel);
+      setModelReady(true);
+
+      toast({
+        title: "✅ Modelo Carregado!",
+        description: "Modelo treinado carregado do navegador.",
+      });
+
+      // Faz previsões automaticamente
+      makePredictions(loadedModel);
+    } catch (error) {
+      console.error('Erro ao carregar modelo:', error);
+      toast({
+        title: "Erro ao carregar",
+        description: "Não foi possível carregar o modelo salvo. Treine um novo modelo.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Exporta modelo como arquivo para download
+  const exportModel = async () => {
+    if (!model || !modelReady) return;
+
+    setIsSaving(true);
+    try {
+      // Cria um diretório temporário no IndexedDB
+      await model.save('downloads://over35-predictor-model');
+
+      toast({
+        title: "✅ Modelo Exportado!",
+        description: "Modelo baixado para sua máquina.",
+      });
+    } catch (error) {
+      console.error('Erro ao exportar modelo:', error);
+      
+      // Fallback: salva metadados como JSON
+      const modelJSON = {
+        info: modelInfo,
+        trainingDataSize: trainingData?.sequences.length || 0,
+        architecture: 'LSTM',
+        note: 'Use "Salvar no Navegador" para salvar o modelo completo'
+      };
+
+      const blob = new Blob([JSON.stringify(modelJSON, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `over35-model-${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Metadados Exportados",
+        description: "Use 'Salvar no Navegador' para modelo completo.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Deleta modelo salvo
+  const deleteModel = async () => {
+    try {
+      await tf.io.removeModel('indexeddb://over35-predictor-model');
+      localStorage.removeItem('nn-model-info');
+      setModelInfo(null);
+      setModel(null);
+      setModelReady(false);
+      setPredictions(null);
+
+      toast({
+        title: "Modelo Deletado",
+        description: "Modelo removido do navegador.",
+      });
+    } catch (error) {
+      console.error('Erro ao deletar modelo:', error);
+    }
+  };
     if (!allMatches || allMatches.length < 10) return null;
 
     const currentDateStr = format(currentDate, 'yyyy-MM-dd');
