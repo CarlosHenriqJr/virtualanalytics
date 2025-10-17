@@ -1058,13 +1058,20 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {historicalResults.globalPatterns.commonGreenOdds.map((odd, idx) => (
                 <div key={idx} className="bg-gray-800/50 rounded p-3 border border-green-500/20">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-semibold text-green-400">
                       #{idx + 1} {odd.market.replace(/_/g, ' ')}
                     </span>
                     <span className="text-xs text-gray-400">
                       {odd.frequency}x ({odd.percentage}%)
                     </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-yellow-400 font-bold">Odd Média: {odd.avgOdd}</span>
+                    <span className="text-gray-500">|</span>
+                    <span className="text-gray-400">Min: {odd.minOdd}</span>
+                    <span className="text-gray-500">|</span>
+                    <span className="text-gray-400">Max: {odd.maxOdd}</span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
                     Apareceu em {odd.appearsInCells} de {historicalResults.selectedOver35Count} células analisadas
