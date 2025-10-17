@@ -549,13 +549,40 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
           <h3 className="text-xl font-bold text-white">Seletor de Blocos - Análise Histórica</h3>
         </div>
         <p className="text-gray-300 mb-3">
-          Selecione células Over 3.5 e descubra com que frequência esse padrão se repete em dias anteriores:
+          <strong>Modo Análise de Entrada:</strong> Selecione células como padrão base e células de entrada para simular probabilidades.
+        </p>
+        <p className="text-gray-300 mb-3">
+          <strong>Modo Jogos Anteriores:</strong> Analisa o que aconteceu antes de cada Over 3.5.
         </p>
         <div className="space-y-2 text-sm text-gray-400">
-          <p>• <strong>Clique em cada célula</strong> para adicionar/remover do padrão</p>
-          <p>• Escolha quantos dias anteriores deseja analisar</p>
-          <p>• Veja a frequência e taxa de acerto do padrão histórico</p>
-          <p>• Células selecionadas ficam destacadas em azul</p>
+          <p>• <strong>Clique em cada célula</strong> para adicionar/remover</p>
+          <p>• Use os botões abaixo para alternar entre PADRÃO e ENTRADA</p>
+          <p>• Células PADRÃO (amarelo) servem como base para busca</p>
+          <p>• Células ENTRADA (roxo) são onde você simularia a aposta</p>
+        </div>
+
+        {/* Seletor de Modo de Seleção */}
+        <div className="mt-4 flex gap-2">
+          <Button
+            onClick={() => setSelectionMode('pattern')}
+            className={`${
+              selectionMode === 'pattern' 
+                ? 'bg-yellow-600 hover:bg-yellow-500' 
+                : 'bg-gray-700 hover:bg-gray-600'
+            }`}
+          >
+            Marcar como PADRÃO
+          </Button>
+          <Button
+            onClick={() => setSelectionMode('entry')}
+            className={`${
+              selectionMode === 'entry'
+                ? 'bg-purple-600 hover:bg-purple-500'
+                : 'bg-gray-700 hover:bg-gray-600'
+            }`}
+          >
+            Marcar como ENTRADA
+          </Button>
         </div>
 
         {/* Controles */}
