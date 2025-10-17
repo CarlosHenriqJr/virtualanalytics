@@ -13,6 +13,9 @@ const NeuralNetworkPredictor = ({ allMatches, currentDate }) => {
   const [trainingLoss, setTrainingLoss] = useState(null);
   const [predictions, setPredictions] = useState(null);
   const [modelReady, setModelReady] = useState(false);
+  const [modelInfo, setModelInfo] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Prepara dados de treinamento
   const trainingData = useMemo(() => {
