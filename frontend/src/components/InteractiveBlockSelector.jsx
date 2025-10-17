@@ -43,15 +43,20 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     if (isAlreadySelected) {
       // Remove da seleção
       setSelectedCells(selectedCells.filter(c => `${c.hour}-${c.minute}` !== cellKey));
+      const newTypes = {...cellTypes};
+      delete newTypes[cellKey];
+      setCellTypes(newTypes);
     } else {
-      // Adiciona à seleção
+      // Adiciona à seleção com o tipo atual (pattern ou entry)
       setSelectedCells([...selectedCells, { hour, minute, match }]);
+      setCellTypes({...cellTypes, [cellKey]: selectionMode});
     }
   };
 
   // Limpa seleção
   const clearSelection = () => {
     setSelectedCells([]);
+    setCellTypes({});
     setHistoricalResults(null);
   };
 
