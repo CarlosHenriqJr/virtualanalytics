@@ -101,3 +101,88 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Usuário solicitou alteração no Seletor de Blocos para análise histórica de padrões Over 3.5:
+  1. Permitir seleção célula por célula (clique individual)
+  2. Adicionar input para escolher quantos dias anteriores analisar
+  3. Implementar análise histórica buscando mesmo padrão visual em dias anteriores
+  4. Exibir frequência e taxa de acerto do padrão
+
+frontend:
+  - task: "InteractiveBlockSelector - Seleção individual de células"
+    implemented: true
+    working: true
+    file: "frontend/src/components/InteractiveBlockSelector.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implementado sistema de clique individual em células. Cada clique adiciona/remove célula do padrão selecionado. Ring azul indica células selecionadas. Funcionalidade testada e confirmada via screenshots."
+
+  - task: "InteractiveBlockSelector - Input de dias para análise"
+    implemented: true
+    working: true
+    file: "frontend/src/components/InteractiveBlockSelector.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Adicionado input numérico para seleção de 1-90 dias anteriores para análise. Valor padrão: 7 dias. Interface intuitiva com label explicativo."
+
+  - task: "InteractiveBlockSelector - Análise histórica de padrões"
+    implemented: true
+    working: true
+    file: "frontend/src/components/InteractiveBlockSelector.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implementado algoritmo de análise histórica que: 1) Extrai padrão de posições (hora:minuto) das células selecionadas, 2) Itera por X dias anteriores, 3) Busca mesmo padrão de posições, 4) Conta ocorrências Over 3.5, 5) Calcula frequência e taxa de acerto. Suporta ambos formatos de data (dd/MM/yyyy e yyyy-MM-dd)."
+
+  - task: "InteractiveBlockSelector - Exibição de resultados"
+    implemented: true
+    working: true
+    file: "frontend/src/components/InteractiveBlockSelector.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Card de resultados mostra: Dias Analisados, Frequência (%), Taxa de Acerto (%), Tamanho do Padrão. Interpretação automática (Forte >=70%, Moderado >=50%, Fraco <50%). Lista detalhada de ocorrências históricas com data, taxa de acerto por ocorrência, e detalhes de cada partida. Mensagem apropriada quando nenhuma ocorrência é encontrada."
+
+  - task: "InteractiveBlockSelector - UI/UX e integração"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/HomePage.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "HomePage atualizado para passar allMatchesData e selectedDate ao InteractiveBlockSelector. Botão 'Limpar Seleção' funcional. Indicador mostra células selecionadas com posições. Design responsivo e consistente com tema dark."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Validação completa via screenshots"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implementação completa do Seletor de Blocos com análise histórica. Todas as funcionalidades solicitadas foram implementadas e testadas via screenshots: seleção individual de células (com indicador visual azul), input para dias de análise (1-90 dias), algoritmo de busca de padrões históricos, e exibição detalhada de resultados com frequência e taxa de acerto. Sistema está funcional e pronto para uso com dados reais."
