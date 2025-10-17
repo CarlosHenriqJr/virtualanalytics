@@ -28,49 +28,23 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     return grid;
   }, [matches]);
 
-  // Inicia seleção
-  const handleMouseDown = (hour, minute) => {
-    setIsSelecting(true);
-    setSelectionStart({ hour, minute });
-    setSelectionEnd({ hour, minute });
-  };
+  // Seleciona/deseleciona célula individual
+  const handleCellClick = (hour, minute) => {
+    const match = matchGrid[`${hour}-${minute}`];
+    if (!match) return;
 
-  // Atualiza seleção
-  const handleMouseEnter = (hour, minute) => {
-    if (isSelecting) {
-      setSelectionEnd({ hour, minute });
+    const cellKey = `${hour}-${minute}`;
+    const isAlreadySelected = selectedCells.some(
+      c => `${c.hour}-${c.minute}` === cellKey
+    );
+
+    if (isAlreadySelected) {
+      // Remove da seleção
+      setSelectedCells(selectedCells.filter(c => `${c.hour}-${c.minute}` !== cellKey));
+    } else {
+      // Adiciona à seleção
+      setSelectedCells([...selectedCells, { hour, minute, match }]);
     }
-  };
-
-  // Finaliza seleção
-  const handleMouseUp = () => {
-    if (isSelecting && selectionStart && selectionEnd) {
-      const minHour = Math.min(selectionStart.hour, selectionEnd.hour);
-      const maxHour = Math.max(selectionStart.hour, selectionEnd.hour);
-      const minMinIdx = Math.min(
-        minuteSlots.indexOf(selectionStart.minute),
-        minuteSlots.indexOf(selectionEnd.minute)
-      );
-      const maxMinIdx = Math.max(
-        minuteSlots.indexOf(selectionStart.minute),
-        minuteSlots.indexOf(selectionEnd.minute)
-      );
-
-      const cells = [];
-      for (let h = minHour; h <= maxHour; h++) {
-        for (let mIdx = minMinIdx; mIdx <= maxMinIdx; mIdx++) {
-          const minute = minuteSlots[mIdx];
-          const match = matchGrid[`${h}-${minute}`];
-          if (match) {
-            cells.push({ hour: h, minute, match });
-          }
-        }
-      }
-
-      setSelectedCells(cells);
-      analyzeBlock(cells);
-    }
-    setIsSelecting(false);
   };
 
   // Analisa bloco selecionado
