@@ -155,6 +155,9 @@ const NeuralNetworkPredictor = ({ allMatches, currentDate }) => {
       console.error('Erro ao deletar modelo:', error);
     }
   };
+
+  // Prepara dados de treinamento
+  const trainingData = useMemo(() => {
     if (!allMatches || allMatches.length < 10) return null;
 
     const currentDateStr = format(currentDate, 'yyyy-MM-dd');
