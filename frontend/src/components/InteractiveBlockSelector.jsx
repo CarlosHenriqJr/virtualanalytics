@@ -335,6 +335,24 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
             <h3 className="text-xl font-bold text-white">Análise Histórica do Padrão</h3>
           </div>
 
+          {/* Padrão Buscado */}
+          <div className="mb-6 p-4 bg-gray-900/70 rounded-lg border border-gray-700">
+            <p className="text-sm text-gray-400 mb-2">Padrão buscado (combinação de resultados):</p>
+            <div className="flex flex-wrap gap-2">
+              {historicalResults.pattern.map((p, idx) => (
+                <div key={idx} className={`px-3 py-2 rounded ${
+                  p.isOver35 ? 'bg-green-600 text-white' : 'bg-gray-600 text-white'
+                } font-semibold`}>
+                  {idx + 1}. {p.isOver35 ? 'Over 3.5 ✓' : 'Not Over ✗'}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Código do padrão: {historicalResults.patternString} 
+              <span className="ml-2 text-gray-500">(1 = Over 3.5, 0 = Not Over)</span>
+            </p>
+          </div>
+
           {/* Estatísticas Principais */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-900/70 rounded-lg p-4 border border-gray-700">
@@ -354,7 +372,7 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
                 {historicalResults.frequency.toFixed(0)}%
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {historicalResults.totalOccurrences} de {historicalResults.daysAnalyzed} dias
+                {historicalResults.totalOccurrences} ocorrências
               </p>
             </div>
 
@@ -367,7 +385,7 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
                 {historicalResults.successRate.toFixed(0)}%
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                {historicalResults.fullMatches} acertos completos
+                {historicalResults.fullMatches} padrões completos
               </p>
             </div>
 
@@ -379,31 +397,32 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
               <p className="text-3xl font-bold text-yellow-400">
                 {historicalResults.patternSize}
               </p>
-              <p className="text-xs text-gray-500 mt-1">células selecionadas</p>
+              <p className="text-xs text-gray-500 mt-1">jogos consecutivos</p>
             </div>
           </div>
 
           {/* Interpretação */}
           <div className={`p-4 rounded-lg border mb-6 ${
-            historicalResults.successRate >= 70 ? 'bg-green-900/30 border-green-500/50' :
-            historicalResults.successRate >= 50 ? 'bg-yellow-900/30 border-yellow-500/50' :
+            historicalResults.frequency >= 30 && historicalResults.successRate >= 70 ? 'bg-green-900/30 border-green-500/50' :
+            historicalResults.frequency >= 15 && historicalResults.successRate >= 50 ? 'bg-yellow-900/30 border-yellow-500/50' :
             'bg-red-900/30 border-red-500/50'
           }`}>
             <p className="text-sm font-semibold mb-2 text-white">
-              {historicalResults.successRate >= 70 ? '✅ Padrão Forte!' :
-               historicalResults.successRate >= 50 ? '⚠️ Padrão Moderado' :
-               '❌ Padrão Fraco'}
+              {historicalResults.frequency >= 30 && historicalResults.successRate >= 70 ? '✅ Padrão Forte e Frequente!' :
+               historicalResults.frequency >= 15 && historicalResults.successRate >= 50 ? '⚠️ Padrão Moderado' :
+               '❌ Padrão Fraco ou Raro'}
             </p>
             <p className="text-sm text-gray-300">
               {historicalResults.totalOccurrences === 0 ? (
-                `Este padrão não foi encontrado nos últimos ${historicalResults.daysAnalyzed} dias. Pode ser um padrão raro ou único.`
+                `Esta combinação específica não foi encontrada nos últimos ${historicalResults.daysAnalyzed} dias. Pode ser um padrão raro ou único.`
               ) : (
                 <>
-                  Este padrão apareceu em <strong>{historicalResults.frequency.toFixed(1)}%</strong> dos dias analisados.
-                  {' '}Das {historicalResults.totalOccurrences} ocorrências, <strong>{historicalResults.fullMatches}</strong> tiveram 
-                  todas as células como Over 3.5 (<strong>{historicalResults.successRate.toFixed(1)}%</strong> de acerto).
-                  {historicalResults.successRate >= 70 && ' Excelente padrão para estratégias!'}
-                  {historicalResults.successRate < 50 && ' Considere revisar o padrão ou buscar correlações adicionais.'}
+                  Esta combinação apareceu <strong>{historicalResults.totalOccurrences} vez(es)</strong> nos 
+                  últimos {historicalResults.daysAnalyzed} dias (<strong>{historicalResults.frequency.toFixed(1)}%</strong> dos dias).
+                  {' '}Das ocorrências encontradas, <strong>{historicalResults.fullMatches}</strong> tiveram 
+                  o padrão exato de Over 3.5 (<strong>{historicalResults.successRate.toFixed(1)}%</strong> de acerto).
+                  {historicalResults.frequency >= 30 && historicalResults.successRate >= 70 && ' 🎯 Excelente padrão para estratégias!'}
+                  {historicalResults.frequency < 15 && ' Considere aumentar o período de análise ou buscar padrões mais comuns.'}
                 </>
               )}
             </p>
@@ -413,36 +432,55 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
           {historicalResults.occurrences.length > 0 && (
             <div>
               <h4 className="text-lg font-bold text-white mb-4">
-                Ocorrências Históricas ({historicalResults.occurrences.length})
+                Ocorrências Encontradas ({historicalResults.occurrences.length})
               </h4>
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
                 {historicalResults.occurrences.map((occurrence, idx) => (
                   <div 
                     key={idx} 
                     className={`bg-gray-800/50 rounded-lg p-4 border ${
-                      occurrence.isFullMatch ? 'border-green-500/50' : 'border-gray-700'
+                      occurrence.isFullMatch ? 'border-green-500/50' : 'border-yellow-500/50'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <Calendar className="w-4 h-4 text-blue-400" />
                         <span className="font-semibold text-white">{occurrence.date}</span>
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${
+                          occurrence.isFullMatch ? 'bg-green-600 text-white' :
+                          'bg-yellow-600 text-white'
+                        }`}>
+                          {occurrence.isFullMatch ? '✓ Padrão Exato' : '~ Parcial'}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          occurrence.isFullMatch ? 'bg-green-600 text-white' :
-                          occurrence.matchRate >= 50 ? 'bg-yellow-600 text-white' :
+                          occurrence.matchRate === 100 ? 'bg-green-600 text-white' :
+                          occurrence.matchRate >= 60 ? 'bg-yellow-600 text-white' :
                           'bg-red-600 text-white'
                         }`}>
-                          {occurrence.over35Count}/{occurrence.totalExpected} Over 3.5
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          ({occurrence.matchRate.toFixed(0)}%)
+                          {occurrence.matchRate.toFixed(0)}% Match
                         </span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {/* Sequência encontrada */}
+                    <div className="mb-2">
+                      <p className="text-xs text-gray-400 mb-1">Sequência encontrada:</p>
+                      <div className="flex gap-1">
+                        {occurrence.details.map((detail, didx) => (
+                          <div key={didx} className={`w-6 h-6 rounded flex items-center justify-center ${
+                            detail.isOver35 ? 'bg-green-600' : 'bg-gray-600'
+                          }`}>
+                            <span className="text-white text-xs font-bold">
+                              {detail.isOver35 ? '✓' : '✗'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                       {occurrence.details.map((detail, didx) => (
                         <div 
                           key={didx}
@@ -451,18 +489,20 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
                             'bg-gray-900/50 border border-gray-700'
                           }`}
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between mb-1">
                             <span className="font-semibold text-white">
-                              {detail.hour}:{detail.minute.toString().padStart(2, '0')}
+                              #{didx + 1} - {detail.hour}:{detail.minute.toString().padStart(2, '0')}
                             </span>
                             <span className={`font-bold ${detail.isOver35 ? 'text-green-400' : 'text-red-400'}`}>
                               {detail.isOver35 ? '✓' : '✗'}
                             </span>
                           </div>
-                          <p className="text-gray-300 mt-1">{detail.teams}</p>
+                          <p className="text-gray-300">{detail.teams}</p>
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-gray-400">{detail.score}</span>
-                            <span className="text-gray-400">
+                            <span className={`font-semibold ${
+                              detail.totalGoals > 3.5 ? 'text-green-400' : 'text-gray-400'
+                            }`}>
                               {detail.totalGoals} gols
                             </span>
                           </div>
@@ -478,10 +518,10 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
           {historicalResults.occurrences.length === 0 && (
             <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-700 text-center">
               <p className="text-gray-400">
-                Nenhuma ocorrência deste padrão foi encontrada nos últimos {historicalResults.daysAnalyzed} dias.
+                Nenhuma ocorrência desta combinação foi encontrada nos últimos {historicalResults.daysAnalyzed} dias.
               </p>
               <p className="text-sm text-gray-500 mt-2">
-                Tente selecionar um padrão diferente ou aumentar o período de análise.
+                Tente aumentar o período de análise ou selecione uma combinação diferente.
               </p>
             </div>
           )}
