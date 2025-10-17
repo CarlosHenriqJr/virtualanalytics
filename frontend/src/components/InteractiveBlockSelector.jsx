@@ -368,15 +368,15 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
         {/* Controles */}
         <div className="mt-4 flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[200px]">
-            <label className="text-xs text-gray-400 mb-1 block">Dias anteriores para análise:</label>
+            <label className="text-xs text-gray-400 mb-1 block">Jogos anteriores para analisar (cada célula Over 3.5):</label>
             <Input
               type="number"
               min="1"
-              max="90"
-              value={daysToAnalyze}
-              onChange={(e) => setDaysToAnalyze(Math.max(1, Math.min(90, parseInt(e.target.value) || 7)))}
+              max="50"
+              value={previousGamesToAnalyze}
+              onChange={(e) => setPreviousGamesToAnalyze(Math.max(1, Math.min(50, parseInt(e.target.value) || 10)))}
               className="bg-gray-800 border-gray-700 text-white"
-              placeholder="Ex: 7, 15, 30"
+              placeholder="Ex: 5, 10, 20"
             />
           </div>
           <Button
@@ -385,7 +385,7 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
             className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400"
           >
             <Search className="w-4 h-4 mr-2" />
-            {isAnalyzing ? 'Analisando...' : 'Analisar Padrão'}
+            {isAnalyzing ? 'Analisando...' : 'Analisar Jogos Anteriores'}
           </Button>
           <Button
             onClick={clearSelection}
