@@ -156,23 +156,9 @@ const InteractiveBlockSelector = ({ matches, allMatchesData, selectedDate, onBlo
     }
   };
 
-  // Verifica se célula está na seleção
-  const isCellInSelection = (hour, minute) => {
-    if (!isSelecting || !selectionStart || !selectionEnd) return false;
-
-    const minHour = Math.min(selectionStart.hour, selectionEnd.hour);
-    const maxHour = Math.max(selectionStart.hour, selectionEnd.hour);
-    const minMinIdx = Math.min(
-      minuteSlots.indexOf(selectionStart.minute),
-      minuteSlots.indexOf(selectionEnd.minute)
-    );
-    const maxMinIdx = Math.max(
-      minuteSlots.indexOf(selectionStart.minute),
-      minuteSlots.indexOf(selectionEnd.minute)
-    );
-    const minIdx = minuteSlots.indexOf(minute);
-
-    return hour >= minHour && hour <= maxHour && minIdx >= minMinIdx && minIdx <= maxMinIdx;
+  // Verifica se célula está selecionada
+  const isCellSelected = (hour, minute) => {
+    return selectedCells.some(c => c.hour === hour && c.minute === minute);
   };
 
   return (
