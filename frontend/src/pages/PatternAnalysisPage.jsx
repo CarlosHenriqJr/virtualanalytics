@@ -226,7 +226,7 @@ const PatternAnalysisPage = () => {
       if (!results || results.length === 0) {
         setIsAnalyzing(false);
         setProgress(0);
-        alert('Nenhum resultado encontrado! Verifique:\n\n1. Se há dados suficientes carregados\n2. Se a Entrada está na MESMA COLUNA do Padrão\n3. Se a Entrada está em LINHA ABAIXO do Padrão (número menor)\n\nExemplo: Padrão nas linhas 5,6,7 → Entrada na linha 3');
+        alert('Nenhum resultado encontrado! Verifique:\n\n1. Se há dados suficientes carregados\n2. Se você marcou células como Padrão Isolado (🟨)\n3. Se você marcou uma célula como Entrada (🟩)\n4. Se a Entrada está temporalmente DEPOIS do padrão\n\nO sistema busca quando TODAS as células do padrão acontecem juntas nos dados históricos.');
         return;
       }
       
