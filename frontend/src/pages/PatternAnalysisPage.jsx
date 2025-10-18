@@ -470,22 +470,6 @@ const PatternAnalysisPage = () => {
     };
   };
 
-  const checkMarket = (match, marketCode) => {
-    const totalGoals = match.totalGolsFT;
-    const placarCasa = match.placarCasaFT;
-    const placarFora = match.placarForaFT;
-
-    switch (marketCode) {
-      case 'AM': return placarCasa > 0 && placarFora > 0;
-      case 'ANM': return placarCasa === 0 || placarFora === 0;
-      case 'O25': return totalGoals > 2.5;
-      case 'O35': return totalGoals > 3.5;
-      case 'U25': return totalGoals < 2.5;
-      case 'U35': return totalGoals < 3.5;
-      default: return false;
-    }
-  };
-
   const evaluateEntry = (entryMatch, galeMatches, config) => {
     const results = { 
       sg: false, 
