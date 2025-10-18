@@ -1065,6 +1065,83 @@ const PatternAnalysisPage = () => {
                     </p>
                   </div>
 
+                  {/* Análise Detalhada - Odds e Placares */}
+                  {result.oddsAnalysis && result.scoresAnalysis && (
+                    <div className="mt-6 grid md:grid-cols-2 gap-4">
+                      {/* Odds Mais Frequentes */}
+                      <div className="bg-gray-900/50 border border-blue-500/30 rounded-lg p-4">
+                        <h4 className="text-sm font-bold text-blue-300 mb-3 flex items-center gap-2">
+                          💰 Odds Mais Frequentes na Entrada
+                        </h4>
+                        {result.oddsAnalysis.mostCommon && result.oddsAnalysis.mostCommon.length > 0 ? (
+                          <div className="space-y-2">
+                            {result.oddsAnalysis.mostCommon.map((item, i) => (
+                              <div key={i} className="flex items-center justify-between text-sm">
+                                <span className="text-white font-semibold">Odd {item.odd.toFixed(2)}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-400">{item.count}x</span>
+                                  <span className="text-xs text-gray-500">
+                                    ({((item.count / result.totalOccurrences) * 100).toFixed(0)}%)
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                            
+                            {result.oddsAnalysis.avgByLevel && Object.keys(result.oddsAnalysis.avgByLevel).length > 0 && (
+                              <div className="mt-4 pt-3 border-t border-gray-700">
+                                <p className="text-xs text-gray-400 mb-2">Odd média por nível:</p>
+                                {Object.entries(result.oddsAnalysis.avgByLevel).map(([level, avg]) => (
+                                  <div key={level} className="flex justify-between text-xs">
+                                    <span className="text-gray-400">{level}:</span>
+                                    <span className="text-blue-300 font-semibold">{avg.toFixed(2)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">Dados de odds não disponíveis</p>
+                        )}
+                      </div>
+
+                      {/* Placares Mais Frequentes */}
+                      <div className="bg-gray-900/50 border border-green-500/30 rounded-lg p-4">
+                        <h4 className="text-sm font-bold text-green-300 mb-3 flex items-center gap-2">
+                          ⚽ Placares Mais Frequentes na Entrada
+                        </h4>
+                        {result.scoresAnalysis.mostCommon && result.scoresAnalysis.mostCommon.length > 0 ? (
+                          <div className="space-y-2">
+                            {result.scoresAnalysis.mostCommon.map((item, i) => (
+                              <div key={i} className="flex items-center justify-between text-sm">
+                                <span className="text-white font-semibold">{item.score}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-gray-400">{item.count}x</span>
+                                  <span className="text-xs text-gray-500">
+                                    ({((item.count / result.totalOccurrences) * 100).toFixed(0)}%)
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                            
+                            {result.scoresAnalysis.avgGoalsByLevel && Object.keys(result.scoresAnalysis.avgGoalsByLevel).length > 0 && (
+                              <div className="mt-4 pt-3 border-t border-gray-700">
+                                <p className="text-xs text-gray-400 mb-2">Média de gols por nível:</p>
+                                {Object.entries(result.scoresAnalysis.avgGoalsByLevel).map(([level, avg]) => (
+                                  <div key={level} className="flex justify-between text-xs">
+                                    <span className="text-gray-400">{level}:</span>
+                                    <span className="text-green-300 font-semibold">{avg.toFixed(1)} gols</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">Dados de placares não disponíveis</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Tabela Detalhada (colapsável) */}
                   <div className="mt-4">
                     <button
