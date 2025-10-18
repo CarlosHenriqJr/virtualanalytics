@@ -562,10 +562,11 @@ const PatternAnalysisPage = () => {
           
           <Button
             onClick={runBacktest}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
+            disabled={isAnalyzing}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Search className="w-4 h-4 mr-2" />
-            Executar Backtest
+            {isAnalyzing ? `Analisando... ${progress}%` : 'Executar Backtest'}
           </Button>
         </div>
       </div>
