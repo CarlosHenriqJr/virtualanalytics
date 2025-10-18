@@ -97,10 +97,12 @@ const PatternAnalysisPage = () => {
         type: 'entry',
         ...currentConfig
       };
+      console.log(`✅ Marcado como ENTRADA: ${key}`, newMatrix[key]);
     });
 
     setMatrix(newMatrix);
     setSelectedCells([]);
+    console.log('📊 Matriz atualizada:', newMatrix);
   };
 
   // Limpa células selecionadas
