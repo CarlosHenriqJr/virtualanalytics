@@ -1113,7 +1113,7 @@ const PatternAnalysisPage = () => {
                       <span className="text-white font-semibold">{getCellText(result.entryConfig)}</span>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-400">
-                      <span>Padrão: Célula {result.patternPosition}</span>
+                      <span>Padrão: Células {result.patternCells.map(cell => `${cell.row}-${cell.col}`).join(', ')}</span>
                       <span>•</span>
                       <span>Entrada: Célula {result.entryPosition}</span>
                     </div>
