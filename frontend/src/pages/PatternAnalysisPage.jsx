@@ -248,169 +248,176 @@ const PatternAnalysisPage = () => {
   };
 
   // Algoritmo de backtest
-  const executeBacktest = (patterns, entries, historicalData) => {
-    console.log('=== EXECUTE BACKTEST ===');
-    console.log('Padrões:', patterns);
-    console.log('Entradas:', entries);
-    console.log('Dados históricos:', historicalData.length, 'partidas');
-    
-    const sortedMatches = [...historicalData].sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      if (dateA.getTime() !== dateB.getTime()) return dateA - dateB;
-      if (a.hour !== b.hour) return a.hour - b.hour;
-      return a.minute - b.minute;
-    });
-
-    console.log('Partidas ordenadas:', sortedMatches.length);
-
+  const executeBacktest = (patterns, entries, matchesData) => {
     const entryResults = [];
-
+    
+    // Agrupa padrões e entradas por suas configurações
+    // Cada "grupo de padrão" representa um conjunto de células marcadas como padrão
+    const patternGroup = {
+      cells: patterns.map(p => ({ row: p.row, col: p.col })),
+      config: patterns[0].config // Assume que todos têm a mesma config
+    };
+    
     entries.forEach((entry, entryIdx) => {
       console.log(`\n=== Processando Entrada ${entryIdx + 1} ===`);
       console.log('Entrada:', entry);
+      console.log('Padrão (grupo de células):', patternGroup.cells);
       
-      const relatedPatterns = patterns.filter(p => 
-        p.col === entry.col && p.row > entry.row // Padrão em linha MAIOR (acima), Entrada em linha MENOR (abaixo)
-      );
+      const patternOccurrences = [];
+      const greenOdds = [];
+      const redOdds = [];
+      const greenScores = [];
+      const redScores = [];
 
-      if (relatedPatterns.length === 0) {
-        console.log(`⚠️ Entrada ${entry.row}-${entry.col} não tem padrão relacionado na mesma coluna e linha acima`);
-        return; // Pula esta entrada se não houver padrão relacionado
-      }
+      // Ordena partidas por data/hora
+      const sortedMatches = [...matchesData].sort((a, b) => {
+        const dateA = new Date(a.date + ' ' + (a.hour || 0) + ':' + (a.minute || 0));
+        const dateB = new Date(b.date + ' ' + (b.hour || 0) + ':' + (b.minute || 0));
+        return dateA - dateB;
+      });
 
-      console.log('Padrões relacionados:', relatedPatterns.length);
+      console.log('Total de partidas ordenadas:', sortedMatches.length);
 
-      relatedPatterns.forEach((pattern, patternIdx) => {
-        console.log(`\n--- Padrão ${patternIdx + 1} para Entrada ${entryIdx + 1} ---`);
-        const patternOccurrences = [];
-        const greenOdds = []; // Odds dos jogos GREEN (que bateram)
-        const redOdds = []; // Odds dos jogos RED (que falharam)
-        const greenScores = []; // Placares dos jogos GREEN
-        const redScores = []; // Placares dos jogos RED
-
-        for (let i = 0; i < sortedMatches.length - 5; i++) {
-          const match = sortedMatches[i];
+      // Para cada posição temporal nos dados
+      for (let i = 0; i < sortedMatches.length - 10; i++) {
+        // Verifica se todas as células do padrão batem nessa posição
+        let patternMatches = true;
+        
+        for (const patternCell of patternGroup.cells) {
+          // Calcula o offset temporal baseado na linha do padrão
+          const offset = 8 - patternCell.row; // Quanto mais baixa a linha, mais no futuro
+          const matchIndex = i + offset;
           
-          if (matchesPattern(match, pattern.config)) {
-            // Com a matriz invertida (8→1), o jogo de entrada vem DEPOIS na timeline
-            const entryMatch = sortedMatches[i + 1];
-            const galeMatches = sortedMatches.slice(i + 1, i + 6);
-            const evaluation = evaluateEntry(entryMatch, galeMatches, entry.config);
-            
-            // Coleta TODAS as odds disponíveis no jogo de entrada
-            if (entryMatch && entryMatch.markets) {
-              const allOdds = [];
-              
-              // Itera por TODOS os mercados disponíveis no jogo
-              Object.entries(entryMatch.markets).forEach(([marketKey, oddValue]) => {
-                // Debug: log de valores inválidos
-                if (!oddValue || typeof oddValue !== 'number' || isNaN(oddValue) || oddValue <= 0) {
-                  console.log(`⚠️ Odd inválida ignorada: ${marketKey} = ${oddValue}`);
-                  return; // Ignora essa odd
-                }
-                
-                // Converte chave do mercado para nome legível
-                const marketLabel = getMarketLabelFromKey(marketKey);
-                if (marketLabel) {
-                  allOdds.push({
-                    market: marketLabel,
-                    marketKey,
-                    odd: oddValue
-                  });
-                } else {
-                  console.log(`⚠️ Mercado sem label ignorado: ${marketKey}`);
-                }
-              });
-              
-              // Separa entre GREEN e RED baseado no resultado
-              const isGreen = evaluation.level !== 'F';
-              if (isGreen) {
-                greenOdds.push(...allOdds.map(o => ({ ...o, level: evaluation.level })));
-                greenScores.push({
-                  score: `${entryMatch.placarCasaFT}x${entryMatch.placarForaFT}`,
-                  totalGoals: entryMatch.totalGolsFT,
-                  teams: `${entryMatch.timeCasa} x ${entryMatch.timeFora}`,
-                  level: evaluation.level
-                });
-              } else {
-                redOdds.push(...allOdds.map(o => ({ ...o, level: 'F' })));
-                redScores.push({
-                  score: `${entryMatch.placarCasaFT}x${entryMatch.placarForaFT}`,
-                  totalGoals: entryMatch.totalGolsFT,
-                  teams: `${entryMatch.timeCasa} x ${entryMatch.timeFora}`,
-                  level: 'F'
-                });
-              }
-            }
-            
-            patternOccurrences.push({
-              patternMatch: match,
-              entryMatch,
-              galeMatches,
-              evaluation
-            });
+          if (matchIndex >= sortedMatches.length) {
+            patternMatches = false;
+            break;
+          }
+          
+          const match = sortedMatches[matchIndex];
+          
+          // Verifica se esse jogo bate com a config do padrão
+          if (!matchesPattern(match, patternGroup.config)) {
+            patternMatches = false;
+            break;
           }
         }
-
-        console.log('Ocorrências do padrão:', patternOccurrences.length);
-
-        const total = patternOccurrences.length;
-        const sg = patternOccurrences.filter(o => o.evaluation.level === 'SG').length;
-        const g1 = patternOccurrences.filter(o => o.evaluation.level === 'G1').length;
-        const g2 = patternOccurrences.filter(o => o.evaluation.level === 'G2').length;
-        const g3 = patternOccurrences.filter(o => o.evaluation.level === 'G3').length;
-        const g4 = patternOccurrences.filter(o => o.evaluation.level === 'G4').length;
-        const failures = patternOccurrences.filter(o => o.evaluation.level === 'F').length;
-
-        // Calcula assertividade total
-        const totalSuccess = sg + g1 + g2 + g3 + g4;
-        const totalSuccessPercentage = total > 0 ? (totalSuccess / total) * 100 : 0;
-
-        console.log('Assertividade - SG:', sg, 'G1:', g1, 'G2:', g2, 'G3:', g3, 'G4:', g4, 'F:', failures);
-        console.log('Odds GREEN coletadas:', greenOdds.length);
-        console.log('Odds RED coletadas:', redOdds.length);
-
-        // Análise separada para GREEN e RED
-        const greenAnalysis = {
-          odds: analyzeOdds(greenOdds),
-          scores: analyzeScores(greenScores),
-          count: totalSuccess,
-          percentage: totalSuccessPercentage
-        };
         
-        const redAnalysis = {
-          odds: analyzeOdds(redOdds),
-          scores: analyzeScores(redScores),
-          count: failures,
-          percentage: total > 0 ? (failures / total) * 100 : 0
-        };
+        // Se o padrão completo foi encontrado
+        if (patternMatches) {
+          // Calcula onde está a entrada temporalmente
+          const entryOffset = 8 - entry.row;
+          const entryIndex = i + entryOffset;
+          
+          if (entryIndex >= sortedMatches.length) continue;
+          
+          const entryMatch = sortedMatches[entryIndex];
+          const galeMatches = sortedMatches.slice(entryIndex, entryIndex + 5);
+          const evaluation = evaluateEntry(entryMatch, galeMatches, entry.config);
+          
+          // Coleta TODAS as odds disponíveis no jogo de entrada
+          if (entryMatch && entryMatch.markets) {
+            const allOdds = [];
+            
+            Object.entries(entryMatch.markets).forEach(([marketKey, oddValue]) => {
+              if (!oddValue || typeof oddValue !== 'number' || isNaN(oddValue) || oddValue <= 0) {
+                console.log(`⚠️ Odd inválida ignorada: ${marketKey} = ${oddValue}`);
+                return;
+              }
+              
+              const marketLabel = getMarketLabelFromKey(marketKey);
+              if (marketLabel) {
+                allOdds.push({
+                  market: marketLabel,
+                  marketKey,
+                  odd: oddValue
+                });
+              } else {
+                console.log(`⚠️ Mercado sem label ignorado: ${marketKey}`);
+              }
+            });
+            
+            // Separa entre GREEN e RED
+            const isGreen = evaluation.level !== 'F';
+            if (isGreen) {
+              greenOdds.push(...allOdds.map(o => ({ ...o, level: evaluation.level })));
+              greenScores.push({
+                score: `${entryMatch.placarCasaFT}x${entryMatch.placarForaFT}`,
+                totalGoals: entryMatch.totalGolsFT,
+                teams: `${entryMatch.timeCasa} x ${entryMatch.timeFora}`,
+                level: evaluation.level
+              });
+            } else {
+              redOdds.push(...allOdds.map(o => ({ ...o, level: 'F' })));
+              redScores.push({
+                score: `${entryMatch.placarCasaFT}x${entryMatch.placarForaFT}`,
+                totalGoals: entryMatch.totalGolsFT,
+                teams: `${entryMatch.timeCasa} x ${entryMatch.timeFora}`,
+                level: 'F'
+              });
+            }
+          }
+          
+          patternOccurrences.push({
+            patternStartIndex: i,
+            entryMatch,
+            galeMatches,
+            evaluation
+          });
+        }
+      }
 
-        entryResults.push({
-          entryPosition: `${entry.row}-${entry.col}`,
-          entryConfig: entry.config,
-          patternPosition: `${pattern.row}-${pattern.col}`,
-          patternConfig: pattern.config,
-          totalOccurrences: total,
-          assertiveness: {
-            sg: { count: sg, percentage: total > 0 ? (sg / total) * 100 : 0 },
-            g1: { count: g1, percentage: total > 0 ? (g1 / total) * 100 : 0 },
-            g2: { count: g2, percentage: total > 0 ? (g2 / total) * 100 : 0 },
-            g3: { count: g3, percentage: total > 0 ? (g3 / total) * 100 : 0 },
-            g4: { count: g4, percentage: total > 0 ? (g4 / total) * 100 : 0 },
-            failures: { count: failures, percentage: total > 0 ? (failures / total) * 100 : 0 },
-            total: { count: totalSuccess, percentage: totalSuccessPercentage }
-          },
-          greenAnalysis, // Análise dos jogos GREEN
-          redAnalysis, // Análise dos jogos RED
-          occurrences: patternOccurrences
-        });
+      console.log('Ocorrências do padrão completo:', patternOccurrences.length);
+
+      const total = patternOccurrences.length;
+      const sg = patternOccurrences.filter(o => o.evaluation.level === 'SG').length;
+      const g1 = patternOccurrences.filter(o => o.evaluation.level === 'G1').length;
+      const g2 = patternOccurrences.filter(o => o.evaluation.level === 'G2').length;
+      const g3 = patternOccurrences.filter(o => o.evaluation.level === 'G3').length;
+      const g4 = patternOccurrences.filter(o => o.evaluation.level === 'G4').length;
+      const failures = patternOccurrences.filter(o => o.evaluation.level === 'F').length;
+
+      const totalSuccess = sg + g1 + g2 + g3 + g4;
+      const totalSuccessPercentage = total > 0 ? (totalSuccess / total) * 100 : 0;
+
+      console.log('Assertividade - SG:', sg, 'G1:', g1, 'G2:', g2, 'G3:', g3, 'G4:', g4, 'F:', failures);
+      console.log('Odds GREEN coletadas:', greenOdds.length);
+      console.log('Odds RED coletadas:', redOdds.length);
+
+      // Análise separada para GREEN e RED
+      const greenAnalysis = {
+        odds: analyzeOdds(greenOdds),
+        scores: analyzeScores(greenScores),
+        count: totalSuccess,
+        percentage: totalSuccessPercentage
+      };
+      
+      const redAnalysis = {
+        odds: analyzeOdds(redOdds),
+        scores: analyzeScores(redScores),
+        count: failures,
+        percentage: total > 0 ? (failures / total) * 100 : 0
+      };
+
+      entryResults.push({
+        entryPosition: `${entry.row}-${entry.col}`,
+        entryConfig: entry.config,
+        patternCells: patternGroup.cells,
+        patternConfig: patternGroup.config,
+        totalOccurrences: total,
+        assertiveness: {
+          sg: { count: sg, percentage: total > 0 ? (sg / total) * 100 : 0 },
+          g1: { count: g1, percentage: total > 0 ? (g1 / total) * 100 : 0 },
+          g2: { count: g2, percentage: total > 0 ? (g2 / total) * 100 : 0 },
+          g3: { count: g3, percentage: total > 0 ? (g3 / total) * 100 : 0 },
+          g4: { count: g4, percentage: total > 0 ? (g4 / total) * 100 : 0 },
+          failures: { count: failures, percentage: total > 0 ? (failures / total) * 100 : 0 },
+          total: { count: totalSuccess, percentage: totalSuccessPercentage }
+        },
+        greenAnalysis,
+        redAnalysis,
+        occurrences: patternOccurrences
       });
     });
-
-    console.log('\n=== RESULTADOS FINAIS ===');
-    console.log('Total de análises:', entryResults.length);
-    console.log('Resultados:', entryResults);
 
     return entryResults;
   };
