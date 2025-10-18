@@ -626,25 +626,34 @@ const PatternAnalysisPage = () => {
 
           <div className="space-y-6">
             {analysisResults.map((result, idx) => {
-              // Calcula F (Falhas)
-              const failures = result.totalOccurrences - result.assertiveness.g4.count;
-              const failurePercentage = result.totalOccurrences > 0 
-                ? (failures / result.totalOccurrences) * 100 
-                : 0;
+              // Usa os dados já calculados corretamente
+              const totalSuccess = result.assertiveness.total.percentage;
+              const failures = result.assertiveness.failures.count;
+              const failurePercentage = result.assertiveness.failures.percentage;
               
-              // Assertividade total (considerando G4 como máximo)
-              const totalSuccess = result.assertiveness.g4.percentage;
+              // Contadores por nível (já corretos do backend)
+              const sgCount = result.assertiveness.sg.count;
+              const g1Count = result.assertiveness.g1.count;
+              const g2Count = result.assertiveness.g2.count;
+              const g3Count = result.assertiveness.g3.count;
+              const g4Count = result.assertiveness.g4.count;
               
-              // Distribui ção por nível
-              const sgOnly = result.assertiveness.sg.count;
-              const g1Only = result.assertiveness.g1.count - result.assertiveness.sg.count;
-              const g2Only = result.assertiveness.g2.count - result.assertiveness.g1.count;
-              const g3Only = result.assertiveness.g3.count - result.assertiveness.g2.count;
-              const g4Only = result.assertiveness.g4.count - result.assertiveness.g3.count;
+              const sgPercent = result.assertiveness.sg.percentage;
+              const g1Percent = result.assertiveness.g1.percentage;
+              const g2Percent = result.assertiveness.g2.percentage;
+              const g3Percent = result.assertiveness.g3.percentage;
+              const g4Percent = result.assertiveness.g4.percentage;
               
-              const sgPercent = result.totalOccurrences > 0 ? (sgOnly / result.totalOccurrences) * 100 : 0;
-              const g1Percent = result.totalOccurrences > 0 ? (g1Only / result.totalOccurrences) * 100 : 0;
-              const g2Percent = result.totalOccurrences > 0 ? (g2Only / result.totalOccurrences) * 100 : 0;
+              // Cálculo de ROI simulado (assumindo odd média de 2.0 e stake de 100)
+              const stake = 100;
+              const avgOdd = 2.0;
+              const totalInvested = result.totalOccurrences * stake * (1 + 1 + 1 + 1 + 1); // SG + G1 + G2 + G3 + G4
+              const totalReturned = (sgCount * stake * avgOdd) + 
+                                   (g1Count * stake * 2 * avgOdd) + 
+                                   (g2Count * stake * 3 * avgOdd) +
+                                   (g3Count * stake * 4 * avgOdd) +
+                                   (g4Count * stake * 5 * avgOdd);
+              const roi = totalInvested > 0 ? ((totalReturned - totalInvested) / totalInvested) * 100 : 0;
               
               return (
                 <div key={idx} className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-lg p-6 border border-purple-500/30">
