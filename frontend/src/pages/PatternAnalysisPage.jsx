@@ -390,6 +390,102 @@ const PatternAnalysisPage = () => {
     }
   };
 
+  const getOddKeyForMarket = (marketCode) => {
+    const mapping = {
+      'AM': 'ParaOTimeMarcarSimNao_AmbasMarcam',
+      'O25': 'TotalGols_MaisDe_25',
+      'O35': 'TotalGols_MaisDe_35',
+      'O45': 'TotalGols_MaisDe_45'
+    };
+    return mapping[marketCode] || null;
+  };
+
+  const analyzeOdds = (oddsData) => {
+    if (oddsData.length === 0) return { mostCommon: [], avgByLevel: {} };
+    
+    // Conta frequência de cada odd
+    const oddFrequency = {};
+    oddsData.forEach(({ odd, level }) => {
+      const roundedOdd = Math.round(odd * 10) / 10; // Arredonda para 1 decimal
+      const key = `${roundedOdd}`;
+      if (!oddFrequency[key]) {
+        oddFrequency[key] = { odd: roundedOdd, count: 0, levels: {} };
+      }
+      oddFrequency[key].count++;
+      oddFrequency[key].levels[level] = (oddFrequency[key].levels[level] || 0) + 1;
+    });
+    
+    // Ordena por frequência
+    const sorted = Object.values(oddFrequency).sort((a, b) => b.count - a.count);
+    
+    // Calcula média por nível
+    const avgByLevel = {};
+    oddsData.forEach(({ odd, level }) => {
+      if (!avgByLevel[level]) avgByLevel[level] = { sum: 0, count: 0 };
+      avgByLevel[level].sum += odd;
+      avgByLevel[level].count++;
+    });
+    
+    Object.keys(avgByLevel).forEach(level => {
+      avgByLevel[level] = avgByLevel[level].sum / avgByLevel[level].count;
+    });
+    
+    return {
+      mostCommon: sorted.slice(0, 5), // Top 5 odds mais comuns
+      avgByLevel
+    };
+  };
+
+  const analyzeScores = (scoresData) => {
+    if (scoresData.length === 0) return { mostCommon: [], avgGoalsByLevel: {} };
+    
+    // Conta frequência de cada placar
+    const scoreFrequency = {};
+    scoresData.forEach(({ score, level }) => {
+      if (!scoreFrequency[score]) {
+        scoreFrequency[score] = { score, count: 0, levels: {} };
+      }
+      scoreFrequency[score].count++;
+      scoreFrequency[score].levels[level] = (scoreFrequency[score].levels[level] || 0) + 1;
+    });
+    
+    // Ordena por frequência
+    const sorted = Object.values(scoreFrequency).sort((a, b) => b.count - a.count);
+    
+    // Calcula média de gols por nível
+    const avgGoalsByLevel = {};
+    scoresData.forEach(({ totalGoals, level }) => {
+      if (!avgGoalsByLevel[level]) avgGoalsByLevel[level] = { sum: 0, count: 0 };
+      avgGoalsByLevel[level].sum += totalGoals;
+      avgGoalsByLevel[level].count++;
+    });
+    
+    Object.keys(avgGoalsByLevel).forEach(level => {
+      avgGoalsByLevel[level] = avgGoalsByLevel[level].sum / avgGoalsByLevel[level].count;
+    });
+    
+    return {
+      mostCommon: sorted.slice(0, 10), // Top 10 placares mais comuns
+      avgGoalsByLevel
+    };
+  };
+
+  const checkMarket = (match, marketCode) => {
+    const totalGoals = match.totalGolsFT;
+    const placarCasa = match.placarCasaFT;
+    const placarFora = match.placarForaFT;
+
+    switch (marketCode) {
+      case 'AM': return placarCasa > 0 && placarFora > 0;
+      case 'ANM': return placarCasa === 0 || placarFora === 0;
+      case 'O25': return totalGoals > 2.5;
+      case 'O35': return totalGoals > 3.5;
+      case 'U25': return totalGoals < 2.5;
+      case 'U35': return totalGoals < 3.5;
+      default: return false;
+    }
+  };
+
   const evaluateEntry = (entryMatch, galeMatches, config) => {
     const results = { 
       sg: false, 
