@@ -216,17 +216,22 @@ frontend:
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
-  test_sequence: 1
-  run_ui: false
+  version: "2.0"
+  test_sequence: 2
+  run_ui: true
 
 test_plan:
   current_focus:
-    - "Validação completa via screenshots"
+    - "PatternAnalysisPage - Lógica de Gale corrigida"
+    - "PatternAnalysisPage - Cálculos de assertividade melhorados"
+    - "PatternAnalysisPage - Distribuição visual G3/G4 adicionada"
+    - "PatternAnalysisPage - ROI simulado implementado"
+    - "PatternAnalysisPage - Helper text expandido"
+    - "PatternAnalysisPage - Seção de tooltips/conceitos"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Implementação completa do Seletor de Blocos com análise histórica. Todas as funcionalidades solicitadas foram implementadas e testadas via screenshots: seleção individual de células (com indicador visual azul), input para dias de análise (1-90 dias), algoritmo de busca de padrões históricos, e exibição detalhada de resultados com frequência e taxa de acerto. Sistema está funcional e pronto para uso com dados reais."
+    message: "Implementação completa das Fases 1 e 2 da página Análise de Padrões. FASE 1: Corrigida lógica de avaliação de gale (agora cada ocorrência marca apenas um nível: SG, G1, G2, G3, G4 ou F), melhorados cálculos de assertividade, adicionada visualização de G3 e G4, e implementado ROI simulado (odd 2.0, stake 100). FASE 2: Expandido helper text com explicações passo-a-passo, criada seção de tooltips com conceitos-chave (Padrão Isolado, Entrada, Gale, ROI), adicionados tooltips nos campos de configuração, e info sobre ROI nos resultados. Sistema pronto para testes E2E com dados reais."
