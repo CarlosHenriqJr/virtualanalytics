@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { format, parse } from 'date-fns';
-import { Eye, EyeOff, BarChart3, Zap, Blocks, Brain, Grid3x3, Trophy } from 'lucide-react';
+import { Eye, EyeOff, BarChart3, Zap, Blocks, Brain, Grid3x3, Trophy, Target } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import FileUpload from '../components/FileUpload';
 import DateSelector from '../components/DateSelector';
 import MatchGrid from '../components/MatchGrid';
@@ -20,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { mockMatches } from '../data/mockData';
 
 const HomePage = () => {
+  const navigate = useNavigate();
   const [matches, setMatches] = useState(mockMatches);
   const [selectedDate, setSelectedDate] = useState(null);
   const [showHT, setShowHT] = useState(false);
