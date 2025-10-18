@@ -149,8 +149,11 @@ const PatternAnalysisPage = () => {
 
   // Executa backtest
   const runBacktest = () => {
+    console.log('=== INICIANDO BACKTEST ===');
+    console.log('Total de partidas:', matches?.length);
+    
     if (!matches || matches.length === 0) {
-      alert('Carregue dados primeiro!');
+      alert('Carregue dados primeiro! Não há partidas disponíveis.');
       return;
     }
 
@@ -172,18 +175,36 @@ const PatternAnalysisPage = () => {
       }
     }
 
+    console.log('Padrões encontrados:', patterns.length);
+    console.log('Entradas encontradas:', entries.length);
+    console.log('Padrões:', patterns);
+    console.log('Entradas:', entries);
+
     if (patterns.length === 0) {
-      alert('Configure pelo menos um Padrão Isolado!');
+      alert('Configure pelo menos um Padrão Isolado! Selecione células, escolha mercados e clique em "🟨 Marcar como Padrão Isolado"');
       return;
     }
 
     if (entries.length === 0) {
-      alert('Configure pelo menos uma Entrada!');
+      alert('Configure pelo menos uma Entrada! Selecione células, escolha mercados e clique em "🟩 Marcar como Entrada"');
       return;
     }
 
+    console.log('Executando backtest...');
     const results = executeBacktest(patterns, entries, matches);
+    console.log('Resultados do backtest:', results);
+    
+    if (!results || results.length === 0) {
+      alert('Nenhum resultado encontrado! Verifique se há dados suficientes e se as entradas estão relacionadas aos padrões (mesma coluna, entrada abaixo do padrão).');
+      return;
+    }
+    
     setAnalysisResults(results);
+    
+    // Scroll para resultados
+    setTimeout(() => {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }, 100);
   };
 
   // Algoritmo de backtest
