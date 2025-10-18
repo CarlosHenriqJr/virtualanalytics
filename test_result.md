@@ -180,15 +180,18 @@ frontend:
 
   - task: "PatternAnalysisPage - Helper text expandido"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Expandido helper text com explicações detalhadas de cada passo (selecionar mercados, definir padrão, definir entrada, executar backtest). Incluídas sub-explicações sobre SG, G1-G4, F e ROI simulado."
+      - working: false
+        agent: "testing"
+        comment: "Mesmo issue de roteamento - componente não está sendo carregado pela URL /pattern-analysis. Implementação existe no código mas não está acessível via interface web."
 
   - task: "PatternAnalysisPage - Seção de tooltips/conceitos"
     implemented: true
