@@ -74,7 +74,7 @@ const PatternAnalysisPage = () => {
   };
 
   // Salva configuração da célula
-  const saveCell Config = () => {
+  const saveCellConfig = () => {
     if (cellConfig.markets.length === 0) {
       alert('Selecione pelo menos um mercado!');
       return;
