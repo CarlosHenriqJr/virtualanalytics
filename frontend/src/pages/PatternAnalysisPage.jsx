@@ -154,7 +154,7 @@ const PatternAnalysisPage = () => {
   };
 
   // Executa backtest
-  const runBacktest = () => {
+  const runBacktest = async () => {
     console.log('=== INICIANDO BACKTEST ===');
     console.log('Total de partidas:', matches?.length);
     console.log('📊 Estado da matriz:', matrix);
@@ -198,21 +198,44 @@ const PatternAnalysisPage = () => {
       return;
     }
 
-    console.log('Executando backtest...');
-    const results = executeBacktest(patterns, entries, matches);
-    console.log('Resultados do backtest:', results);
-    
-    if (!results || results.length === 0) {
-      alert('Nenhum resultado encontrado! Verifique se há dados suficientes e se as entradas estão relacionadas aos padrões (mesma coluna, entrada abaixo do padrão).');
-      return;
+    setIsAnalyzing(true);
+    setProgress(0);
+
+    // Simula progresso durante análise
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 90) return prev;
+        return prev + 10;
+      });
+    }, 200);
+
+    try {
+      console.log('Executando backtest...');
+      const results = executeBacktest(patterns, entries, matches);
+      console.log('Resultados do backtest:', results);
+      
+      clearInterval(progressInterval);
+      setProgress(100);
+      
+      if (!results || results.length === 0) {
+        setIsAnalyzing(false);
+        alert('Nenhum resultado encontrado! Verifique se há dados suficientes e se as entradas estão relacionadas aos padrões (mesma coluna, entrada abaixo do padrão na timeline).');
+        return;
+      }
+      
+      setAnalysisResults(results);
+      
+      // Scroll para resultados
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 500);
+    } catch (error) {
+      clearInterval(progressInterval);
+      setIsAnalyzing(false);
+      console.error('Erro no backtest:', error);
+      alert('Erro ao executar backtest. Verifique o console para detalhes.');
     }
-    
-    setAnalysisResults(results);
-    
-    // Scroll para resultados
-    setTimeout(() => {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }, 100);
   };
 
   // Algoritmo de backtest
