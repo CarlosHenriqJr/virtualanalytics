@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { format, parse } from 'date-fns';
 import { Eye, EyeOff, BarChart3, Zap, Blocks, Brain, Grid3x3, Trophy, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useMatches } from '../contexts/MatchesContext';
 import FileUpload from '../components/FileUpload';
 import DateSelector from '../components/DateSelector';
 import MatchGrid from '../components/MatchGrid';
@@ -18,11 +19,10 @@ import LeagueTable from '../components/LeagueTable';
 import { Button } from '../components/ui/button';
 import { Toaster } from '../components/ui/toaster';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { mockMatches } from '../data/mockData';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const [matches, setMatches] = useState(mockMatches);
+  const { matches, setMatches } = useMatches();
   const [selectedDate, setSelectedDate] = useState(null);
   const [showHT, setShowHT] = useState(false);
   const [filterMode, setFilterMode] = useState(null);
