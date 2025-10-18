@@ -452,7 +452,7 @@ const PatternAnalysisPage = () => {
         
         <div className="overflow-x-auto">
           <div className="inline-block">
-            {/* Header com números das colunas */}
+            {/* Header */}
             <div className="flex">
               <div className="w-[60px] h-[50px] flex-shrink-0 border-r border-gray-800 bg-gray-950 flex items-center justify-center text-xs font-semibold text-gray-400">
                 #
@@ -467,31 +467,36 @@ const PatternAnalysisPage = () => {
               ))}
             </div>
 
-            {/* Linhas da matriz */}
+            {/* Linhas */}
             {[...Array(8)].map((_, rowIdx) => {
               const row = rowIdx + 1;
               return (
                 <div key={row} className="flex">
-                  {/* Número da linha */}
                   <div className="w-[60px] h-[60px] flex-shrink-0 border-r border-t border-gray-800 bg-gray-950 flex items-center justify-center text-sm font-semibold text-gray-300">
                     {row}
                   </div>
                   
-                  {/* Células da linha */}
                   {[...Array(20)].map((_, colIdx) => {
                     const col = colIdx + 1;
                     const key = `${row}-${col}`;
                     const config = matrix[key];
+                    const isSelected = selectedCells.includes(key);
                     const cellText = getCellText(config);
                     
                     return (
                       <div
                         key={col}
                         onClick={() => handleCellClick(row, col)}
-                        className={`w-[70px] h-[60px] flex-shrink-0 border-r border-t border-gray-800 cursor-pointer transition-all flex items-center justify-center p-1 ${
-                          config?.type === 'pattern' ? 'bg-yellow-600/40 hover:bg-yellow-600/60 border-yellow-500/50' :
-                          config?.type === 'entry' ? 'bg-green-600/40 hover:bg-green-600/60 border-green-500/50' :
-                          'bg-gray-800/30 hover:bg-gray-700/50'
+                        className={`w-[70px] h-[60px] flex-shrink-0 border-r border-t cursor-pointer transition-all flex items-center justify-center p-1 ${
+                          isSelected ? 'ring-4 ring-blue-400 ring-inset' :
+                          config?.type === 'pattern' ? 'bg-yellow-600/40 border-yellow-500/50' :
+                          config?.type === 'entry' ? 'bg-green-600/40 border-green-500/50' :
+                          'border-gray-800'
+                        } ${
+                          !config && !isSelected ? 'bg-gray-800/30 hover:bg-gray-700/50' :
+                          config?.type === 'pattern' ? 'hover:bg-yellow-600/60' :
+                          config?.type === 'entry' ? 'hover:bg-green-600/60' :
+                          ''
                         }`}
                       >
                         <span className="text-[10px] font-bold text-white text-center leading-tight">
@@ -515,6 +520,10 @@ const PatternAnalysisPage = () => {
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-green-600/40 border-2 border-green-500/50 rounded"></div>
             <span className="text-gray-300">Entrada</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 border-4 border-blue-400 rounded"></div>
+            <span className="text-gray-300">Selecionada</span>
           </div>
         </div>
       </Card>
