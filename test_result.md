@@ -158,7 +158,7 @@ frontend:
     implemented: true
     working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -168,6 +168,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "Mesmo issue de roteamento - componente não está sendo carregado pela URL /pattern-analysis. Implementação existe no código mas não está acessível via interface web."
+      - working: false
+        agent: "testing"
+        comment: "PROBLEMA PERSISTENTE: G3/G4 implementados no código mas não testáveis devido ao problema de roteamento. PatternAnalysisPage.jsx não carrega na URL /pattern-analysis."
 
   - task: "PatternAnalysisPage - ROI simulado implementado"
     implemented: true
