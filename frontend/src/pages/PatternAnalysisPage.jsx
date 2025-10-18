@@ -586,7 +586,7 @@ const PatternAnalysisPage = () => {
             <li><strong>2. Defina o Padrão Isolado (🟨):</strong> Clique nas células que formam o gatilho do seu padrão</li>
             <li><strong>3. Defina a Entrada (🟩):</strong> Clique na célula onde você faria a aposta após o padrão</li>
             <li className="text-yellow-300 font-semibold">
-              ⚠️ <strong>REGRA IMPORTANTE:</strong> A Entrada deve estar na <strong>mesma coluna</strong> e em <strong>linha abaixo</strong> do Padrão para que o backtest funcione!
+              ⚠️ <strong>REGRA IMPORTANTE:</strong> A Entrada deve estar na <strong>mesma coluna</strong> e em <strong>linha abaixo</strong> do Padrão para que o backtest funcione! (Linhas decrescem de 8 a 1, sendo 8 o jogo mais antigo e 1 o mais recente)
             </li>
             <li><strong>4. Execute o Backtest:</strong> O sistema vai analisar os dados históricos e mostrar:
               <ul className="ml-4 mt-1 space-y-0.5">
