@@ -832,6 +832,7 @@ const PatternAnalysisPage = () => {
                       Este padrão teve <strong>{result.totalOccurrences} ocorrências</strong> nos dados.
                       {' '}A assertividade total considerando gale é de <strong>{totalSuccess.toFixed(1)}%</strong>.
                       {' '}<strong>{sgPercent.toFixed(0)}%</strong> dos casos bateram sem gale (SG).
+                      {' '}ROI simulado: <strong className={roi >= 0 ? 'text-green-400' : 'text-red-400'}>{roi >= 0 ? '+' : ''}{roi.toFixed(1)}%</strong>.
                     </p>
                   </div>
 
