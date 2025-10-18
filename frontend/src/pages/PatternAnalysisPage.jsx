@@ -4,9 +4,11 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Target, TrendingUp, Search, Settings, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { mockMatches } from '../data/mockData';
 
-const PatternAnalysisPage = ({ matches }) => {
+const PatternAnalysisPage = () => {
   const navigate = useNavigate();
+  const matches = mockMatches; // Usa mockData por padrão
   
   // Estado da matriz 8x20
   const [matrix, setMatrix] = useState(() => {
