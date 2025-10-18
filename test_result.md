@@ -120,15 +120,18 @@ user_problem_statement: |
 frontend:
   - task: "PatternAnalysisPage - Lógica de Gale corrigida"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Corrigida função evaluateEntry para retornar corretamente em qual nível o gale bateu (SG, G1, G2, G3, G4 ou F). Agora cada ocorrência marca apenas um nível, não todos acumulativamente. Adicionado campo 'level' para rastreamento preciso."
+      - working: false
+        agent: "testing"
+        comment: "ISSUE CRÍTICO IDENTIFICADO: A URL /pattern-analysis não está renderizando o componente PatternAnalysisPage.jsx. Em vez disso, está mostrando 'Seletor de Blocos - Análise Histórica' que é um componente diferente. O arquivo PatternAnalysisPage.jsx existe e tem toda a implementação correta (matriz 8x20, seleção de mercados, botões de padrão/entrada, backtest), mas não está sendo carregado pela rota. PROBLEMA DE ROTEAMENTO: Verificar App.js - a rota '/pattern-analysis' pode estar apontando para componente errado."
 
   - task: "PatternAnalysisPage - Cálculos de assertividade melhorados"
     implemented: true
