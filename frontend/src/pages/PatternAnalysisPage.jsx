@@ -722,7 +722,7 @@ const PatternAnalysisPage = () => {
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm text-white font-semibold">SG (Sem Gale)</span>
-                          <span className="text-sm text-gray-400">{sgOnly} jogos ({sgPercent.toFixed(1)}%)</span>
+                          <span className="text-sm text-gray-400">{sgCount} jogos ({sgPercent.toFixed(1)}%)</span>
                         </div>
                         <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
                           <div 
@@ -738,7 +738,7 @@ const PatternAnalysisPage = () => {
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm text-white font-semibold">G1 (Gale 1)</span>
-                          <span className="text-sm text-gray-400">{g1Only} jogos ({g1Percent.toFixed(1)}%)</span>
+                          <span className="text-sm text-gray-400">{g1Count} jogos ({g1Percent.toFixed(1)}%)</span>
                         </div>
                         <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
                           <div 
@@ -754,7 +754,7 @@ const PatternAnalysisPage = () => {
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-sm text-white font-semibold">G2 (Gale 2)</span>
-                          <span className="text-sm text-gray-400">{g2Only} jogos ({g2Percent.toFixed(1)}%)</span>
+                          <span className="text-sm text-gray-400">{g2Count} jogos ({g2Percent.toFixed(1)}%)</span>
                         </div>
                         <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
                           <div 
@@ -762,6 +762,38 @@ const PatternAnalysisPage = () => {
                             style={{ width: `${g2Percent}%` }}
                           >
                             {g2Percent > 5 && `${g2Percent.toFixed(0)}%`}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* G3 */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-white font-semibold">G3 (Gale 3)</span>
+                          <span className="text-sm text-gray-400">{g3Count} jogos ({g3Percent.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-orange-600 to-orange-400 flex items-center justify-center text-xs font-bold text-white"
+                            style={{ width: `${g3Percent}%` }}
+                          >
+                            {g3Percent > 5 && `${g3Percent.toFixed(0)}%`}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* G4 */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-white font-semibold">G4 (Gale 4)</span>
+                          <span className="text-sm text-gray-400">{g4Count} jogos ({g4Percent.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-pink-600 to-pink-400 flex items-center justify-center text-xs font-bold text-white"
+                            style={{ width: `${g4Percent}%` }}
+                          >
+                            {g4Percent > 5 && `${g4Percent.toFixed(0)}%`}
                           </div>
                         </div>
                       </div>
