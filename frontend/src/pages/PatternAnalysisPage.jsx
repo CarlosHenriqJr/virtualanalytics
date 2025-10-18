@@ -576,110 +576,265 @@ const PatternAnalysisPage = () => {
       {/* Resultados do Backtest */}
       {analysisResults && analysisResults.length > 0 && (
         <Card className="bg-gray-900/50 border-gray-800 p-6">
-          <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
             <TrendingUp className="w-6 h-6 text-green-400" />
             Resultados do Backtest
           </h3>
 
-          <div className="space-y-4">
-            {analysisResults.map((result, idx) => (
-              <div key={idx} className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-white font-semibold">
-                      Entrada: Célula {result.entryPosition} - {getCellText(result.entryConfig)}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Padrão: Célula {result.patternPosition} - {getCellText(result.patternConfig)}
-                    </p>
+          <div className="space-y-6">
+            {analysisResults.map((result, idx) => {
+              // Calcula F (Falhas)
+              const failures = result.totalOccurrences - result.assertiveness.g4.count;
+              const failurePercentage = result.totalOccurrences > 0 
+                ? (failures / result.totalOccurrences) * 100 
+                : 0;
+              
+              // Assertividade total (considerando G4 como máximo)
+              const totalSuccess = result.assertiveness.g4.percentage;
+              
+              // Distribui ção por nível
+              const sgOnly = result.assertiveness.sg.count;
+              const g1Only = result.assertiveness.g1.count - result.assertiveness.sg.count;
+              const g2Only = result.assertiveness.g2.count - result.assertiveness.g1.count;
+              const g3Only = result.assertiveness.g3.count - result.assertiveness.g2.count;
+              const g4Only = result.assertiveness.g4.count - result.assertiveness.g3.count;
+              
+              const sgPercent = result.totalOccurrences > 0 ? (sgOnly / result.totalOccurrences) * 100 : 0;
+              const g1Percent = result.totalOccurrences > 0 ? (g1Only / result.totalOccurrences) * 100 : 0;
+              const g2Percent = result.totalOccurrences > 0 ? (g2Only / result.totalOccurrences) * 100 : 0;
+              
+              return (
+                <div key={idx} className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 rounded-lg p-6 border border-purple-500/30">
+                  {/* Header */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 text-lg mb-2">
+                      <span className="text-yellow-400 font-bold">🔹 Padrão:</span>
+                      <span className="text-white font-semibold">{getCellText(result.patternConfig)}</span>
+                      <span className="text-gray-400">→</span>
+                      <span className="text-green-400 font-bold">Entrada:</span>
+                      <span className="text-white font-semibold">{getCellText(result.entryConfig)}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                      <span>Padrão: Célula {result.patternPosition}</span>
+                      <span>•</span>
+                      <span>Entrada: Célula {result.entryPosition}</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-purple-400">{result.totalOccurrences}</p>
-                    <p className="text-xs text-gray-400">Ocorrências</p>
-                  </div>
-                </div>
 
-                {/* Tabela de Assertividade */}
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="bg-gray-900">
-                        <th className="border border-gray-700 p-2 text-left text-white text-sm">Tipo</th>
-                        <th className="border border-gray-700 p-2 text-center text-white text-sm">Acertos</th>
-                        <th className="border border-gray-700 p-2 text-center text-white text-sm">Assertividade</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-gray-700 p-2 text-white font-semibold">SG (Sem Gale)</td>
-                        <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.sg.count}/{result.totalOccurrences}</td>
-                        <td className="border border-gray-700 p-2 text-center">
-                          <span className={`font-bold ${
-                            result.assertiveness.sg.percentage >= 70 ? 'text-green-400' :
-                            result.assertiveness.sg.percentage >= 50 ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {result.assertiveness.sg.percentage.toFixed(1)}%
-                          </span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-700 p-2 text-white">G1</td>
-                        <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.g1.count}/{result.totalOccurrences}</td>
-                        <td className="border border-gray-700 p-2 text-center">
-                          <span className={`font-bold ${
-                            result.assertiveness.g1.percentage >= 70 ? 'text-green-400' :
-                            result.assertiveness.g1.percentage >= 50 ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {result.assertiveness.g1.percentage.toFixed(1)}%
-                          </span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-700 p-2 text-white">G2</td>
-                        <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.g2.count}/{result.totalOccurrences}</td>
-                        <td className="border border-gray-700 p-2 text-center">
-                          <span className={`font-bold ${
-                            result.assertiveness.g2.percentage >= 70 ? 'text-green-400' :
-                            result.assertiveness.g2.percentage >= 50 ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {result.assertiveness.g2.percentage.toFixed(1)}%
-                          </span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-700 p-2 text-white">G3</td>
-                        <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.g3.count}/{result.totalOccurrences}</td>
-                        <td className="border border-gray-700 p-2 text-center">
-                          <span className={`font-bold ${
-                            result.assertiveness.g3.percentage >= 70 ? 'text-green-400' :
-                            result.assertiveness.g3.percentage >= 50 ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {result.assertiveness.g3.percentage.toFixed(1)}%
-                          </span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="border border-gray-700 p-2 text-white">G4</td>
-                        <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.g4.count}/{result.totalOccurrences}</td>
-                        <td className="border border-gray-700 p-2 text-center">
-                          <span className={`font-bold ${
-                            result.assertiveness.g4.percentage >= 70 ? 'text-green-400' :
-                            result.assertiveness.g4.percentage >= 50 ? 'text-yellow-400' :
-                            'text-red-400'
-                          }`}>
-                            {result.assertiveness.g4.percentage.toFixed(1)}%
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  {/* Métricas Principais */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gray-900/70 rounded-lg p-4 border border-green-500/50">
+                      <p className="text-xs text-gray-400 mb-1">✅ Assertividade Total</p>
+                      <p className={`text-3xl font-bold ${
+                        totalSuccess >= 70 ? 'text-green-400' :
+                        totalSuccess >= 50 ? 'text-yellow-400' :
+                        'text-red-400'
+                      }`}>
+                        {totalSuccess.toFixed(1)}%
+                      </p>
+                    </div>
+
+                    <div className="bg-gray-900/70 rounded-lg p-4 border border-blue-500/50">
+                      <p className="text-xs text-gray-400 mb-1">🧮 Ocorrências</p>
+                      <p className="text-3xl font-bold text-blue-400">{result.totalOccurrences}</p>
+                    </div>
+
+                    <div className="bg-gray-900/70 rounded-lg p-4 border border-purple-500/50">
+                      <p className="text-xs text-gray-400 mb-1">🎯 Sem Gale (SG)</p>
+                      <p className="text-3xl font-bold text-purple-400">{sgPercent.toFixed(0)}%</p>
+                      <p className="text-xs text-gray-500 mt-1">{sgOnly} jogos</p>
+                    </div>
+
+                    <div className="bg-gray-900/70 rounded-lg p-4 border border-red-500/50">
+                      <p className="text-xs text-gray-400 mb-1">❌ Falhas (F)</p>
+                      <p className="text-3xl font-bold text-red-400">{failurePercentage.toFixed(0)}%</p>
+                      <p className="text-xs text-gray-500 mt-1">{failures} jogos</p>
+                    </div>
+                  </div>
+
+                  {/* Distribuição Visual */}
+                  <div className="mb-6">
+                    <p className="text-sm font-semibold text-white mb-3">📈 Distribuição por Gale:</p>
+                    <div className="space-y-2">
+                      {/* SG */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-white font-semibold">SG (Sem Gale)</span>
+                          <span className="text-sm text-gray-400">{sgOnly} jogos ({sgPercent.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-green-600 to-green-400 flex items-center justify-center text-xs font-bold text-white"
+                            style={{ width: `${sgPercent}%` }}
+                          >
+                            {sgPercent > 5 && `${sgPercent.toFixed(0)}%`}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* G1 */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-white font-semibold">G1 (Gale 1)</span>
+                          <span className="text-sm text-gray-400">{g1Only} jogos ({g1Percent.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-blue-600 to-blue-400 flex items-center justify-center text-xs font-bold text-white"
+                            style={{ width: `${g1Percent}%` }}
+                          >
+                            {g1Percent > 5 && `${g1Percent.toFixed(0)}%`}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* G2 */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-white font-semibold">G2 (Gale 2)</span>
+                          <span className="text-sm text-gray-400">{g2Only} jogos ({g2Percent.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 flex items-center justify-center text-xs font-bold text-white"
+                            style={{ width: `${g2Percent}%` }}
+                          >
+                            {g2Percent > 5 && `${g2Percent.toFixed(0)}%`}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* F (Falhas) */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-white font-semibold">F (Falhas)</span>
+                          <span className="text-sm text-gray-400">{failures} jogos ({failurePercentage.toFixed(1)}%)</span>
+                        </div>
+                        <div className="h-6 bg-gray-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-red-600 to-red-400 flex items-center justify-center text-xs font-bold text-white"
+                            style={{ width: `${failurePercentage}%` }}
+                          >
+                            {failurePercentage > 5 && `${failurePercentage.toFixed(0)}%`}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Resumo Textual */}
+                  <div className={`p-4 rounded-lg border ${
+                    totalSuccess >= 70 ? 'bg-green-900/30 border-green-500/50' :
+                    totalSuccess >= 50 ? 'bg-yellow-900/30 border-yellow-500/50' :
+                    'bg-red-900/30 border-red-500/50'
+                  }`}>
+                    <p className="text-sm text-white">
+                      <strong>
+                        {totalSuccess >= 70 ? '✅ Padrão Excelente!' :
+                         totalSuccess >= 50 ? '⚠️ Padrão Moderado' :
+                         '❌ Padrão Fraco'}
+                      </strong>
+                      {' - '}
+                      Este padrão teve <strong>{result.totalOccurrences} ocorrências</strong> nos dados.
+                      {' '}A assertividade total considerando gale é de <strong>{totalSuccess.toFixed(1)}%</strong>.
+                      {' '}<strong>{sgPercent.toFixed(0)}%</strong> dos casos bateram sem gale (SG).
+                    </p>
+                  </div>
+
+                  {/* Tabela Detalhada (colapsável) */}
+                  <div className="mt-4">
+                    <button
+                      onClick={() => {
+                        const elem = document.getElementById(`details-${idx}`);
+                        if (elem) elem.style.display = elem.style.display === 'none' ? 'block' : 'none';
+                      }}
+                      className="text-sm text-blue-400 hover:text-blue-300"
+                    >
+                      Ver Tabela Detalhada ▼
+                    </button>
+                    
+                    <div id={`details-${idx}`} style={{ display: 'none' }} className="mt-3 overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="bg-gray-900">
+                            <th className="border border-gray-700 p-2 text-left text-white text-sm">Tipo</th>
+                            <th className="border border-gray-700 p-2 text-center text-white text-sm">Acertos</th>
+                            <th className="border border-gray-700 p-2 text-center text-white text-sm">Assertividade</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="border border-gray-700 p-2 text-white font-semibold">SG (Sem Gale)</td>
+                            <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.sg.count}/{result.totalOccurrences}</td>
+                            <td className="border border-gray-700 p-2 text-center">
+                              <span className={`font-bold ${
+                                result.assertiveness.sg.percentage >= 70 ? 'text-green-400' :
+                                result.assertiveness.sg.percentage >= 50 ? 'text-yellow-400' :
+                                'text-red-400'
+                              }`}>
+                                {result.assertiveness.sg.percentage.toFixed(1)}%
+                              </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-700 p-2 text-white">G1</td>
+                            <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.g1.count}/{result.totalOccurrences}</td>
+                            <td className="border border-gray-700 p-2 text-center">
+                              <span className={`font-bold ${
+                                result.assertiveness.g1.percentage >= 70 ? 'text-green-400' :
+                                result.assertiveness.g1.percentage >= 50 ? 'text-yellow-400' :
+                                'text-red-400'
+                              }`}>
+                                {result.assertiveness.g1.percentage.toFixed(1)}%
+                              </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-700 p-2 text-white">G2</td>
+                            <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.g2.count}/{result.totalOccurrences}</td>
+                            <td className="border border-gray-700 p-2 text-center">
+                              <span className={`font-bold ${
+                                result.assertiveness.g2.percentage >= 70 ? 'text-green-400' :
+                                result.assertiveness.g2.percentage >= 50 ? 'text-yellow-400' :
+                                'text-red-400'
+                              }`}>
+                                {result.assertiveness.g2.percentage.toFixed(1)}%
+                              </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-700 p-2 text-white">G3</td>
+                            <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.g3.count}/{result.totalOccurrences}</td>
+                            <td className="border border-gray-700 p-2 text-center">
+                              <span className={`font-bold ${
+                                result.assertiveness.g3.percentage >= 70 ? 'text-green-400' :
+                                result.assertiveness.g3.percentage >= 50 ? 'text-yellow-400' :
+                                'text-red-400'
+                              }`}>
+                                {result.assertiveness.g3.percentage.toFixed(1)}%
+                              </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="border border-gray-700 p-2 text-white">G4</td>
+                            <td className="border border-gray-700 p-2 text-center text-white">{result.assertiveness.g4.count}/{result.totalOccurrences}</td>
+                            <td className="border border-gray-700 p-2 text-center">
+                              <span className={`font-bold ${
+                                result.assertiveness.g4.percentage >= 70 ? 'text-green-400' :
+                                result.assertiveness.g4.percentage >= 50 ? 'text-yellow-400' :
+                                'text-red-400'
+                              }`}>
+                                {result.assertiveness.g4.percentage.toFixed(1)}%
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       )}
