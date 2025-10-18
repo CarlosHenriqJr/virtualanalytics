@@ -201,13 +201,16 @@ const PatternAnalysisPage = () => {
     setIsAnalyzing(true);
     setProgress(0);
 
-    // Simula progresso durante análise
+    // Simula progresso durante análise com intervalo mais lento
     const progressInterval = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) return prev;
-        return prev + 10;
+        return prev + 5; // Incrementa de 5 em 5
       });
-    }, 200);
+    }, 300); // A cada 300ms
+
+    // Pequeno delay para garantir que o estado seja atualizado
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
       console.log('Executando backtest...');
@@ -217,22 +220,28 @@ const PatternAnalysisPage = () => {
       clearInterval(progressInterval);
       setProgress(100);
       
+      // Aguarda um pouco para mostrar 100%
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       if (!results || results.length === 0) {
         setIsAnalyzing(false);
+        setProgress(0);
         alert('Nenhum resultado encontrado! Verifique se há dados suficientes e se as entradas estão relacionadas aos padrões (mesma coluna, entrada abaixo do padrão na timeline).');
         return;
       }
       
       setAnalysisResults(results);
+      setIsAnalyzing(false);
+      setProgress(0);
       
       // Scroll para resultados
       setTimeout(() => {
-        setIsAnalyzing(false);
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-      }, 500);
+      }, 300);
     } catch (error) {
       clearInterval(progressInterval);
       setIsAnalyzing(false);
+      setProgress(0);
       console.error('Erro no backtest:', error);
       alert('Erro ao executar backtest. Verifique o console para detalhes.');
     }
