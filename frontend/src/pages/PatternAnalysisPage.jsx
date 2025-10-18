@@ -265,13 +265,18 @@ const PatternAnalysisPage = () => {
         console.log('Ocorrências do padrão:', patternOccurrences.length);
 
         const total = patternOccurrences.length;
-        const sg = patternOccurrences.filter(o => o.evaluation.sg).length;
-        const g1 = patternOccurrences.filter(o => o.evaluation.g1).length;
-        const g2 = patternOccurrences.filter(o => o.evaluation.g2).length;
-        const g3 = patternOccurrences.filter(o => o.evaluation.g3).length;
-        const g4 = patternOccurrences.filter(o => o.evaluation.g4).length;
+        const sg = patternOccurrences.filter(o => o.evaluation.level === 'SG').length;
+        const g1 = patternOccurrences.filter(o => o.evaluation.level === 'G1').length;
+        const g2 = patternOccurrences.filter(o => o.evaluation.level === 'G2').length;
+        const g3 = patternOccurrences.filter(o => o.evaluation.level === 'G3').length;
+        const g4 = patternOccurrences.filter(o => o.evaluation.level === 'G4').length;
+        const failures = patternOccurrences.filter(o => o.evaluation.level === 'F').length;
 
-        console.log('Assertividade - SG:', sg, 'G1:', g1, 'G2:', g2, 'G3:', g3, 'G4:', g4);
+        // Calcula assertividade total (todos que bateram em algum nível)
+        const totalSuccess = sg + g1 + g2 + g3 + g4;
+        const totalSuccessPercentage = total > 0 ? (totalSuccess / total) * 100 : 0;
+
+        console.log('Assertividade - SG:', sg, 'G1:', g1, 'G2:', g2, 'G3:', g3, 'G4:', g4, 'F:', failures);
 
         entryResults.push({
           entryPosition: `${entry.row}-${entry.col}`,
@@ -284,7 +289,9 @@ const PatternAnalysisPage = () => {
             g1: { count: g1, percentage: total > 0 ? (g1 / total) * 100 : 0 },
             g2: { count: g2, percentage: total > 0 ? (g2 / total) * 100 : 0 },
             g3: { count: g3, percentage: total > 0 ? (g3 / total) * 100 : 0 },
-            g4: { count: g4, percentage: total > 0 ? (g4 / total) * 100 : 0 }
+            g4: { count: g4, percentage: total > 0 ? (g4 / total) * 100 : 0 },
+            failures: { count: failures, percentage: total > 0 ? (failures / total) * 100 : 0 },
+            total: { count: totalSuccess, percentage: totalSuccessPercentage }
           },
           occurrences: patternOccurrences
         });
