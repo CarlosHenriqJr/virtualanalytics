@@ -466,16 +466,19 @@ const PatternAnalysisPage = () => {
       'VencedorFT_Casa': 'Vitória Casa',
       'VencedorFT_Visitante': 'Vitória Visitante',
       'VencedorFT_Empate': 'Empate',
-      'ResultadoCorreto_Casa': 'Resultado Correto Casa',
-      'ResultadoCorreto_Visitante': 'Resultado Correto Visitante',
-      'ResultadoCorreto_Empate': 'Resultado Correto Empate'
+      'ResultadoCorreto_Casa': 'Resultado Exato Casa',
+      'ResultadoCorreto_Visitante': 'Resultado Exato Visitante',
+      'ResultadoCorreto_Empate': 'Resultado Exato Empate',
+      'DuplaChance_CasaEmpate': 'Dupla Chance 1X',
+      'DuplaChance_CasaVisitante': 'Dupla Chance 12',
+      'DuplaChance_EmpateVisitante': 'Dupla Chance X2',
+      'PrimeiroGol_Casa': 'Primeiro Gol Casa',
+      'PrimeiroGol_Visitante': 'Primeiro Gol Visitante',
+      'PrimeiroGol_Nenhum': 'Sem Gols'
     };
     
-    // Tenta encontrar correspondência direta
-    if (mapping[marketKey]) return mapping[marketKey];
-    
-    // Se não encontrar, tenta usar o próprio marketKey formatado
-    return marketKey.replace(/_/g, ' ');
+    // Retorna label se existir no mapping, caso contrário retorna null
+    return mapping[marketKey] || null;
   };
 
   const analyzeOdds = (oddsData) => {
