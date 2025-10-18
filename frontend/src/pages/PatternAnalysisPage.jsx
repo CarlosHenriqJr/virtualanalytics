@@ -481,9 +481,16 @@ const PatternAnalysisPage = () => {
   const analyzeOdds = (oddsData) => {
     if (oddsData.length === 0) return { mostCommon: [], avgByLevel: {} };
     
+    // Filtra odds inválidas antes de processar
+    const validOdds = oddsData.filter(({ odd }) => 
+      odd && typeof odd === 'number' && !isNaN(odd) && odd > 0
+    );
+    
+    if (validOdds.length === 0) return { mostCommon: [], avgByLevel: {} };
+    
     // Conta frequência de cada combinação mercado+odd
     const oddFrequency = {};
-    oddsData.forEach(({ market, odd, level }) => {
+    validOdds.forEach(({ market, odd, level }) => {
       const roundedOdd = Math.round(odd * 10) / 10; // Arredonda para 1 decimal
       const key = `${market}-${roundedOdd}`;
       if (!oddFrequency[key]) {
@@ -498,7 +505,7 @@ const PatternAnalysisPage = () => {
     
     // Calcula média por nível
     const avgByLevel = {};
-    oddsData.forEach(({ odd, level }) => {
+    validOdds.forEach(({ odd, level }) => {
       if (!avgByLevel[level]) avgByLevel[level] = { sum: 0, count: 0 };
       avgByLevel[level].sum += odd;
       avgByLevel[level].count++;
@@ -509,7 +516,7 @@ const PatternAnalysisPage = () => {
     });
     
     return {
-      mostCommon: sorted.slice(0, 5), // Top 5 odds mais comuns
+      mostCommon: sorted.slice(0, 10), // Top 10 odds mais comuns
       avgByLevel
     };
   };
