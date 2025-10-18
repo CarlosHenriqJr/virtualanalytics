@@ -103,11 +103,19 @@
 #====================================================================================================
 
 user_problem_statement: |
-  Usuário solicitou alteração no Seletor de Blocos para análise histórica de padrões Over 3.5:
-  1. Permitir seleção célula por célula (clique individual)
-  2. Adicionar input para escolher quantos dias anteriores analisar
-  3. Implementar análise histórica buscando mesmo padrão visual em dias anteriores
-  4. Exibir frequência e taxa de acerto do padrão
+  Usuário solicitou melhorias na página "Análise de Padrões":
+  
+  FASE 1 - Implementação Completa de Backtest:
+  1. Corrigir lógica de avaliação de Gale (SG/G1/G2/G3/G4/F)
+  2. Adicionar distribuição visual completa incluindo G3 e G4
+  3. Calcular e exibir ROI simulado
+  4. Melhorar cálculos de assertividade
+  
+  FASE 2 - Melhorias de UX:
+  1. Adicionar helper text explicativo detalhado
+  2. Criar seção de tooltips com conceitos (Padrão Isolado, Entrada, Gale, ROI)
+  3. Adicionar tooltips nos campos de mercado e combinação
+  4. Explicação sobre cálculo de ROI nos resultados
 
 frontend:
   - task: "InteractiveBlockSelector - Seleção individual de células"
