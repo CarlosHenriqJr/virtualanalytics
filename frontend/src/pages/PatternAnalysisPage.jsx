@@ -71,10 +71,12 @@ const PatternAnalysisPage = () => {
         type: 'pattern',
         ...currentConfig
       };
+      console.log(`✅ Marcado como PADRÃO: ${key}`, newMatrix[key]);
     });
 
     setMatrix(newMatrix);
     setSelectedCells([]);
+    console.log('📊 Matriz atualizada:', newMatrix);
   };
 
   // Marca células selecionadas como Entrada
