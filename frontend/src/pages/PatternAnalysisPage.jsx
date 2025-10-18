@@ -603,9 +603,9 @@ const PatternAnalysisPage = () => {
               ))}
             </div>
 
-            {/* Linhas */}
+            {/* Linhas - INVERTIDAS (8 até 1) para ordem cronológica correta */}
             {[...Array(8)].map((_, rowIdx) => {
-              const row = rowIdx + 1;
+              const row = 8 - rowIdx; // Inverte: 8, 7, 6, 5, 4, 3, 2, 1
               return (
                 <div key={row} className="flex">
                   <div className="w-[60px] h-[60px] flex-shrink-0 border-r border-t border-gray-800 bg-gray-950 flex items-center justify-center text-sm font-semibold text-gray-300">
