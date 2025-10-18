@@ -271,8 +271,13 @@ const PatternAnalysisPage = () => {
       console.log('Entrada:', entry);
       
       const relatedPatterns = patterns.filter(p => 
-        p.col === entry.col && p.row > entry.row // Padrão deve estar em linha MAIOR (antes na timeline)
+        p.col === entry.col && p.row > entry.row // Padrão em linha MAIOR (acima), Entrada em linha MENOR (abaixo)
       );
+
+      if (relatedPatterns.length === 0) {
+        console.log(`⚠️ Entrada ${entry.row}-${entry.col} não tem padrão relacionado na mesma coluna e linha acima`);
+        continue; // Pula esta entrada se não houver padrão relacionado
+      }
 
       console.log('Padrões relacionados:', relatedPatterns.length);
 
