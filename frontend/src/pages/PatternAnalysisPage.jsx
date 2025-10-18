@@ -30,6 +30,8 @@ const PatternAnalysisPage = () => {
   });
 
   const [analysisResults, setAnalysisResults] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   // Mercados disponíveis
   const availableMarkets = [
