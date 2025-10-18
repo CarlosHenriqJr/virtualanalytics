@@ -403,6 +403,19 @@ const PatternAnalysisPage = () => {
     return mapping[marketCode] || null;
   };
 
+  const getMarketLabel = (marketCode) => {
+    const labels = {
+      'AM': 'Ambas Marcam',
+      'ANM': 'Ambas Não Marcam',
+      'O25': 'Over 2.5',
+      'O35': 'Over 3.5',
+      'U25': 'Under 2.5',
+      'U35': 'Under 3.5',
+      'O45': 'Over 4.5'
+    };
+    return labels[marketCode] || marketCode;
+  };
+
   const analyzeOdds = (oddsData) => {
     if (oddsData.length === 0) return { mostCommon: [], avgByLevel: {} };
     
