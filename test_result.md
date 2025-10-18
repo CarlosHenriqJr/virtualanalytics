@@ -246,15 +246,18 @@ metadata:
 
 test_plan:
   current_focus:
+    - "PatternAnalysisPage - Roteamento corrigido"
+  stuck_tasks:
     - "PatternAnalysisPage - Lógica de Gale corrigida"
     - "PatternAnalysisPage - Cálculos de assertividade melhorados"
     - "PatternAnalysisPage - Distribuição visual G3/G4 adicionada"
     - "PatternAnalysisPage - ROI simulado implementado"
     - "PatternAnalysisPage - Helper text expandido"
     - "PatternAnalysisPage - Seção de tooltips/conceitos"
-  stuck_tasks: []
+    - "PatternAnalysisPage - Tooltips informativos nos campos"
+    - "PatternAnalysisPage - Info sobre ROI nos resultados"
   test_all: false
-  test_priority: "high_first"
+  test_priority: "stuck_first"
 
 agent_communication:
   - agent: "main"
