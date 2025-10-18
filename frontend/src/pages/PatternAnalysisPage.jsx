@@ -387,6 +387,22 @@ const PatternAnalysisPage = () => {
       <Card className="bg-gray-900/50 border-gray-800 p-6 mb-6">
         <h3 className="text-lg font-bold text-white mb-4">Configuração de Mercados</h3>
         
+        {/* Helper Text */}
+        <div className="mb-4 p-4 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+          <p className="text-sm text-blue-200 mb-2">
+            <strong>📘 Como usar:</strong>
+          </p>
+          <ul className="text-sm text-blue-200 space-y-1 ml-4">
+            <li>1. Selecione os mercados que deseja testar</li>
+            <li>2. Clique nas células da matriz para selecioná-las (ring azul)</li>
+            <li>3. Use "🟨 Marcar como Padrão Isolado" para células que formam o gatilho</li>
+            <li>4. Use "🟩 Marcar como Entrada" para a célula onde faria a aposta</li>
+            <li className="text-yellow-300 font-semibold">
+              ⚠️ IMPORTANTE: A Entrada deve estar na <strong>mesma coluna</strong> e em <strong>linha abaixo</strong> do Padrão!
+            </li>
+          </ul>
+        </div>
+        
         <div className="space-y-4">
           {/* Seleção de Mercados */}
           <div>
