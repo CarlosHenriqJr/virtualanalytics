@@ -150,15 +150,18 @@ frontend:
 
   - task: "PatternAnalysisPage - Distribuição visual G3/G4 adicionada"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Adicionadas barras de progresso para G3 (laranja) e G4 (rosa) na seção de distribuição visual. Agora mostra todos os 6 níveis: SG, G1, G2, G3, G4 e F."
+      - working: false
+        agent: "testing"
+        comment: "Mesmo issue de roteamento - componente não está sendo carregado pela URL /pattern-analysis. Implementação existe no código mas não está acessível via interface web."
 
   - task: "PatternAnalysisPage - ROI simulado implementado"
     implemented: true
