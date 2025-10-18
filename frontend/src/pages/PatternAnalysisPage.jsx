@@ -276,15 +276,10 @@ const PatternAnalysisPage = () => {
 
       if (relatedPatterns.length === 0) {
         console.log(`⚠️ Entrada ${entry.row}-${entry.col} não tem padrão relacionado na mesma coluna e linha acima`);
-        continue; // Pula esta entrada se não houver padrão relacionado
+        return; // Pula esta entrada se não houver padrão relacionado
       }
 
       console.log('Padrões relacionados:', relatedPatterns.length);
-
-      if (relatedPatterns.length === 0) {
-        console.log('⚠️ Nenhum padrão relacionado (mesma coluna, linha acima)');
-        return;
-      }
 
       relatedPatterns.forEach((pattern, patternIdx) => {
         console.log(`\n--- Padrão ${patternIdx + 1} para Entrada ${entryIdx + 1} ---`);
