@@ -210,15 +210,18 @@ frontend:
 
   - task: "PatternAnalysisPage - Tooltips informativos nos campos"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Adicionados tooltips (ℹ️) nos labels de 'Selecione Mercados' e 'Combinação Lógica' com explicações curtas sobre sua função. Melhor UX para novos usuários."
+      - working: false
+        agent: "testing"
+        comment: "Mesmo issue de roteamento - componente não está sendo carregado pela URL /pattern-analysis. Implementação existe no código mas não está acessível via interface web."
 
   - task: "PatternAnalysisPage - Info sobre ROI nos resultados"
     implemented: true
