@@ -118,65 +118,101 @@ user_problem_statement: |
   4. Explicação sobre cálculo de ROI nos resultados
 
 frontend:
-  - task: "InteractiveBlockSelector - Seleção individual de células"
+  - task: "PatternAnalysisPage - Lógica de Gale corrigida"
     implemented: true
     working: true
-    file: "frontend/src/components/InteractiveBlockSelector.jsx"
+    file: "frontend/src/pages/PatternAnalysisPage.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Implementado sistema de clique individual em células. Cada clique adiciona/remove célula do padrão selecionado. Ring azul indica células selecionadas. Funcionalidade testada e confirmada via screenshots."
+        comment: "Corrigida função evaluateEntry para retornar corretamente em qual nível o gale bateu (SG, G1, G2, G3, G4 ou F). Agora cada ocorrência marca apenas um nível, não todos acumulativamente. Adicionado campo 'level' para rastreamento preciso."
 
-  - task: "InteractiveBlockSelector - Input de dias para análise"
+  - task: "PatternAnalysisPage - Cálculos de assertividade melhorados"
     implemented: true
     working: true
-    file: "frontend/src/components/InteractiveBlockSelector.jsx"
+    file: "frontend/src/pages/PatternAnalysisPage.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Adicionado input numérico para seleção de 1-90 dias anteriores para análise. Valor padrão: 7 dias. Interface intuitiva com label explicativo."
+        comment: "Refatorados cálculos de assertividade usando o campo 'level'. Agora conta corretamente quantas ocorrências bateram em cada nível (SG, G1, G2, G3, G4) e calcula falhas. Percentuais agora refletem distribuição real."
 
-  - task: "InteractiveBlockSelector - Análise histórica de padrões"
+  - task: "PatternAnalysisPage - Distribuição visual G3/G4 adicionada"
     implemented: true
     working: true
-    file: "frontend/src/components/InteractiveBlockSelector.jsx"
+    file: "frontend/src/pages/PatternAnalysisPage.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Implementado algoritmo de análise histórica que: 1) Extrai padrão de posições (hora:minuto) das células selecionadas, 2) Itera por X dias anteriores, 3) Busca mesmo padrão de posições, 4) Conta ocorrências Over 3.5, 5) Calcula frequência e taxa de acerto. Suporta ambos formatos de data (dd/MM/yyyy e yyyy-MM-dd)."
+        comment: "Adicionadas barras de progresso para G3 (laranja) e G4 (rosa) na seção de distribuição visual. Agora mostra todos os 6 níveis: SG, G1, G2, G3, G4 e F."
 
-  - task: "InteractiveBlockSelector - Exibição de resultados"
+  - task: "PatternAnalysisPage - ROI simulado implementado"
     implemented: true
     working: true
-    file: "frontend/src/components/InteractiveBlockSelector.jsx"
+    file: "frontend/src/pages/PatternAnalysisPage.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Card de resultados mostra: Dias Analisados, Frequência (%), Taxa de Acerto (%), Tamanho do Padrão. Interpretação automática (Forte >=70%, Moderado >=50%, Fraco <50%). Lista detalhada de ocorrências históricas com data, taxa de acerto por ocorrência, e detalhes de cada partida. Mensagem apropriada quando nenhuma ocorrência é encontrada."
+        comment: "Implementado cálculo de ROI simulado considerando odd média de 2.0 e stake de 100. Calcula investimento total (5 apostas por ocorrência com gale) e retorno (baseado no nível onde bateu). Exibe como cartão nas métricas principais e no resumo textual."
 
-  - task: "InteractiveBlockSelector - UI/UX e integração"
+  - task: "PatternAnalysisPage - Helper text expandido"
     implemented: true
     working: true
-    file: "frontend/src/pages/HomePage.jsx"
+    file: "frontend/src/pages/PatternAnalysisPage.jsx"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "HomePage atualizado para passar allMatchesData e selectedDate ao InteractiveBlockSelector. Botão 'Limpar Seleção' funcional. Indicador mostra células selecionadas com posições. Design responsivo e consistente com tema dark."
+        comment: "Expandido helper text com explicações detalhadas de cada passo (selecionar mercados, definir padrão, definir entrada, executar backtest). Incluídas sub-explicações sobre SG, G1-G4, F e ROI simulado."
+
+  - task: "PatternAnalysisPage - Seção de tooltips/conceitos"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PatternAnalysisPage.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Criada seção expansível (details/summary) com explicações detalhadas dos conceitos: Padrão Isolado (amarelo), Entrada (verde), Gale/Progressão, e ROI. Texto claro e acessível para usuários iniciantes."
+
+  - task: "PatternAnalysisPage - Tooltips informativos nos campos"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PatternAnalysisPage.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Adicionados tooltips (ℹ️) nos labels de 'Selecione Mercados' e 'Combinação Lógica' com explicações curtas sobre sua função. Melhor UX para novos usuários."
+
+  - task: "PatternAnalysisPage - Info sobre ROI nos resultados"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/PatternAnalysisPage.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Adicionado card informativo amarelo acima dos resultados explicando como o ROI é calculado (odd 2.0, stake 100, gale com dobro). Avisa que é simplificado e odds reais variam."
 
 metadata:
   created_by: "main_agent"
