@@ -498,7 +498,12 @@ const PatternAnalysisPage = () => {
           {/* Combinação Lógica */}
           {currentConfig.markets.length > 1 && (
             <div>
-              <label className="text-sm text-gray-400 mb-2 block">Combinação Lógica:</label>
+              <label className="text-sm text-gray-400 mb-2 block flex items-center gap-2">
+                Combinação Lógica:
+                <span className="text-xs text-gray-500 italic" title="E = todos os mercados devem bater | OU = pelo menos um mercado deve bater">
+                  ℹ️ Como combinar os mercados
+                </span>
+              </label>
               <div className="flex gap-2">
                 <Button
                   onClick={() => setCurrentConfig({ ...currentConfig, combination: 'AND' })}
