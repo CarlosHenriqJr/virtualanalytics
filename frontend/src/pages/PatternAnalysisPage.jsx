@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Target, TrendingUp, Search, Settings, ArrowLeft } from 'lucide-react';
+import { Target, TrendingUp, Search, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { mockMatches } from '../data/mockData';
 
 const PatternAnalysisPage = () => {
   const navigate = useNavigate();
-  const matches = mockMatches; // Usa mockData por padrão
+  const matches = mockMatches;
   
   // Estado da matriz 8x20
   const [matrix, setMatrix] = useState(() => {
@@ -21,95 +20,140 @@ const PatternAnalysisPage = () => {
     return initialMatrix;
   });
 
-  const [selectedCell, setSelectedCell] = useState(null);
-  const [showConfigModal, setShowConfigModal] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState(null);
+  // Células selecionadas temporariamente
+  const [selectedCells, setSelectedCells] = useState([]);
 
-  // Configuração da célula selecionada
-  const [cellConfig, setCellConfig] = useState({
-    type: 'pattern', // 'pattern' ou 'entry'
+  // Configuração atual (para aplicar nas células selecionadas)
+  const [currentConfig, setCurrentConfig] = useState({
     markets: [],
-    combination: 'AND', // 'AND' ou 'OR'
-    oddRange: { min: '', max: '' },
-    teamOrder: 'random', // 'random' ou 'specific'
-    homeTeam: '',
-    awayTeam: '',
-    leagues: [],
-    timeSlots: []
+    combination: 'AND'
   });
+
+  const [analysisResults, setAnalysisResults] = useState(null);
 
   // Mercados disponíveis
   const availableMarkets = [
-    { value: 'AM', label: 'Ambas Marcam', key: 'AmbasMarcam' },
-    { value: 'ANM', label: 'Ambas Não Marcam', key: 'AmbasNaoMarcam' },
-    { value: 'O25', label: 'Over 2.5', key: 'TotalGols_MaisDe_25' },
-    { value: 'O35', label: 'Over 3.5', key: 'TotalGols_MaisDe_35' },
-    { value: 'U25', label: 'Under 2.5', key: 'TotalGols_MenosDe_25' },
-    { value: 'U35', label: 'Under 3.5', key: 'TotalGols_MenosDe_35' }
+    { value: 'AM', label: 'Ambas Marcam' },
+    { value: 'ANM', label: 'Ambas Não Marcam' },
+    { value: 'O25', label: 'Over 2.5' },
+    { value: 'O35', label: 'Over 3.5' },
+    { value: 'U25', label: 'Under 2.5' },
+    { value: 'U35', label: 'Under 3.5' }
   ];
 
-  // Abre modal de configuração
+  // Clica em célula para selecionar/desselecionar
   const handleCellClick = (row, col) => {
     const key = `${row}-${col}`;
-    setSelectedCell({ row, col, key });
-    
-    // Carrega configuração existente ou limpa
-    if (matrix[key]) {
-      setCellConfig(matrix[key]);
+    const isSelected = selectedCells.includes(key);
+
+    if (isSelected) {
+      setSelectedCells(selectedCells.filter(k => k !== key));
     } else {
-      setCellConfig({
-        type: 'pattern',
-        markets: [],
-        combination: 'AND',
-        oddRange: { min: '', max: '' },
-        teamOrder: 'random',
-        homeTeam: '',
-        awayTeam: '',
-        leagues: [],
-        timeSlots: []
-      });
+      setSelectedCells([...selectedCells, key]);
     }
-    
-    setShowConfigModal(true);
   };
 
-  // Salva configuração da célula
-  const saveCellConfig = () => {
-    if (cellConfig.markets.length === 0) {
+  // Marca células selecionadas como Padrão Isolado
+  const markAsPattern = () => {
+    if (selectedCells.length === 0) {
+      alert('Selecione células primeiro!');
+      return;
+    }
+
+    if (currentConfig.markets.length === 0) {
       alert('Selecione pelo menos um mercado!');
       return;
     }
 
     const newMatrix = { ...matrix };
-    newMatrix[selectedCell.key] = { ...cellConfig };
+    selectedCells.forEach(key => {
+      newMatrix[key] = {
+        type: 'pattern',
+        ...currentConfig
+      };
+    });
+
     setMatrix(newMatrix);
-    setShowConfigModal(false);
+    setSelectedCells([]);
   };
 
-  // Remove configuração da célula
-  const clearCell = () => {
+  // Marca células selecionadas como Entrada
+  const markAsEntry = () => {
+    if (selectedCells.length === 0) {
+      alert('Selecione células primeiro!');
+      return;
+    }
+
+    if (currentConfig.markets.length === 0) {
+      alert('Selecione pelo menos um mercado!');
+      return;
+    }
+
     const newMatrix = { ...matrix };
-    newMatrix[selectedCell.key] = null;
+    selectedCells.forEach(key => {
+      newMatrix[key] = {
+        type: 'entry',
+        ...currentConfig
+      };
+    });
+
     setMatrix(newMatrix);
-    setShowConfigModal(false);
+    setSelectedCells([]);
   };
 
-  // Gera texto da célula baseado na configuração
+  // Limpa células selecionadas
+  const clearSelected = () => {
+    const newMatrix = { ...matrix };
+    selectedCells.forEach(key => {
+      newMatrix[key] = null;
+    });
+
+    setMatrix(newMatrix);
+    setSelectedCells([]);
+  };
+
+  // Limpa tudo
+  const clearAll = () => {
+    const initialMatrix = {};
+    for (let row = 1; row <= 8; row++) {
+      for (let col = 1; col <= 20; col++) {
+        initialMatrix[`${row}-${col}`] = null;
+      }
+    }
+    setMatrix(initialMatrix);
+    setSelectedCells([]);
+    setCurrentConfig({ markets: [], combination: 'AND' });
+  };
+
+  // Gera texto da célula
   const getCellText = (config) => {
     if (!config) return '';
-    
     const marketText = config.markets.join(config.combination === 'AND' ? ' + ' : ' | ');
     return marketText;
   };
 
-  // Executa análise de backtest
+  // Toggle mercado
+  const toggleMarket = (marketValue) => {
+    if (currentConfig.markets.includes(marketValue)) {
+      setCurrentConfig({
+        ...currentConfig,
+        markets: currentConfig.markets.filter(m => m !== marketValue)
+      });
+    } else {
+      setCurrentConfig({
+        ...currentConfig,
+        markets: [...currentConfig.markets, marketValue]
+      });
+    }
+  };
+
+  // Executa backtest
   const runBacktest = () => {
     if (!matches || matches.length === 0) {
       alert('Carregue dados primeiro!');
       return;
     }
 
-    // Identifica padrões e entradas na matriz
     const patterns = [];
     const entries = [];
 
@@ -138,14 +182,12 @@ const PatternAnalysisPage = () => {
       return;
     }
 
-    // Executa backtest
     const results = executeBacktest(patterns, entries, matches);
     setAnalysisResults(results);
   };
 
   // Algoritmo de backtest
   const executeBacktest = (patterns, entries, historicalData) => {
-    // Ordena partidas por data/hora
     const sortedMatches = [...historicalData].sort((a, b) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
@@ -156,32 +198,22 @@ const PatternAnalysisPage = () => {
 
     const entryResults = [];
 
-    // Para cada entrada, busca padrões correspondentes
     entries.forEach(entry => {
-      // Encontra padrões relacionados (mesma coluna, linha acima)
       const relatedPatterns = patterns.filter(p => 
         p.col === entry.col && p.row < entry.row
       );
 
       if (relatedPatterns.length === 0) return;
 
-      // Para cada padrão relacionado
       relatedPatterns.forEach(pattern => {
         const patternOccurrences = [];
 
-        // Percorre dados históricos buscando o padrão
         for (let i = 0; i < sortedMatches.length - 5; i++) {
           const match = sortedMatches[i];
           
-          // Verifica se a partida atende ao padrão
           if (matchesPattern(match, pattern.config)) {
-            // Partida seguinte é a entrada
             const entryMatch = sortedMatches[i + 1];
-            
-            // Próximas 4 partidas para gale
             const galeMatches = sortedMatches.slice(i + 1, i + 6);
-
-            // Avalia resultado
             const evaluation = evaluateEntry(entryMatch, galeMatches, entry.config);
             
             patternOccurrences.push({
@@ -193,7 +225,6 @@ const PatternAnalysisPage = () => {
           }
         }
 
-        // Calcula assertividade
         const total = patternOccurrences.length;
         const sg = patternOccurrences.filter(o => o.evaluation.sg).length;
         const g1 = patternOccurrences.filter(o => o.evaluation.g1).length;
@@ -222,88 +253,50 @@ const PatternAnalysisPage = () => {
     return entryResults;
   };
 
-  // Verifica se partida atende ao padrão
   const matchesPattern = (match, config) => {
-    const results = config.markets.map(marketCode => {
-      return checkMarket(match, marketCode);
-    });
-
-    if (config.combination === 'AND') {
-      return results.every(r => r);
-    } else {
-      return results.some(r => r);
-    }
+    const results = config.markets.map(marketCode => checkMarket(match, marketCode));
+    return config.combination === 'AND' ? results.every(r => r) : results.some(r => r);
   };
 
-  // Verifica mercado específico
   const checkMarket = (match, marketCode) => {
     const totalGoals = match.totalGolsFT;
     const placarCasa = match.placarCasaFT;
     const placarFora = match.placarForaFT;
 
     switch (marketCode) {
-      case 'AM':
-        return placarCasa > 0 && placarFora > 0;
-      case 'ANM':
-        return placarCasa === 0 || placarFora === 0;
-      case 'O25':
-        return totalGoals > 2.5;
-      case 'O35':
-        return totalGoals > 3.5;
-      case 'U25':
-        return totalGoals < 2.5;
-      case 'U35':
-        return totalGoals < 3.5;
-      default:
-        return false;
+      case 'AM': return placarCasa > 0 && placarFora > 0;
+      case 'ANM': return placarCasa === 0 || placarFora === 0;
+      case 'O25': return totalGoals > 2.5;
+      case 'O35': return totalGoals > 3.5;
+      case 'U25': return totalGoals < 2.5;
+      case 'U35': return totalGoals < 3.5;
+      default: return false;
     }
   };
 
-  // Avalia entrada com gale
   const evaluateEntry = (entryMatch, galeMatches, config) => {
-    const results = {
-      sg: false,
-      g1: false,
-      g2: false,
-      g3: false,
-      g4: false
-    };
+    const results = { sg: false, g1: false, g2: false, g3: false, g4: false };
 
-    // SG (Sem Gale) - primeira partida
     if (entryMatch && matchesPattern(entryMatch, config)) {
-      results.sg = true;
-      results.g1 = true;
-      results.g2 = true;
-      results.g3 = true;
-      results.g4 = true;
+      results.sg = results.g1 = results.g2 = results.g3 = results.g4 = true;
       return results;
     }
 
-    // G1 - até segunda partida
     if (galeMatches.length > 1 && matchesPattern(galeMatches[1], config)) {
-      results.g1 = true;
-      results.g2 = true;
-      results.g3 = true;
-      results.g4 = true;
+      results.g1 = results.g2 = results.g3 = results.g4 = true;
       return results;
     }
 
-    // G2 - até terceira partida
     if (galeMatches.length > 2 && matchesPattern(galeMatches[2], config)) {
-      results.g2 = true;
-      results.g3 = true;
-      results.g4 = true;
+      results.g2 = results.g3 = results.g4 = true;
       return results;
     }
 
-    // G3 - até quarta partida
     if (galeMatches.length > 3 && matchesPattern(galeMatches[3], config)) {
-      results.g3 = true;
-      results.g4 = true;
+      results.g3 = results.g4 = true;
       return results;
     }
 
-    // G4 - até quinta partida
     if (galeMatches.length > 4 && matchesPattern(galeMatches[4], config)) {
       results.g4 = true;
     }
