@@ -674,7 +674,7 @@ const PatternAnalysisPage = () => {
                   </div>
 
                   {/* Métricas Principais */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                     <div className="bg-gray-900/70 rounded-lg p-4 border border-green-500/50">
                       <p className="text-xs text-gray-400 mb-1">✅ Assertividade Total</p>
                       <p className={`text-3xl font-bold ${
@@ -694,13 +694,23 @@ const PatternAnalysisPage = () => {
                     <div className="bg-gray-900/70 rounded-lg p-4 border border-purple-500/50">
                       <p className="text-xs text-gray-400 mb-1">🎯 Sem Gale (SG)</p>
                       <p className="text-3xl font-bold text-purple-400">{sgPercent.toFixed(0)}%</p>
-                      <p className="text-xs text-gray-500 mt-1">{sgOnly} jogos</p>
+                      <p className="text-xs text-gray-500 mt-1">{sgCount} jogos</p>
                     </div>
 
                     <div className="bg-gray-900/70 rounded-lg p-4 border border-red-500/50">
                       <p className="text-xs text-gray-400 mb-1">❌ Falhas (F)</p>
                       <p className="text-3xl font-bold text-red-400">{failurePercentage.toFixed(0)}%</p>
                       <p className="text-xs text-gray-500 mt-1">{failures} jogos</p>
+                    </div>
+
+                    <div className="bg-gray-900/70 rounded-lg p-4 border border-yellow-500/50">
+                      <p className="text-xs text-gray-400 mb-1">💰 ROI Simulado</p>
+                      <p className={`text-3xl font-bold ${
+                        roi >= 0 ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {roi >= 0 ? '+' : ''}{roi.toFixed(1)}%
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Odd 2.0, Stake 100</p>
                     </div>
                   </div>
 
