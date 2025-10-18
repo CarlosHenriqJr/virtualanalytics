@@ -165,15 +165,18 @@ frontend:
 
   - task: "PatternAnalysisPage - ROI simulado implementado"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Implementado cálculo de ROI simulado considerando odd média de 2.0 e stake de 100. Calcula investimento total (5 apostas por ocorrência com gale) e retorno (baseado no nível onde bateu). Exibe como cartão nas métricas principais e no resumo textual."
+      - working: false
+        agent: "testing"
+        comment: "Mesmo issue de roteamento - componente não está sendo carregado pela URL /pattern-analysis. Implementação existe no código mas não está acessível via interface web."
 
   - task: "PatternAnalysisPage - Helper text expandido"
     implemented: true
