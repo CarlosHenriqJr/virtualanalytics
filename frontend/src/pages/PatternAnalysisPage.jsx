@@ -275,6 +275,8 @@ const PatternAnalysisPage = () => {
       relatedPatterns.forEach((pattern, patternIdx) => {
         console.log(`\n--- Padrão ${patternIdx + 1} para Entrada ${entryIdx + 1} ---`);
         const patternOccurrences = [];
+        const entryOdds = []; // Armazena odds das entradas
+        const entryScores = []; // Armazena placares das entradas
 
         for (let i = 0; i < sortedMatches.length - 5; i++) {
           const match = sortedMatches[i];
@@ -283,6 +285,29 @@ const PatternAnalysisPage = () => {
             const entryMatch = sortedMatches[i + 1];
             const galeMatches = sortedMatches.slice(i + 1, i + 6);
             const evaluation = evaluateEntry(entryMatch, galeMatches, entry.config);
+            
+            // Coleta dados da entrada
+            if (entryMatch) {
+              // Coleta odd do mercado de entrada
+              const entryMarkets = entry.config.markets;
+              entryMarkets.forEach(market => {
+                const oddKey = getOddKeyForMarket(market);
+                if (entryMatch.markets && entryMatch.markets[oddKey]) {
+                  entryOdds.push({
+                    market,
+                    odd: entryMatch.markets[oddKey],
+                    level: evaluation.level
+                  });
+                }
+              });
+              
+              // Coleta placar
+              entryScores.push({
+                score: `${entryMatch.placarCasaFT}x${entryMatch.placarForaFT}`,
+                totalGoals: entryMatch.totalGolsFT,
+                level: evaluation.level
+              });
+            }
             
             patternOccurrences.push({
               patternMatch: match,
@@ -309,6 +334,12 @@ const PatternAnalysisPage = () => {
 
         console.log('Assertividade - SG:', sg, 'G1:', g1, 'G2:', g2, 'G3:', g3, 'G4:', g4, 'F:', failures);
 
+        // Análise de odds mais frequentes
+        const oddsAnalysis = analyzeOdds(entryOdds);
+        
+        // Análise de placares mais frequentes
+        const scoresAnalysis = analyzeScores(entryScores);
+
         entryResults.push({
           entryPosition: `${entry.row}-${entry.col}`,
           entryConfig: entry.config,
@@ -324,6 +355,8 @@ const PatternAnalysisPage = () => {
             failures: { count: failures, percentage: total > 0 ? (failures / total) * 100 : 0 },
             total: { count: totalSuccess, percentage: totalSuccessPercentage }
           },
+          oddsAnalysis, // Dados de odds
+          scoresAnalysis, // Dados de placares
           occurrences: patternOccurrences
         });
       });
