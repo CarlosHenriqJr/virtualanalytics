@@ -122,7 +122,7 @@ frontend:
     implemented: true
     working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -132,6 +132,9 @@ frontend:
       - working: false
         agent: "testing"
         comment: "ISSUE CRÍTICO IDENTIFICADO: A URL /pattern-analysis não está renderizando o componente PatternAnalysisPage.jsx. Em vez disso, está mostrando 'Seletor de Blocos - Análise Histórica' que é um componente diferente. O arquivo PatternAnalysisPage.jsx existe e tem toda a implementação correta (matriz 8x20, seleção de mercados, botões de padrão/entrada, backtest), mas não está sendo carregado pela rota. PROBLEMA DE ROTEAMENTO: Verificar App.js - a rota '/pattern-analysis' pode estar apontando para componente errado."
+      - working: false
+        agent: "testing"
+        comment: "PROBLEMA PERSISTENTE CONFIRMADO: Após teste detalhado, o roteamento continua incorreto. URL /pattern-analysis carrega InteractiveBlockSelector em vez de PatternAnalysisPage.jsx. INVESTIGAÇÃO REALIZADA: ✅ App.js tem configuração correta, ✅ PatternAnalysisPage.jsx existe e está completo, ✅ Navegação funciona (URL muda), ❌ Componente errado renderizado. CAUSA PROVÁVEL: Erro de sintaxe/importação em PatternAnalysisPage.jsx impedindo carregamento, ou problema de cache/build. AÇÃO NECESSÁRIA: Verificar erros no componente PatternAnalysisPage.jsx, limpar cache, ou investigar redirecionamentos condicionais."
 
   - task: "PatternAnalysisPage - Cálculos de assertividade melhorados"
     implemented: true
