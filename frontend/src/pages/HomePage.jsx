@@ -115,6 +115,14 @@ const HomePage = () => {
                 </Button>
 
                 <Button
+                  onClick={() => navigate('/pattern-analysis')}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white"
+                >
+                  <Target className="w-4 h-4 mr-2" />
+                  Análise de Padrões
+                </Button>
+
+                <Button
                   onClick={() => {
                     setMatches([]);
                     setSelectedDate(null);
