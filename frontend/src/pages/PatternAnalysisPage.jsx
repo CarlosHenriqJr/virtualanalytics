@@ -237,7 +237,7 @@ const PatternAnalysisPage = () => {
       console.log('Entrada:', entry);
       
       const relatedPatterns = patterns.filter(p => 
-        p.col === entry.col && p.row < entry.row
+        p.col === entry.col && p.row > entry.row // Padrão deve estar em linha MAIOR (antes na timeline)
       );
 
       console.log('Padrões relacionados:', relatedPatterns.length);
