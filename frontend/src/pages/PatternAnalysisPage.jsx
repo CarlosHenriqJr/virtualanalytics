@@ -284,41 +284,56 @@ const PatternAnalysisPage = () => {
       relatedPatterns.forEach((pattern, patternIdx) => {
         console.log(`\n--- Padrão ${patternIdx + 1} para Entrada ${entryIdx + 1} ---`);
         const patternOccurrences = [];
-        const entryOdds = []; // Armazena odds das entradas
-        const entryScores = []; // Armazena placares das entradas
+        const greenOdds = []; // Odds dos jogos GREEN (que bateram)
+        const redOdds = []; // Odds dos jogos RED (que falharam)
+        const greenScores = []; // Placares dos jogos GREEN
+        const redScores = []; // Placares dos jogos RED
 
         for (let i = 0; i < sortedMatches.length - 5; i++) {
           const match = sortedMatches[i];
           
           if (matchesPattern(match, pattern.config)) {
             // Com a matriz invertida (8→1), o jogo de entrada vem DEPOIS na timeline
-            // Então precisamos pegar os próximos jogos (i+1, i+2, etc)
             const entryMatch = sortedMatches[i + 1];
             const galeMatches = sortedMatches.slice(i + 1, i + 6);
             const evaluation = evaluateEntry(entryMatch, galeMatches, entry.config);
             
-            // Coleta dados da entrada
-            if (entryMatch) {
-              // Coleta odd do mercado de entrada COM o nome do mercado
-              const entryMarkets = entry.config.markets;
-              entryMarkets.forEach(market => {
-                const oddKey = getOddKeyForMarket(market);
-                if (entryMatch.markets && entryMatch.markets[oddKey]) {
-                  entryOdds.push({
-                    market: getMarketLabel(market), // Nome legível do mercado
-                    marketCode: market,
-                    odd: entryMatch.markets[oddKey],
-                    level: evaluation.level
+            // Coleta TODAS as odds disponíveis no jogo de entrada
+            if (entryMatch && entryMatch.markets) {
+              const allOdds = [];
+              
+              // Itera por TODOS os mercados disponíveis no jogo
+              Object.entries(entryMatch.markets).forEach(([marketKey, oddValue]) => {
+                // Converte chave do mercado para nome legível
+                const marketLabel = getMarketLabelFromKey(marketKey);
+                if (marketLabel && oddValue) {
+                  allOdds.push({
+                    market: marketLabel,
+                    marketKey,
+                    odd: oddValue
                   });
                 }
               });
               
-              // Coleta placar
-              entryScores.push({
-                score: `${entryMatch.placarCasaFT}x${entryMatch.placarForaFT}`,
-                totalGoals: entryMatch.totalGolsFT,
-                level: evaluation.level
-              });
+              // Separa entre GREEN e RED baseado no resultado
+              const isGreen = evaluation.level !== 'F';
+              if (isGreen) {
+                greenOdds.push(...allOdds.map(o => ({ ...o, level: evaluation.level })));
+                greenScores.push({
+                  score: `${entryMatch.placarCasaFT}x${entryMatch.placarForaFT}`,
+                  totalGoals: entryMatch.totalGolsFT,
+                  teams: `${entryMatch.timeCasa} x ${entryMatch.timeFora}`,
+                  level: evaluation.level
+                });
+              } else {
+                redOdds.push(...allOdds.map(o => ({ ...o, level: 'F' })));
+                redScores.push({
+                  score: `${entryMatch.placarCasaFT}x${entryMatch.placarForaFT}`,
+                  totalGoals: entryMatch.totalGolsFT,
+                  teams: `${entryMatch.timeCasa} x ${entryMatch.timeFora}`,
+                  level: 'F'
+                });
+              }
             }
             
             patternOccurrences.push({
@@ -340,17 +355,28 @@ const PatternAnalysisPage = () => {
         const g4 = patternOccurrences.filter(o => o.evaluation.level === 'G4').length;
         const failures = patternOccurrences.filter(o => o.evaluation.level === 'F').length;
 
-        // Calcula assertividade total (todos que bateram em algum nível)
+        // Calcula assertividade total
         const totalSuccess = sg + g1 + g2 + g3 + g4;
         const totalSuccessPercentage = total > 0 ? (totalSuccess / total) * 100 : 0;
 
         console.log('Assertividade - SG:', sg, 'G1:', g1, 'G2:', g2, 'G3:', g3, 'G4:', g4, 'F:', failures);
+        console.log('Odds GREEN coletadas:', greenOdds.length);
+        console.log('Odds RED coletadas:', redOdds.length);
 
-        // Análise de odds mais frequentes
-        const oddsAnalysis = analyzeOdds(entryOdds);
+        // Análise separada para GREEN e RED
+        const greenAnalysis = {
+          odds: analyzeOdds(greenOdds),
+          scores: analyzeScores(greenScores),
+          count: totalSuccess,
+          percentage: totalSuccessPercentage
+        };
         
-        // Análise de placares mais frequentes
-        const scoresAnalysis = analyzeScores(entryScores);
+        const redAnalysis = {
+          odds: analyzeOdds(redOdds),
+          scores: analyzeScores(redScores),
+          count: failures,
+          percentage: total > 0 ? (failures / total) * 100 : 0
+        };
 
         entryResults.push({
           entryPosition: `${entry.row}-${entry.col}`,
@@ -367,8 +393,8 @@ const PatternAnalysisPage = () => {
             failures: { count: failures, percentage: total > 0 ? (failures / total) * 100 : 0 },
             total: { count: totalSuccess, percentage: totalSuccessPercentage }
           },
-          oddsAnalysis, // Dados de odds
-          scoresAnalysis, // Dados de placares
+          greenAnalysis, // Análise dos jogos GREEN
+          redAnalysis, // Análise dos jogos RED
           occurrences: patternOccurrences
         });
       });
