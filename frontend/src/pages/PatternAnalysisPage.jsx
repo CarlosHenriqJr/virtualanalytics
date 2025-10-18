@@ -417,17 +417,51 @@ const PatternAnalysisPage = () => {
         {/* Helper Text */}
         <div className="mb-4 p-4 bg-blue-900/30 border border-blue-500/50 rounded-lg">
           <p className="text-sm text-blue-200 mb-2">
-            <strong>📘 Como usar:</strong>
+            <strong>📘 Como usar a Análise de Padrões:</strong>
           </p>
           <ul className="text-sm text-blue-200 space-y-1 ml-4">
-            <li>1. Selecione os mercados que deseja testar</li>
-            <li>2. Clique nas células da matriz para selecioná-las (ring azul)</li>
-            <li>3. Use "🟨 Marcar como Padrão Isolado" para células que formam o gatilho</li>
-            <li>4. Use "🟩 Marcar como Entrada" para a célula onde faria a aposta</li>
+            <li><strong>1. Selecione Mercados:</strong> Escolha os mercados que deseja testar (Over 3.5, Ambas Marcam, etc.)</li>
+            <li><strong>2. Defina o Padrão Isolado (🟨):</strong> Clique nas células que formam o gatilho do seu padrão</li>
+            <li><strong>3. Defina a Entrada (🟩):</strong> Clique na célula onde você faria a aposta após o padrão</li>
             <li className="text-yellow-300 font-semibold">
-              ⚠️ IMPORTANTE: A Entrada deve estar na <strong>mesma coluna</strong> e em <strong>linha abaixo</strong> do Padrão!
+              ⚠️ <strong>REGRA IMPORTANTE:</strong> A Entrada deve estar na <strong>mesma coluna</strong> e em <strong>linha abaixo</strong> do Padrão para que o backtest funcione!
+            </li>
+            <li><strong>4. Execute o Backtest:</strong> O sistema vai analisar os dados históricos e mostrar:
+              <ul className="ml-4 mt-1 space-y-0.5">
+                <li>• <strong>SG (Sem Gale):</strong> Quando bateu no primeiro jogo</li>
+                <li>• <strong>G1-G4 (Gale 1-4):</strong> Quando precisou de 1 a 4 progressões</li>
+                <li>• <strong>F (Falha):</strong> Quando não bateu em nenhum dos 5 jogos</li>
+                <li>• <strong>ROI Simulado:</strong> Lucro/prejuízo estimado (odd 2.0, stake 100)</li>
+              </ul>
             </li>
           </ul>
+        </div>
+        
+        {/* Seção de Tooltips Informativos */}
+        <div className="mb-4 p-3 bg-purple-900/20 border border-purple-500/30 rounded-lg">
+          <details className="cursor-pointer">
+            <summary className="text-sm font-semibold text-purple-300 hover:text-purple-200">
+              ❓ O que significa cada conceito? (clique para expandir)
+            </summary>
+            <div className="mt-3 space-y-2 text-sm text-gray-300">
+              <div>
+                <strong className="text-yellow-400">🟨 Padrão Isolado:</strong> São as células que representam o "gatilho" da sua estratégia. 
+                Por exemplo: 3 jogos seguidos que bateram Over 3.5. Quando esse padrão é encontrado nos dados históricos, o sistema registra e analisa o que aconteceu depois.
+              </div>
+              <div>
+                <strong className="text-green-400">🟩 Entrada:</strong> É a célula onde você faria a aposta após identificar o padrão. 
+                O sistema vai verificar se essa entrada bateu (SG), se precisou de gale (G1-G4), ou se falhou (F).
+              </div>
+              <div>
+                <strong className="text-blue-400">📊 Gale (Progressão):</strong> Estratégia onde, se a aposta não bate no primeiro jogo, você aposta novamente com valor maior no próximo jogo. 
+                G1 = precisou de 1 jogo extra, G2 = 2 jogos extras, etc. Máximo de 4 gales (G4).
+              </div>
+              <div>
+                <strong className="text-purple-400">💰 ROI (Return on Investment):</strong> Retorno sobre investimento. 
+                Calcula quanto você lucraria (ou perderia) seguindo esse padrão, considerando odd média de 2.0 e stake de 100 por aposta.
+              </div>
+            </div>
+          </details>
         </div>
         
         <div className="space-y-4">
