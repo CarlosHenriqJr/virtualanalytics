@@ -282,19 +282,22 @@ const PatternAnalysisPage = () => {
           const match = sortedMatches[i];
           
           if (matchesPattern(match, pattern.config)) {
+            // Com a matriz invertida (8→1), o jogo de entrada vem DEPOIS na timeline
+            // Então precisamos pegar os próximos jogos (i+1, i+2, etc)
             const entryMatch = sortedMatches[i + 1];
             const galeMatches = sortedMatches.slice(i + 1, i + 6);
             const evaluation = evaluateEntry(entryMatch, galeMatches, entry.config);
             
             // Coleta dados da entrada
             if (entryMatch) {
-              // Coleta odd do mercado de entrada
+              // Coleta odd do mercado de entrada COM o nome do mercado
               const entryMarkets = entry.config.markets;
               entryMarkets.forEach(market => {
                 const oddKey = getOddKeyForMarket(market);
                 if (entryMatch.markets && entryMatch.markets[oddKey]) {
                   entryOdds.push({
-                    market,
+                    market: getMarketLabel(market), // Nome legível do mercado
+                    marketCode: market,
                     odd: entryMatch.markets[oddKey],
                     level: evaluation.level
                   });
