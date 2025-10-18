@@ -419,13 +419,13 @@ const PatternAnalysisPage = () => {
   const analyzeOdds = (oddsData) => {
     if (oddsData.length === 0) return { mostCommon: [], avgByLevel: {} };
     
-    // Conta frequência de cada odd
+    // Conta frequência de cada combinação mercado+odd
     const oddFrequency = {};
-    oddsData.forEach(({ odd, level }) => {
+    oddsData.forEach(({ market, odd, level }) => {
       const roundedOdd = Math.round(odd * 10) / 10; // Arredonda para 1 decimal
-      const key = `${roundedOdd}`;
+      const key = `${market}-${roundedOdd}`;
       if (!oddFrequency[key]) {
-        oddFrequency[key] = { odd: roundedOdd, count: 0, levels: {} };
+        oddFrequency[key] = { market, odd: roundedOdd, count: 0, levels: {} };
       }
       oddFrequency[key].count++;
       oddFrequency[key].levels[level] = (oddFrequency[key].levels[level] || 0) + 1;
