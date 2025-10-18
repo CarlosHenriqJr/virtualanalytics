@@ -1076,8 +1076,11 @@ const PatternAnalysisPage = () => {
                         {result.oddsAnalysis.mostCommon && result.oddsAnalysis.mostCommon.length > 0 ? (
                           <div className="space-y-2">
                             {result.oddsAnalysis.mostCommon.map((item, i) => (
-                              <div key={i} className="flex items-center justify-between text-sm">
-                                <span className="text-white font-semibold">Odd {item.odd.toFixed(2)}</span>
+                              <div key={i} className="flex items-center justify-between text-sm bg-gray-800/50 p-2 rounded">
+                                <div className="flex flex-col">
+                                  <span className="text-white font-semibold">{item.market}</span>
+                                  <span className="text-blue-300 text-xs">Odd: {item.odd.toFixed(2)}</span>
+                                </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-gray-400">{item.count}x</span>
                                   <span className="text-xs text-gray-500">
