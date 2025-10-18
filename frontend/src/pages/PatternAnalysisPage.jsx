@@ -666,6 +666,15 @@ const PatternAnalysisPage = () => {
             Resultados do Backtest
           </h3>
 
+          {/* Info sobre ROI */}
+          <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+            <p className="text-sm text-yellow-200">
+              <strong>💡 Sobre o ROI:</strong> O ROI simulado considera odd média de 2.0 e stake base de 100.
+              Para cada ocorrência do padrão, simula apostas com gale (stake dobrado a cada nível).
+              Este é um cálculo simplificado - odds reais podem variar significativamente.
+            </p>
+          </div>
+
           <div className="space-y-6">
             {analysisResults.map((result, idx) => {
               // Usa os dados já calculados corretamente
