@@ -451,6 +451,30 @@ const PatternAnalysisPage = () => {
     return labels[marketCode] || marketCode;
   };
 
+  const getMarketLabelFromKey = (marketKey) => {
+    // Converte chaves do tipo "TotalGols_MaisDe_35" para "Over 3.5"
+    const mapping = {
+      'TotalGols_MaisDe_25': 'Over 2.5',
+      'TotalGols_MaisDe_35': 'Over 3.5',
+      'TotalGols_MaisDe_45': 'Over 4.5',
+      'TotalGols_MenosDe_25': 'Under 2.5',
+      'TotalGols_MenosDe_35': 'Under 3.5',
+      'ParaOTimeMarcarSimNao_AmbasMarcam': 'Ambas Marcam',
+      'VencedorFT_Casa': 'Vitória Casa',
+      'VencedorFT_Visitante': 'Vitória Visitante',
+      'VencedorFT_Empate': 'Empate',
+      'ResultadoCorreto_Casa': 'Resultado Correto Casa',
+      'ResultadoCorreto_Visitante': 'Resultado Correto Visitante',
+      'ResultadoCorreto_Empate': 'Resultado Correto Empate'
+    };
+    
+    // Tenta encontrar correspondência direta
+    if (mapping[marketKey]) return mapping[marketKey];
+    
+    // Se não encontrar, tenta usar o próprio marketKey formatado
+    return marketKey.replace(/_/g, ' ');
+  };
+
   const analyzeOdds = (oddsData) => {
     if (oddsData.length === 0) return { mostCommon: [], avgByLevel: {} };
     
