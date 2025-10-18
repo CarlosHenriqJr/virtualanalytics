@@ -258,7 +258,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "PatternAnalysisPage - Roteamento corrigido"
+    - "PatternAnalysisPage - Problema de roteamento CRÍTICO"
   stuck_tasks:
     - "PatternAnalysisPage - Lógica de Gale corrigida"
     - "PatternAnalysisPage - Cálculos de assertividade melhorados"
