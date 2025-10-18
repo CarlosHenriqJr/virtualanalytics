@@ -209,6 +209,11 @@ const PatternAnalysisPage = () => {
 
   // Algoritmo de backtest
   const executeBacktest = (patterns, entries, historicalData) => {
+    console.log('=== EXECUTE BACKTEST ===');
+    console.log('Padrões:', patterns);
+    console.log('Entradas:', entries);
+    console.log('Dados históricos:', historicalData.length, 'partidas');
+    
     const sortedMatches = [...historicalData].sort((a, b) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
@@ -217,16 +222,27 @@ const PatternAnalysisPage = () => {
       return a.minute - b.minute;
     });
 
+    console.log('Partidas ordenadas:', sortedMatches.length);
+
     const entryResults = [];
 
-    entries.forEach(entry => {
+    entries.forEach((entry, entryIdx) => {
+      console.log(`\n=== Processando Entrada ${entryIdx + 1} ===`);
+      console.log('Entrada:', entry);
+      
       const relatedPatterns = patterns.filter(p => 
         p.col === entry.col && p.row < entry.row
       );
 
-      if (relatedPatterns.length === 0) return;
+      console.log('Padrões relacionados:', relatedPatterns.length);
 
-      relatedPatterns.forEach(pattern => {
+      if (relatedPatterns.length === 0) {
+        console.log('⚠️ Nenhum padrão relacionado (mesma coluna, linha acima)');
+        return;
+      }
+
+      relatedPatterns.forEach((pattern, patternIdx) => {
+        console.log(`\n--- Padrão ${patternIdx + 1} para Entrada ${entryIdx + 1} ---`);
         const patternOccurrences = [];
 
         for (let i = 0; i < sortedMatches.length - 5; i++) {
@@ -246,12 +262,16 @@ const PatternAnalysisPage = () => {
           }
         }
 
+        console.log('Ocorrências do padrão:', patternOccurrences.length);
+
         const total = patternOccurrences.length;
         const sg = patternOccurrences.filter(o => o.evaluation.sg).length;
         const g1 = patternOccurrences.filter(o => o.evaluation.g1).length;
         const g2 = patternOccurrences.filter(o => o.evaluation.g2).length;
         const g3 = patternOccurrences.filter(o => o.evaluation.g3).length;
         const g4 = patternOccurrences.filter(o => o.evaluation.g4).length;
+
+        console.log('Assertividade - SG:', sg, 'G1:', g1, 'G2:', g2, 'G3:', g3, 'G4:', g4);
 
         entryResults.push({
           entryPosition: `${entry.row}-${entry.col}`,
@@ -270,6 +290,10 @@ const PatternAnalysisPage = () => {
         });
       });
     });
+
+    console.log('\n=== RESULTADOS FINAIS ===');
+    console.log('Total de análises:', entryResults.length);
+    console.log('Resultados:', entryResults);
 
     return entryResults;
   };
