@@ -155,6 +155,7 @@ const PatternAnalysisPage = () => {
   const runBacktest = () => {
     console.log('=== INICIANDO BACKTEST ===');
     console.log('Total de partidas:', matches?.length);
+    console.log('📊 Estado da matriz:', matrix);
     
     if (!matches || matches.length === 0) {
       alert('Carregue dados primeiro! Não há partidas disponíveis.');
@@ -170,6 +171,7 @@ const PatternAnalysisPage = () => {
         const config = matrix[key];
         
         if (config) {
+          console.log(`🔍 Célula ${key}:`, config);
           if (config.type === 'pattern') {
             patterns.push({ row, col, config });
           } else if (config.type === 'entry') {
