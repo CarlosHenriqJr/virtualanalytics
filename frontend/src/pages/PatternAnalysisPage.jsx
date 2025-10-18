@@ -324,7 +324,7 @@ const PatternAnalysisPage = () => {
               Análise de Padrões
             </h1>
             <p className="text-gray-400 mt-1">
-              Configure padrões e entradas na matriz para análise de backtest com progressões
+              Selecione células, configure mercados e execute backtest com progressões
             </p>
           </div>
           
@@ -337,6 +337,114 @@ const PatternAnalysisPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Painel de Configuração */}
+      <Card className="bg-gray-900/50 border-gray-800 p-6 mb-6">
+        <h3 className="text-lg font-bold text-white mb-4">Configuração de Mercados</h3>
+        
+        <div className="space-y-4">
+          {/* Seleção de Mercados */}
+          <div>
+            <label className="text-sm text-gray-400 mb-2 block">
+              Selecione Mercados (múltipla seleção):
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+              {availableMarkets.map(market => (
+                <label
+                  key={market.value}
+                  className={`flex items-center gap-2 p-3 rounded cursor-pointer transition-colors ${
+                    currentConfig.markets.includes(market.value)
+                      ? 'bg-purple-600 border-2 border-purple-400'
+                      : 'bg-gray-800 border-2 border-gray-700 hover:bg-gray-700'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={currentConfig.markets.includes(market.value)}
+                    onChange={() => toggleMarket(market.value)}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-white text-sm font-semibold">{market.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Combinação Lógica */}
+          {currentConfig.markets.length > 1 && (
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">Combinação Lógica:</label>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setCurrentConfig({ ...currentConfig, combination: 'AND' })}
+                  className={`${
+                    currentConfig.combination === 'AND'
+                      ? 'bg-blue-600 hover:bg-blue-500'
+                      : 'bg-gray-700 hover:bg-gray-600'
+                  }`}
+                >
+                  E (todos os mercados)
+                </Button>
+                <Button
+                  onClick={() => setCurrentConfig({ ...currentConfig, combination: 'OR' })}
+                  className={`${
+                    currentConfig.combination === 'OR'
+                      ? 'bg-blue-600 hover:bg-blue-500'
+                      : 'bg-gray-700 hover:bg-gray-600'
+                  }`}
+                >
+                  OU (qualquer mercado)
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Indicador de seleção */}
+          {selectedCells.length > 0 && (
+            <div className="p-4 bg-blue-900/30 border border-blue-500/50 rounded">
+              <p className="text-white font-semibold mb-2">
+                {selectedCells.length} célula(s) selecionada(s)
+              </p>
+              <p className="text-sm text-blue-200">
+                Posições: {selectedCells.join(', ')}
+              </p>
+            </div>
+          )}
+
+          {/* Botões de Ação */}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={markAsPattern}
+              disabled={selectedCells.length === 0}
+              className="bg-yellow-600 hover:bg-yellow-500 text-white font-semibold"
+            >
+              🟨 Marcar como Padrão Isolado
+            </Button>
+            <Button
+              onClick={markAsEntry}
+              disabled={selectedCells.length === 0}
+              className="bg-green-600 hover:bg-green-500 text-white font-semibold"
+            >
+              🟩 Marcar como Entrada
+            </Button>
+            <Button
+              onClick={clearSelected}
+              disabled={selectedCells.length === 0}
+              variant="outline"
+              className="bg-red-900/20 hover:bg-red-900/40 border-red-500/30"
+            >
+              Limpar Selecionadas
+            </Button>
+            <Button
+              onClick={clearAll}
+              variant="outline"
+              className="bg-gray-700 hover:bg-gray-600 border-gray-600"
+            >
+              Limpar Tudo
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* Matriz 8x20 */}
       <Card className="bg-gray-900/50 border-gray-800 p-6 mb-6">
