@@ -225,15 +225,18 @@ frontend:
 
   - task: "PatternAnalysisPage - Info sobre ROI nos resultados"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Adicionado card informativo amarelo acima dos resultados explicando como o ROI é calculado (odd 2.0, stake 100, gale com dobro). Avisa que é simplificado e odds reais variam."
+      - working: false
+        agent: "testing"
+        comment: "Mesmo issue de roteamento - componente não está sendo carregado pela URL /pattern-analysis. Implementação existe no código mas não está acessível via interface web."
 
 metadata:
   created_by: "main_agent"
