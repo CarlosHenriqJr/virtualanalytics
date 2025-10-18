@@ -563,12 +563,29 @@ const PatternAnalysisPage = () => {
           <Button
             onClick={runBacktest}
             disabled={isAnalyzing}
-            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allow"
           >
             <Search className="w-4 h-4 mr-2" />
             {isAnalyzing ? `Analisando... ${progress}%` : 'Executar Backtest'}
           </Button>
         </div>
+        
+        {/* Barra de Progresso */}
+        {isAnalyzing && (
+          <div className="mt-4 p-4 bg-purple-900/30 border border-purple-500/50 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-purple-200 font-semibold">⏳ Executando análise...</span>
+              <span className="text-sm text-purple-300">{progress}%</span>
+            </div>
+            <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-2">Analisando padrões históricos e calculando probabilidades...</p>
+          </div>
+        )}
       </div>
 
       {/* Painel de Configuração */}
