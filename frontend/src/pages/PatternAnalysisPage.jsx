@@ -465,26 +465,158 @@ const PatternAnalysisPage = () => {
   };
 
   const getMarketLabelFromKey = (marketKey) => {
-    // Converte chaves do tipo "TotalGols_MaisDe_35" para "Over 3.5"
+    // Mapeamento completo de TODOS os mercados disponíveis
     const mapping = {
+      // Total de Gols
+      'TotalGols_MaisDe_05': 'Over 0.5',
+      'TotalGols_MaisDe_15': 'Over 1.5',
       'TotalGols_MaisDe_25': 'Over 2.5',
       'TotalGols_MaisDe_35': 'Over 3.5',
       'TotalGols_MaisDe_45': 'Over 4.5',
+      'TotalGols_MenosDe_05': 'Under 0.5',
+      'TotalGols_MenosDe_15': 'Under 1.5',
       'TotalGols_MenosDe_25': 'Under 2.5',
       'TotalGols_MenosDe_35': 'Under 3.5',
-      'ParaOTimeMarcarSimNao_AmbasMarcam': 'Ambas Marcam',
+      'TotalGols_MenosDe_45': 'Under 4.5',
+      'TOTAL_GOLS_HT': 'Total Gols HT',
+      
+      // Resultado Final
       'VencedorFT_Casa': 'Vitória Casa',
       'VencedorFT_Visitante': 'Vitória Visitante',
       'VencedorFT_Empate': 'Empate',
-      'ResultadoCorreto_Casa': 'Resultado Exato Casa',
-      'ResultadoCorreto_Visitante': 'Resultado Exato Visitante',
-      'ResultadoCorreto_Empate': 'Resultado Exato Empate',
-      'DuplaChance_CasaEmpate': 'Dupla Chance 1X',
-      'DuplaChance_CasaVisitante': 'Dupla Chance 12',
-      'DuplaChance_EmpateVisitante': 'Dupla Chance X2',
-      'PrimeiroGol_Casa': 'Primeiro Gol Casa',
-      'PrimeiroGol_Visitante': 'Primeiro Gol Visitante',
-      'PrimeiroGol_Nenhum': 'Sem Gols'
+      
+      // Dupla Chance
+      'DuplaHipotese_CasaOuEmpate': 'Dupla Chance 1X',
+      'DuplaHipotese_CasaOuVisitante': 'Dupla Chance 12',
+      'DuplaHipotese_EmpateOuVisitante': 'Dupla Chance X2',
+      
+      // Ambas Marcam
+      'ParaOTimeMarcarSimNao_AmbasMarcam': 'Ambas Marcam',
+      'ParaOTimeMarcarSimNao_AmbasNaoMarcam': 'Ambas Não Marcam',
+      'ParaOTimeMarcarSimNao_CasaSim': 'Casa Marca',
+      'ParaOTimeMarcarSimNao_CasaNao': 'Casa Não Marca',
+      'ParaOTimeMarcarSimNao_VisitanteSim': 'Visitante Marca',
+      'ParaOTimeMarcarSimNao_VisitanteNao': 'Visitante Não Marca',
+      
+      // Resultado Correto
+      'ResultadoCorreto_Casa_1x0': 'Placar Exato 1x0',
+      'ResultadoCorreto_Casa_2x0': 'Placar Exato 2x0',
+      'ResultadoCorreto_Casa_2x1': 'Placar Exato 2x1',
+      'ResultadoCorreto_Casa_3x0': 'Placar Exato 3x0',
+      'ResultadoCorreto_Casa_3x1': 'Placar Exato 3x1',
+      'ResultadoCorreto_Casa_3x2': 'Placar Exato 3x2',
+      'ResultadoCorreto_Casa_4x0': 'Placar Exato 4x0',
+      'ResultadoCorreto_Casa_QualquerOutro': 'Placar Casa Outro',
+      'ResultadoCorreto_Visitante_1x0': 'Placar Exato 0x1',
+      'ResultadoCorreto_Visitante_2x0': 'Placar Exato 0x2',
+      'ResultadoCorreto_Visitante_2x1': 'Placar Exato 1x2',
+      'ResultadoCorreto_Visitante_3x0': 'Placar Exato 0x3',
+      'ResultadoCorreto_Visitante_3x1': 'Placar Exato 1x3',
+      'ResultadoCorreto_Visitante_3x2': 'Placar Exato 2x3',
+      'ResultadoCorreto_Visitante_4x0': 'Placar Exato 0x4',
+      'ResultadoCorreto_Visitante_QualquerOutro': 'Placar Visitante Outro',
+      'ResultadoCorreto_Empate_0x0': 'Placar Exato 0x0',
+      'ResultadoCorreto_Empate_1x1': 'Placar Exato 1x1',
+      'ResultadoCorreto_Empate_2x2': 'Placar Exato 2x2',
+      'ResultadoCorreto_Empate_QualquerOutro': 'Placar Empate Outro',
+      
+      // Resultado Correto Grupo
+      'ResultadoCorretoGrupo_Casa_1x0_2x0_2x1': 'Grupo Casa 1x0/2x0/2x1',
+      'ResultadoCorretoGrupo_Casa_3x0_3x1_4x0': 'Grupo Casa 3x0/3x1/4x0',
+      'ResultadoCorretoGrupo_Casa_QualquerOutro': 'Grupo Casa Outro',
+      'ResultadoCorretoGrupo_Visitante_1x0_2x0_2x1': 'Grupo Visitante 0x1/0x2/1x2',
+      'ResultadoCorretoGrupo_Visitante_3x0_3x1_4x0': 'Grupo Visitante 0x3/1x3/0x4',
+      'ResultadoCorretoGrupo_Visitante_QualquerOutro': 'Grupo Visitante Outro',
+      'ResultadoCorretoGrupo_Empate_0x0': 'Grupo Empate 0x0',
+      'ResultadoCorretoGrupo_Empate_1x1_2x2': 'Grupo Empate 1x1/2x2',
+      'ResultadoCorretoGrupo_Empate_3x3_4x4': 'Grupo Empate 3x3/4x4',
+      
+      // HT/FT
+      'IntervaloFinalJogo_CasaCasa': 'HT/FT Casa/Casa',
+      'IntervaloFinalJogo_CasaEmpate': 'HT/FT Casa/Empate',
+      'IntervaloFinalJogo_CasaVisitante': 'HT/FT Casa/Visitante',
+      'IntervaloFinalJogo_EmpateCasa': 'HT/FT Empate/Casa',
+      'IntervaloFinalJogo_EmpateEmpate': 'HT/FT Empate/Empate',
+      'IntervaloFinalJogo_EmpateVisitante': 'HT/FT Empate/Visitante',
+      'IntervaloFinalJogo_VisitanteCasa': 'HT/FT Visitante/Casa',
+      'IntervaloFinalJogo_VisitanteEmpate': 'HT/FT Visitante/Empate',
+      'IntervaloFinalJogo_VisitanteVisitante': 'HT/FT Visitante/Visitante',
+      
+      // Gols Exatos
+      'GolsExatos_0': '0 Gols',
+      'GolsExatos_1': '1 Gol',
+      'GolsExatos_2': '2 Gols',
+      'GolsExatos_3': '3 Gols',
+      'GolsExatos_4': '4 Gols',
+      'GolsExatos_5_Mais': '5+ Gols',
+      
+      // Margem Vitória
+      'MargemVitoriaGols_Casa1': 'Casa Vence por 1',
+      'MargemVitoriaGols_Casa2': 'Casa Vence por 2',
+      'MargemVitoriaGols_Casa3Mais': 'Casa Vence por 3+',
+      'MargemVitoriaGols_Visitante1': 'Visitante Vence por 1',
+      'MargemVitoriaGols_Visitante2': 'Visitante Vence por 2',
+      'MargemVitoriaGols_Visitante3Mais': 'Visitante Vence por 3+',
+      'MargemVitoriaGols_EmpateComGols': 'Empate com Gols',
+      'MargemVitoriaGols_SemGols': 'Empate 0x0',
+      
+      // Time Gols
+      'TimeGols_Casa0': 'Casa 0 Gols',
+      'TimeGols_Casa1': 'Casa 1 Gol',
+      'TimeGols_Casa2': 'Casa 2 Gols',
+      'TimeGols_Casa3': 'Casa 3 Gols',
+      'TimeGols_Casa4': 'Casa 4 Gols',
+      'TimeGols_Casa5mais': 'Casa 5+ Gols',
+      'TimeGols_Visitante0': 'Visitante 0 Gols',
+      'TimeGols_Visitante1': 'Visitante 1 Gol',
+      'TimeGols_Visitante2': 'Visitante 2 Gols',
+      'TimeGols_Visitante3': 'Visitante 3 Gols',
+      'TimeGols_Visitante4': 'Visitante 4 Gols',
+      'TimeGols_Visitante5mais': 'Visitante 5+ Gols',
+      
+      // Primeiro/Último Gol
+      'TimeAMarcarPrimeiro_Casa': 'Primeiro Gol Casa',
+      'TimeAMarcarPrimeiro_Visitante': 'Primeiro Gol Visitante',
+      'TimeAMarcarPrimeiro_Nenhum': 'Sem Gols',
+      'TimeAMarcarPorUltimo_Casa': 'Último Gol Casa',
+      'TimeAMarcarPorUltimo_Visitante': 'Último Gol Visitante',
+      'TimeAMarcarPorUltimo_Nenhum': 'Último Sem Gols',
+      
+      // Intervalo
+      'IntervaloVencedor_Casa': 'Casa Vence HT',
+      'IntervaloVencedor_Visitante': 'Visitante Vence HT',
+      'IntervaloVencedor_Empate': 'Empate HT',
+      'IntervaloResultadoCorreto_Casa_1x0': 'HT 1x0',
+      'IntervaloResultadoCorreto_Casa_2x0': 'HT 2x0',
+      'IntervaloResultadoCorreto_Visitante_1x0': 'HT 0x1',
+      'IntervaloResultadoCorreto_Visitante_2x0': 'HT 0x2',
+      'IntervaloResultadoCorreto_Empate_0x0': 'HT 0x0',
+      'IntervaloResultadoCorreto_Empate_1x1': 'HT 1x1',
+      'IntervaloResultadoCorreto_Outros': 'HT Outros',
+      
+      // Handicap
+      'HandicapAsiatico_Casa': 'Handicap Asiático Casa',
+      'HandicapAsiatico_Visitante': 'Handicap Asiático Visitante',
+      'HandicapResultado_Casa_Mais10': 'Handicap Casa +1',
+      'HandicapResultado_Casa_Mais20': 'Handicap Casa +2',
+      'HandicapResultado_Casa_Menos10': 'Handicap Casa -1',
+      'HandicapResultado_Casa_Menos20': 'Handicap Casa -2',
+      'HandicapResultado_Visitante_Mais10': 'Handicap Visitante +1',
+      'HandicapResultado_Visitante_Mais20': 'Handicap Visitante +2',
+      'HandicapResultado_Visitante_Menos10': 'Handicap Visitante -1',
+      'HandicapResultado_Visitante_Menos20': 'Handicap Visitante -2',
+      'HandicapResultado_Empate_Mais10': 'Handicap Empate +1',
+      'HandicapResultado_Empate_Mais20': 'Handicap Empate +2',
+      'HandicapResultado_Empate_Menos10': 'Handicap Empate -1',
+      'HandicapResultado_Empate_Menos20': 'Handicap Empate -2',
+      
+      // Resultado + Ambas Marcam
+      'ResultadoParaAmbosMarcarem_CasaSim': 'Casa + Ambas Marcam',
+      'ResultadoParaAmbosMarcarem_CasaNao': 'Casa + Ambas Não',
+      'ResultadoParaAmbosMarcarem_VisitanteSim': 'Visitante + Ambas Marcam',
+      'ResultadoParaAmbosMarcarem_VisitanteNao': 'Visitante + Ambas Não',
+      'ResultadoParaAmbosMarcarem_EmpateSim': 'Empate + Ambas Marcam',
+      'ResultadoParaAmbosMarcarem_EmpateNao': 'Empate + Ambas Não'
     };
     
     // Retorna label se existir no mapping, caso contrário retorna null
