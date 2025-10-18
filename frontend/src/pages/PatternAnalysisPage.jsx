@@ -320,32 +320,52 @@ const PatternAnalysisPage = () => {
   };
 
   const evaluateEntry = (entryMatch, galeMatches, config) => {
-    const results = { sg: false, g1: false, g2: false, g3: false, g4: false };
+    const results = { 
+      sg: false, 
+      g1: false, 
+      g2: false, 
+      g3: false, 
+      g4: false,
+      level: null // Qual nível bateu: 'SG', 'G1', 'G2', 'G3', 'G4', ou null (falha)
+    };
 
+    // Verifica jogo de entrada (SG)
     if (entryMatch && matchesPattern(entryMatch, config)) {
-      results.sg = results.g1 = results.g2 = results.g3 = results.g4 = true;
+      results.sg = true;
+      results.level = 'SG';
       return results;
     }
 
+    // Verifica Gale 1
     if (galeMatches.length > 1 && matchesPattern(galeMatches[1], config)) {
-      results.g1 = results.g2 = results.g3 = results.g4 = true;
+      results.g1 = true;
+      results.level = 'G1';
       return results;
     }
 
+    // Verifica Gale 2
     if (galeMatches.length > 2 && matchesPattern(galeMatches[2], config)) {
-      results.g2 = results.g3 = results.g4 = true;
+      results.g2 = true;
+      results.level = 'G2';
       return results;
     }
 
+    // Verifica Gale 3
     if (galeMatches.length > 3 && matchesPattern(galeMatches[3], config)) {
-      results.g3 = results.g4 = true;
+      results.g3 = true;
+      results.level = 'G3';
       return results;
     }
 
+    // Verifica Gale 4
     if (galeMatches.length > 4 && matchesPattern(galeMatches[4], config)) {
       results.g4 = true;
+      results.level = 'G4';
+      return results;
     }
 
+    // Nenhum bateu = Falha
+    results.level = 'F';
     return results;
   };
 
