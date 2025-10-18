@@ -135,15 +135,18 @@ frontend:
 
   - task: "PatternAnalysisPage - Cálculos de assertividade melhorados"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/PatternAnalysisPage.jsx"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Refatorados cálculos de assertividade usando o campo 'level'. Agora conta corretamente quantas ocorrências bateram em cada nível (SG, G1, G2, G3, G4) e calcula falhas. Percentuais agora refletem distribuição real."
+      - working: false
+        agent: "testing"
+        comment: "Mesmo issue de roteamento - componente não está sendo carregado pela URL /pattern-analysis. Implementação existe no código mas não está acessível via interface web."
 
   - task: "PatternAnalysisPage - Distribuição visual G3/G4 adicionada"
     implemented: true
