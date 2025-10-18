@@ -304,17 +304,22 @@ const PatternAnalysisPage = () => {
               
               // Itera por TODOS os mercados disponíveis no jogo
               Object.entries(entryMatch.markets).forEach(([marketKey, oddValue]) => {
-                // Valida se a odd é um número válido
-                if (oddValue && typeof oddValue === 'number' && !isNaN(oddValue) && oddValue > 0) {
-                  // Converte chave do mercado para nome legível
-                  const marketLabel = getMarketLabelFromKey(marketKey);
-                  if (marketLabel) {
-                    allOdds.push({
-                      market: marketLabel,
-                      marketKey,
-                      odd: oddValue
-                    });
-                  }
+                // Debug: log de valores inválidos
+                if (!oddValue || typeof oddValue !== 'number' || isNaN(oddValue) || oddValue <= 0) {
+                  console.log(`⚠️ Odd inválida ignorada: ${marketKey} = ${oddValue}`);
+                  return; // Ignora essa odd
+                }
+                
+                // Converte chave do mercado para nome legível
+                const marketLabel = getMarketLabelFromKey(marketKey);
+                if (marketLabel) {
+                  allOdds.push({
+                    market: marketLabel,
+                    marketKey,
+                    odd: oddValue
+                  });
+                } else {
+                  console.log(`⚠️ Mercado sem label ignorado: ${marketKey}`);
                 }
               });
               
