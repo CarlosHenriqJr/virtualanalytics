@@ -467,8 +467,11 @@ const PatternAnalysisPage = () => {
         <div className="space-y-4">
           {/* Seleção de Mercados */}
           <div>
-            <label className="text-sm text-gray-400 mb-2 block">
+            <label className="text-sm text-gray-400 mb-2 block flex items-center gap-2">
               Selecione Mercados (múltipla seleção):
+              <span className="text-xs text-gray-500 italic" title="Escolha os mercados que o padrão deve verificar nas partidas">
+                ℹ️ Escolha quais condições verificar
+              </span>
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
               {availableMarkets.map(market => (
