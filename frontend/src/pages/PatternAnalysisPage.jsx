@@ -3,11 +3,11 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Target, TrendingUp, Search, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { mockMatches } from '../data/mockData';
+import { useMatches } from '../contexts/MatchesContext';
 
 const PatternAnalysisPage = () => {
   const navigate = useNavigate();
-  const matches = mockMatches;
+  const { matches } = useMatches();
   
   // Estado da matriz 8x20
   const [matrix, setMatrix] = useState(() => {
