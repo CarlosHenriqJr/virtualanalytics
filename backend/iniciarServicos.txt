@@ -1,0 +1,6 @@
+Subindo Backend
+cd /c/Users/carlo/Downloads/NovaAplicacao/Futebol-Virtual-Analytics/backend/ && uvicorn server:app --reload --port 8000
+
+Subindo FrontEnd
+cd /c/Users/carlo/Downloads/NovaAplicacao/Futebol-Virtual-Analytics/FrontEnd/ && npm start
+
