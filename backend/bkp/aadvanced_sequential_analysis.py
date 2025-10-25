@@ -10,6 +10,7 @@ incluindo:
 - Detecção de clusters temporais
 - Combinações de mercados recorrentes
 """
+print("✅ Carregando advanced_sequential_analysis.py...")
 
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional, Dict, Any
@@ -18,7 +19,14 @@ from pydantic import BaseModel
 from database import get_database
 from collections import Counter, defaultdict
 
-advanced_analysis_router = APIRouter(prefix="/advanced-analysis", tags=["advanced-analysis"])
+try:
+    advanced_analysis_router = APIRouter(prefix="/advanced-analysis", tags=["advanced-analysis"])
+    print("✅ Router advanced_analysis_router criado com sucesso")
+except Exception as e:
+    print(f"❌ ERRO ao criar router: {e}")
+    raise
+
+print("✅ Router 'advanced_analysis_router' criado com prefix:", advanced_analysis_router.prefix)
 
 # ==================== MODELOS ====================
 
@@ -72,12 +80,68 @@ class AdvancedSequentialAnalysisResponse(BaseModel):
 
 # ==================== FUNÇÕES AUXILIARES ====================
 
+def sanitize_mongo_document(doc: dict) -> dict:
+    """
+    Remove ObjectId e outros tipos não serializáveis do documento MongoDB.
+    Converte ObjectId para string e remove campos problemáticos.
+    """
+    if doc is None:
+        return None
+    
+    # Criar cópia para não modificar o original
+    sanitized = {}
+    
+    for key, value in doc.items():
+        # Pular _id (ObjectId)
+        if key == "_id":
+            continue
+        
+        # Converter ObjectId para string se necessário
+        if hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
+            sanitized[key] = str(value)
+        # Recursivamente limpar dicionários aninhados
+        elif isinstance(value, dict):
+            sanitized[key] = sanitize_mongo_document(value)
+        # Limpar listas
+        elif isinstance(value, list):
+            sanitized[key] = [
+                sanitize_mongo_document(item) if isinstance(item, dict) else item
+                for item in value
+            ]
+        else:
+            sanitized[key] = value
+    
+    return sanitized
+
 def parse_time(time_str: str) -> datetime:
     """Converte string HH:MM para datetime."""
     try:
+        # Garantir que time_str é string
+        time_str = str(time_str)
         return datetime.strptime(time_str, "%H:%M")
     except:
         return None
+
+def safe_get_hour(hour_value: Any) -> str:
+    """Converte valor de hora para string HH:MM de forma segura."""
+    if isinstance(hour_value, str):
+        return hour_value
+    elif isinstance(hour_value, int):
+        return f"{hour_value:02d}:00"
+    else:
+        return "00:00"
+
+def safe_get_hour_int(hour_value: Any) -> int:
+    """Extrai hora (int) de forma segura."""
+    if isinstance(hour_value, int):
+        return hour_value
+    elif isinstance(hour_value, str):
+        try:
+            return int(hour_value.split(":")[0])
+        except:
+            return 0
+    else:
+        return 0
 
 def get_fixed_odd(market_name: str, markets_data: dict) -> Optional[float]:
     """
@@ -93,50 +157,66 @@ def get_fixed_odd(market_name: str, markets_data: dict) -> Optional[float]:
 def check_market_occurred(match: dict, market: str) -> bool:
     """
     Verifica se um mercado específico ocorreu (ganhou) no jogo.
-    Usa a mesma lógica de check_market_result do analysis_routes.py
+    Usa a mesma lógica de check_market_result do analysis_routes.py.
     """
+    # Debug: identificar quando market não é string
+    if not isinstance(market, str):
+        print(f"⚠️  [check_market_occurred] Market inválido: {repr(market)} (tipo: {type(market)})")
+        return False
+
+    # Extrair dados do jogo
     placar_casa_ft = match.get("placarCasaFT", 0)
     placar_fora_ft = match.get("placarForaFT", 0)
     total_gols_ft = match.get("totalGolsFT", 0)
-    
-    # Total de Gols - Mais de X
+
+    # === Total de Gols - Mais de X ===
     if "TotalGols_MaisDe_" in market:
         try:
-            threshold = float(market.split("_")[-1].replace("5", ".5"))
+            threshold_str = market.split("_")[-1]
+            # Converter "25" → 2.5, "35" → 3.5, etc.
+            if len(threshold_str) >= 2 and threshold_str.endswith("5"):
+                threshold = float(threshold_str[:-1] + "." + threshold_str[-1])
+            else:
+                threshold = float(threshold_str)
             return total_gols_ft > threshold
-        except:
-            pass
-    
-    # Total de Gols - Menos de X
+        except (ValueError, IndexError):
+            return False
+
+    # === Total de Gols - Menos de X ===
     if "TotalGols_MenosDe_" in market:
         try:
-            threshold = float(market.split("_")[-1].replace("5", ".5"))
+            threshold_str = market.split("_")[-1]
+            if len(threshold_str) >= 2 and threshold_str.endswith("5"):
+                threshold = float(threshold_str[:-1] + "." + threshold_str[-1])
+            else:
+                threshold = float(threshold_str)
             return total_gols_ft < threshold
-        except:
-            pass
-    
-    # Vencedor FT
+        except (ValueError, IndexError):
+            return False
+
+    # === Vencedor FT ===
     if market == "VencedorFT_Casa":
         return placar_casa_ft > placar_fora_ft
     elif market == "VencedorFT_Empate":
         return placar_casa_ft == placar_fora_ft
     elif market == "VencedorFT_Visitante":
         return placar_casa_ft < placar_fora_ft
-    
-    # Ambas Marcam
+
+    # === Ambas Marcam ===
     if market == "ParaOTimeMarcarSimNao_AmbasMarcam":
         return placar_casa_ft > 0 and placar_fora_ft > 0
     elif market == "ParaOTimeMarcarSimNao_NenhumaMarca":
         return placar_casa_ft == 0 and placar_fora_ft == 0
-    
-    # Gols Exatos
+
+    # === Gols Exatos ===
     if "GolsExatos_" in market:
         try:
             exact_goals = int(market.split("_")[-1])
             return total_gols_ft == exact_goals
-        except:
-            pass
-    
+        except (ValueError, IndexError):
+            return False
+
+    # Mercado não reconhecido
     return False
 
 def detect_temporal_clusters(matches: List[dict], time_window_minutes: int = 120) -> List[TemporalCluster]:
@@ -146,13 +226,8 @@ def detect_temporal_clusters(matches: List[dict], time_window_minutes: int = 120
     """
     clusters = []
     
-    # Ordenar jogos por horário (usar hour e minute)
-    def get_time_key(match):
-        hour = match.get("hour", "00")
-        minute = match.get("minute", "00")
-        return f"{hour}:{minute}"
-    
-    sorted_matches = sorted(matches, key=get_time_key)
+    # Ordenar jogos por horário
+    sorted_matches = sorted(matches, key=lambda x: safe_get_hour(x.get("hour", "00:00")))
     
     if len(sorted_matches) < 2:
         return clusters
@@ -160,12 +235,8 @@ def detect_temporal_clusters(matches: List[dict], time_window_minutes: int = 120
     current_cluster = [sorted_matches[0]]
     
     for i in range(1, len(sorted_matches)):
-        prev_match = sorted_matches[i-1]
-        curr_match = sorted_matches[i]
-        prev_time_str = f"{prev_match.get('hour', '00')}:{prev_match.get('minute', '00')}"
-        curr_time_str = f"{curr_match.get('hour', '00')}:{curr_match.get('minute', '00')}"
-        prev_time = parse_time(prev_time_str)
-        curr_time = parse_time(curr_time_str)
+        prev_time = parse_time(safe_get_hour(sorted_matches[i-1].get("hour", "00:00")))
+        curr_time = parse_time(safe_get_hour(sorted_matches[i].get("hour", "00:00")))
         
         if prev_time and curr_time:
             time_diff = (curr_time - prev_time).total_seconds() / 60  # minutos
@@ -184,15 +255,10 @@ def detect_temporal_clusters(matches: List[dict], time_window_minutes: int = 120
                                     if check_market_occurred(match, market_name):
                                         market_freq[market_name] += 1
                     
-                    start_match = current_cluster[0]
-                    end_match = current_cluster[-1]
-                    start_time_str = f"{start_match.get('hour', '00')}:{start_match.get('minute', '00')}"
-                    end_time_str = f"{end_match.get('hour', '00')}:{end_match.get('minute', '00')}"
-                    
                     clusters.append(TemporalCluster(
-                        start_time=start_time_str,
-                        end_time=end_time_str,
-                        games=current_cluster,
+                        start_time=safe_get_hour(current_cluster[0].get("hour", "00:00")),
+                        end_time=safe_get_hour(current_cluster[-1].get("hour", "00:00")),
+                        games=[sanitize_mongo_document(match) for match in current_cluster],
                         market_frequency=dict(market_freq)
                     ))
                 
@@ -209,15 +275,10 @@ def detect_temporal_clusters(matches: List[dict], time_window_minutes: int = 120
                         if check_market_occurred(match, market_name):
                             market_freq[market_name] += 1
         
-        start_match = current_cluster[0]
-        end_match = current_cluster[-1]
-        start_time_str = f"{start_match.get('hour', '00')}:{start_match.get('minute', '00')}"
-        end_time_str = f"{end_match.get('hour', '00')}:{end_match.get('minute', '00')}"
-        
         clusters.append(TemporalCluster(
-            start_time=start_time_str,
-            end_time=end_time_str,
-            games=current_cluster,
+            start_time=safe_get_hour(current_cluster[0].get("hour", "00:00")),
+            end_time=safe_get_hour(current_cluster[-1].get("hour", "00:00")),
+            games=[sanitize_mongo_document(match) for match in current_cluster],
             market_frequency=dict(market_freq)
         ))
     
@@ -243,7 +304,10 @@ async def analyze_sequential_patterns(request: SequentialAnalysisRequest):
         # Buscar todos os jogos da data de referência
         query = {"date": request.reference_date}
         cursor = db.partidas.find(query).sort("hour", 1)  # Ordenar por hora
-        all_matches = await cursor.to_list(length=None)
+        all_matches_raw = await cursor.to_list(length=None)
+        
+        # Limpar documentos MongoDB (remover ObjectId)
+        all_matches = [sanitize_mongo_document(match) for match in all_matches_raw]
         
         if not all_matches:
             raise HTTPException(status_code=404, detail=f"Nenhum jogo encontrado na data {request.reference_date}")
@@ -269,11 +333,7 @@ async def analyze_sequential_patterns(request: SequentialAnalysisRequest):
         
         hourly_counts = defaultdict(int)
         for occurrence in target_occurrences:
-            hour_str = occurrence["match"].get("hour", "00")
-            try:
-                hour = int(hour_str)
-            except:
-                hour = 0
+            hour = safe_get_hour_int(occurrence["match"].get("hour", "00:00"))
             hourly_counts[hour] += 1
         
         total_occurrences = len(target_occurrences)
@@ -334,21 +394,21 @@ async def analyze_sequential_patterns(request: SequentialAnalysisRequest):
                 ))
             
             sequential_patterns.append(SequentialPattern(
-                pattern_description=f"Padrão antes do jogo às {target_game.get('hour', '?')}",
-                games_before=[{
-                    "hour": g.get("hour"),
+                pattern_description=f"Padrão antes do jogo às {safe_get_hour(target_game.get('hour', '?'))}",
+                games_before=[sanitize_mongo_document({
+                    "hour": safe_get_hour(g.get("hour")),
                     "placarHT": g.get("placarHT"),
                     "placarFT": g.get("placarFT"),
                     "timeCasa": g.get("timeCasa"),
                     "timeFora": g.get("timeFora")
-                } for g in games_before[-5:]],  # Últimos 5 jogos
-                target_game={
-                    "hour": target_game.get("hour"),
+                }) for g in games_before[-5:]],  # Últimos 5 jogos
+                target_game=sanitize_mongo_document({
+                    "hour": safe_get_hour(target_game.get("hour")),
                     "placarHT": target_game.get("placarHT"),
                     "placarFT": target_game.get("placarFT"),
                     "timeCasa": target_game.get("timeCasa"),
                     "timeFora": target_game.get("timeFora")
-                },
+                }),
                 score_sequence_ht=score_seq_ht[-5:],  # Últimos 5
                 score_sequence_ft=score_seq_ft[-5:],  # Últimos 5
                 market_combinations=pattern_markets[:5]  # Top 5
@@ -445,4 +505,3 @@ async def analyze_sequential_patterns(request: SequentialAnalysisRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

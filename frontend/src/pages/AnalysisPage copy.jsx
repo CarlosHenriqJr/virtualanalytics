@@ -14,7 +14,6 @@ import axios from 'axios';
 import PredictiveAnalysisTab from '../components/PredictiveAnalysisTab';
 import AdvancedSequentialAnalysisTab from '../components/AdvancedSequentialAnalysisTab';
 import PatternDiscoveryTab from '../components/PatternDiscoveryTab';
-import EfficientPatternTab from '../components/EfficientPatternTab';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
@@ -467,63 +466,59 @@ export default function AnalysisPage() {
         {/* Tabs de Resultados */}
         <div className="bg-white rounded-lg shadow">
           <div className="border-b border-gray-200">
-<nav className="flex space-x-2 border-b">
-  <button
-    onClick={() => setActiveTab('overview')}
-    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-      activeTab === 'overview'
-        ? 'border-indigo-500 text-indigo-600'
-        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-    }`}
-  >
-    📊 Visão Geral
-  </button>
-
-  <button
-    onClick={() => setActiveTab('advanced')}
-    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-      activeTab === 'advanced'
-        ? 'border-indigo-500 text-indigo-600'
-        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-    }`}
-  >
-    ⚙️ Análise Avançada
-  </button>
-
-  <button
-    onClick={() => setActiveTab('sequential')}
-    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-      activeTab === 'sequential'
-        ? 'border-indigo-500 text-indigo-600'
-        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-    }`}
-  >
-    🔁 Análise Sequencial
-  </button>
-
-  <button
-    onClick={() => setActiveTab('pattern-discovery')}
-    className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-      activeTab === 'pattern-discovery'
-        ? 'border-indigo-500 text-indigo-600'
-        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-    }`}
-  >
-    🤖 Descoberta de Padrões
-  </button>
-
-  <button
-  onClick={() => setActiveTab('efficient-pattern')}
-  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-    activeTab === 'efficient-pattern'
-      ? 'border-blue-500 text-blue-600'
-      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-  }`}
->
-  📊 Análise Eficiente
-</button>
-</nav>
-
+            <nav className="flex -mb-px overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('trigger')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'trigger'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Análise de Gatilhos
+              </button>
+              <button
+                onClick={() => setActiveTab('sequential')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'sequential'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                🔬 Análise Sequencial
+              </button>
+              <button
+                onClick={() => setActiveTab('predictive')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'predictive'
+                    ? 'border-purple-500 text-purple-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                🔮 Análise Preditiva
+              </button>
+              <button
+                onClick={() => setActiveTab('historical')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'historical'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Análise Histórica
+              </button>
+              <button
+                onClick={handleLoadMatches}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'matches'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+                disabled={!dbStatus.connected || loading || !selectedMarket}
+              >
+                Lista de Jogos
+              </button>
+            </nav>
           </div>
 
           <div className="p-6">
@@ -697,23 +692,6 @@ export default function AnalysisPage() {
                 )}
               </div>
             )}
-
-            {/* Tab: Descoberta de Padrões */}
-{activeTab === 'pattern-discovery' && (
-  <PatternDiscoveryTab
-    selectedMarket={selectedMarket}
-    dbConnected={dbStatus.connected}
-    availableDates={availableDates}
-  />
-)}
-
-{activeTab === 'efficient-pattern' && (
-  <EfficientPatternTab
-    selectedMarket={selectedMarket}
-    dbConnected={dbStatus.connected}
-    availableDates={availableDates}
-  />
-)}
 
             {/* Tab: Lista de Jogos */}
             {activeTab === 'matches' && (
