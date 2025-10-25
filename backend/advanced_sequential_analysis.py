@@ -72,6 +72,16 @@ class AdvancedSequentialAnalysisResponse(BaseModel):
 
 # ==================== FUNÇÕES AUXILIARES ====================
 
+def clean_mongo_doc(doc: dict) -> dict:
+    """
+    Remove campos do MongoDB que não são serializáveis (como _id).
+    Retorna uma cópia limpa do documento.
+    """
+    if doc is None:
+        return {}
+    clean_doc = {k: v for k, v in doc.items() if k != '_id'}
+    return clean_doc
+
 def parse_time(time_str: str) -> datetime:
     """Converte string HH:MM para datetime."""
     try:
@@ -192,7 +202,7 @@ def detect_temporal_clusters(matches: List[dict], time_window_minutes: int = 120
                     clusters.append(TemporalCluster(
                         start_time=start_time_str,
                         end_time=end_time_str,
-                        games=current_cluster,
+                        games=[clean_mongo_doc(m) for m in current_cluster],
                         market_frequency=dict(market_freq)
                     ))
                 
@@ -217,7 +227,7 @@ def detect_temporal_clusters(matches: List[dict], time_window_minutes: int = 120
         clusters.append(TemporalCluster(
             start_time=start_time_str,
             end_time=end_time_str,
-            games=current_cluster,
+            games=[clean_mongo_doc(m) for m in current_cluster],
             market_frequency=dict(market_freq)
         ))
     
