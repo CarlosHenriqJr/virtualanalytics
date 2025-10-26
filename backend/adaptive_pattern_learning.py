@@ -32,6 +32,7 @@ class DailyStudyRequest(BaseModel):
     start_date: str  # Data inicial (YYYY-MM-DD)
     days_to_analyze: int = 10  # Quantos dias analisar
     lookback_games: int = 10  # Quantos jogos anteriores considerar
+    max_entries: int = 1  # Número máximo de entradas (Gale): 1, 2, 3, etc
 
 class PatternFeature(BaseModel):
     """Característica de um padrão identificado"""
@@ -58,6 +59,8 @@ class DayValidation(BaseModel):
     accuracy: float  # Taxa de acerto (0-100)
     should_keep_pattern: bool  # Se deve manter o padrão
     adjustment_needed: str  # Descrição do ajuste necessário
+    # Estatísticas de Gale (múltiplas entradas)
+    gale_stats: Optional[Dict[str, Any]] = None  # Estatísticas por número de entrada
 
 class AdaptiveLearningResponse(BaseModel):
     """Resposta completa do estudo adaptativo"""
@@ -328,7 +331,7 @@ async def adaptive_daily_study(request: DailyStudyRequest):
             # DIA 2+: VALIDAÇÃO E ADAPTAÇÃO
             else:
                 validation = await validate_and_adapt(
-                    matches, request.target_market, request.lookback_games, current_pattern
+                    matches, request.target_market, request.lookback_games, current_pattern, request.max_entries
                 )
                 validation_results.append(validation)
                 
@@ -436,22 +439,39 @@ async def learn_patterns_from_day(matches: List[dict], target_market: str, lookb
         top_sequences=top_sequences
     )
 
-async def validate_and_adapt(matches: List[dict], target_market: str, lookback_games: int, reference_pattern: DayPattern) -> DayValidation:
+async def validate_and_adapt(matches: List[dict], target_market: str, lookback_games: int, reference_pattern: DayPattern, max_entries: int = 1) -> DayValidation:
     """
     Valida se o padrão aprendido funciona no dia atual.
     Retorna métricas de acurácia e se deve manter ou adaptar o padrão.
+    
+    Com suporte a Gale (múltiplas entradas):
+    - max_entries=1: Sem Gale (entrada única)
+    - max_entries=2: Gale 1 (2 tentativas)
+    - max_entries=3: Gale 2 (3 tentativas)
     """
     date = matches[0].get("date", "")
     predictions_made = 0
     correct_predictions = 0
     patterns_applied = []
     
-    for i, match in enumerate(matches):
+    # Estatísticas de Gale
+    gale_stats = {
+        "total_signals": 0,
+        "wins_by_entry": {i: 0 for i in range(1, max_entries + 1)},
+        "total_wins": 0,
+        "total_losses": 0,
+        "win_rate_by_entry": {},
+        "overall_win_rate": 0
+    }
+    
+    i = 0
+    while i < len(matches):
         # Pegar jogos anteriores
         start_idx = max(0, i - lookback_games)
         previous_games = matches[start_idx:i]
         
         if not previous_games:
+            i += 1
             continue
         
         # Extrair features do momento atual
@@ -462,12 +482,53 @@ async def validate_and_adapt(matches: List[dict], target_market: str, lookback_g
         
         if matches_ref:
             predictions_made += 1
+            gale_stats["total_signals"] += 1
             patterns_applied.append(f"Similaridade: {similarity:.2%}")
             
-            # Verificar se a previsão estava correta
-            actual_result = check_market_occurred(match, target_market)
-            if actual_result:
-                correct_predictions += 1
+            # Lógica de Gale: tentar até max_entries vezes
+            won = False
+            entry_number = 0
+            
+            for entry in range(max_entries):
+                current_idx = i + entry
+                
+                # Verificar se ainda há jogos disponíveis
+                if current_idx >= len(matches):
+                    break
+                
+                entry_number = entry + 1
+                current_match = matches[current_idx]
+                
+                # Verificar se o mercado ocorreu nesta entrada
+                actual_result = check_market_occurred(current_match, target_market)
+                
+                if actual_result:
+                    # GREEN! Ganhou nesta entrada
+                    won = True
+                    gale_stats["wins_by_entry"][entry_number] += 1
+                    gale_stats["total_wins"] += 1
+                    correct_predictions += 1
+                    break
+            
+            if not won:
+                # RED - perdeu todas as entradas
+                gale_stats["total_losses"] += 1
+            
+            # Pular os jogos usados no Gale
+            i += entry_number
+        else:
+            i += 1
+    
+    # Calcular estatísticas finais
+    if gale_stats["total_signals"] > 0:
+        gale_stats["overall_win_rate"] = (gale_stats["total_wins"] / gale_stats["total_signals"]) * 100
+        
+        for entry_num in range(1, max_entries + 1):
+            wins_at_entry = gale_stats["wins_by_entry"][entry_num]
+            gale_stats["win_rate_by_entry"][f"entry_{entry_num}"] = {
+                "wins": wins_at_entry,
+                "percentage": (wins_at_entry / gale_stats["total_signals"]) * 100 if gale_stats["total_signals"] > 0 else 0
+            }
     
     accuracy = (correct_predictions / predictions_made * 100) if predictions_made > 0 else 0
     should_keep = accuracy >= 60  # Manter se acurácia >= 60%
@@ -486,7 +547,8 @@ async def validate_and_adapt(matches: List[dict], target_market: str, lookback_g
         correct_predictions=correct_predictions,
         accuracy=round(accuracy, 2),
         should_keep_pattern=should_keep,
-        adjustment_needed=adjustment
+        adjustment_needed=adjustment,
+        gale_stats=gale_stats
     )
 
 def generate_recommendations(learning_evolution: List[DayPattern], validation_results: List[DayValidation], overall_accuracy: float) -> List[str]:

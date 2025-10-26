@@ -20,6 +20,7 @@ const AdaptiveLearningTab = () => {
   const [startDate, setStartDate] = useState('2025-01-01');
   const [daysToAnalyze, setDaysToAnalyze] = useState(10);
   const [lookbackGames, setLookbackGames] = useState(10);
+  const [maxEntries, setMaxEntries] = useState(1);
 
   const marketOptions = [
     { value: 'TotalGols_MaisDe_25', label: 'Over 2.5 Gols' },
@@ -48,6 +49,7 @@ const AdaptiveLearningTab = () => {
           start_date: startDate,
           days_to_analyze: parseInt(daysToAnalyze),
           lookback_games: parseInt(lookbackGames),
+          max_entries: parseInt(maxEntries),
         }),
       });
 
@@ -156,6 +158,26 @@ const AdaptiveLearningTab = () => {
                 onChange={(e) => setLookbackGames(e.target.value)}
               />
               <p className="text-xs text-gray-500">Recomendado: 5-20 jogos</p>
+            </div>
+
+            {/* Max Entries (Gale) */}
+            <div className="space-y-2">
+              <Label htmlFor="max-entries">Máximo de Entradas (Gale)</Label>
+              <Select value={String(maxEntries)} onValueChange={(val) => setMaxEntries(parseInt(val))}>
+                <SelectTrigger id="max-entries">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Entrada (Sem Gale)</SelectItem>
+                  <SelectItem value="2">2 Entradas (Gale 1)</SelectItem>
+                  <SelectItem value="3">3 Entradas (Gale 2)</SelectItem>
+                  <SelectItem value="4">4 Entradas (Gale 3)</SelectItem>
+                  <SelectItem value="5">5 Entradas (Gale 4)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                {maxEntries === 1 ? 'Sem Gale - apenas 1 tentativa' : `Com Gale - até ${maxEntries} tentativas antes de RED`}
+              </p>
             </div>
           </div>
 
@@ -388,6 +410,59 @@ const AdaptiveLearningTab = () => {
                         </div>
                         <Progress value={validation.accuracy} className="h-2 mb-2" />
                         <p className="text-sm text-gray-600 italic">{validation.adjustment_needed}</p>
+                        
+                        {/* Estatísticas de Gale */}
+                        {validation.gale_stats && validation.gale_stats.total_signals > 0 && (
+                          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                            <div className="flex items-center gap-2 mb-2">
+                              <TrendingUp className="h-4 w-4 text-blue-600" />
+                              <span className="text-sm font-semibold text-blue-900">Estatísticas de Gale</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div>
+                                <span className="text-gray-600">Sinais:</span>
+                                <span className="ml-2 font-medium">{validation.gale_stats.total_signals}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Taxa de Acerto:</span>
+                                <span className="ml-2 font-medium text-green-600">
+                                  {validation.gale_stats.overall_win_rate.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Greens:</span>
+                                <span className="ml-2 font-medium text-green-600">{validation.gale_stats.total_wins}</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Reds:</span>
+                                <span className="ml-2 font-medium text-red-600">{validation.gale_stats.total_losses}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Distribuição por entrada */}
+                            {validation.gale_stats.win_rate_by_entry && Object.keys(validation.gale_stats.win_rate_by_entry).length > 1 && (
+                              <div className="mt-3 pt-3 border-t border-blue-200">
+                                <span className="text-xs font-semibold text-blue-900">Greens por Entrada:</span>
+                                <div className="mt-2 space-y-1">
+                                  {Object.entries(validation.gale_stats.win_rate_by_entry).map(([key, data]) => (
+                                    <div key={key} className="flex items-center justify-between text-xs">
+                                      <span className="text-gray-600">{key.replace('entry_', 'Entrada ')}:</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium">{data.wins} ({data.percentage.toFixed(1)}%)</span>
+                                        <div className="w-20 bg-gray-200 rounded-full h-1.5">
+                                          <div 
+                                            className="bg-green-600 h-1.5 rounded-full" 
+                                            style={{ width: `${data.percentage}%` }}
+                                          ></div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
