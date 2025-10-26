@@ -253,13 +253,149 @@ const AdaptiveLearningTab = () => {
           </Card>
 
           {/* Tabs for detailed results */}
-          <Tabs defaultValue="recommendations" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="trigger" className="w-full">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="trigger">🎯 Gatilho</TabsTrigger>
               <TabsTrigger value="recommendations">Recomendações</TabsTrigger>
               <TabsTrigger value="features">Features</TabsTrigger>
               <TabsTrigger value="evolution">Evolução</TabsTrigger>
               <TabsTrigger value="validations">Validações</TabsTrigger>
             </TabsList>
+
+            {/* Trigger Guide Tab */}
+            <TabsContent value="trigger">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-red-600" />
+                    <CardTitle className="text-lg">Como Identificar o Gatilho de Entrada</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Guia prático para reconhecer quando entrar no mercado {results.target_market}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {results.trigger_guide && results.trigger_guide.available ? (
+                    <div className="space-y-6">
+                      {/* Resumo */}
+                      <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border-l-4 border-red-600">
+                        <div className="flex items-start gap-3">
+                          <Target className="h-6 w-6 text-red-600 mt-1" />
+                          <div>
+                            <h3 className="font-semibold text-red-900 mb-2">Resumo do Gatilho</h3>
+                            <p className="text-sm text-gray-700">{results.trigger_guide.summary}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Critérios de Entrada */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="p-3 bg-blue-50 rounded-lg text-center">
+                          <div className="text-xs text-gray-600 mb-1">Confiança</div>
+                          <div className="font-semibold text-blue-900">
+                            {results.trigger_guide.entry_criteria.minimum_confidence}
+                          </div>
+                        </div>
+                        <div className="p-3 bg-purple-50 rounded-lg text-center">
+                          <div className="text-xs text-gray-600 mb-1">Força do Padrão</div>
+                          <div className="font-semibold text-purple-900">
+                            {results.trigger_guide.entry_criteria.pattern_strength}
+                          </div>
+                        </div>
+                        <div className="p-3 bg-green-50 rounded-lg text-center">
+                          <div className="text-xs text-gray-600 mb-1">Ação</div>
+                          <div className="font-semibold text-green-900">
+                            {results.trigger_guide.entry_criteria.recommended_action}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Checklist de Verificação */}
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          Checklist de Verificação
+                        </h3>
+                        <div className="space-y-2">
+                          {results.trigger_guide.top_features.map((feat, index) => (
+                            <div key={index} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="font-medium text-gray-900">{feat.feature}</div>
+                                  <div className="text-sm text-gray-600 mt-1">{feat.description}</div>
+                                </div>
+                                <div className="ml-4">
+                                  <Badge className="bg-blue-600">Importância: {feat.importance.toFixed(1)}%</Badge>
+                                </div>
+                              </div>
+                              <div className="mt-2 text-sm">
+                                <span className="text-gray-600">Valor alvo: </span>
+                                <span className="font-semibold text-gray-900">{feat.target_value}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Exemplo Prático */}
+                      <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <h3 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+                          <AlertTriangle className="h-5 w-5" />
+                          Exemplo Prático de Entrada
+                        </h3>
+                        <p className="text-sm text-gray-700 mb-3">
+                          {results.trigger_guide.practical_example.scenario}
+                        </p>
+                        <ol className="space-y-2">
+                          {results.trigger_guide.practical_example.steps.map((step, index) => (
+                            <li key={index} className="text-sm text-gray-700">{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+
+                      {/* Sequências de Referência */}
+                      {results.trigger_guide.reference_sequences && results.trigger_guide.reference_sequences.length > 0 && (
+                        <div>
+                          <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5 text-blue-600" />
+                            Sequências de Gols de Referência
+                          </h3>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {results.trigger_guide.reference_sequences.map((seq, index) => (
+                              <div key={index} className="p-3 bg-blue-50 rounded-lg text-center">
+                                <div className="font-mono font-semibold text-blue-900">
+                                  {seq.sequence}
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Padrão #{index + 1}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Taxa de Sucesso */}
+                      <div className="p-4 bg-green-50 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700">Taxa de Sucesso Histórica:</span>
+                          <span className="text-lg font-bold text-green-600">
+                            {results.trigger_guide.success_rate.toFixed(1)}%
+                          </span>
+                        </div>
+                        <Progress value={results.trigger_guide.success_rate} className="h-2 mt-2" />
+                      </div>
+                    </div>
+                  ) : (
+                    <Alert>
+                      <AlertDescription>
+                        Guia de gatilho não disponível. Execute a análise para gerar o guia.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Recommendations Tab */}
             <TabsContent value="recommendations">

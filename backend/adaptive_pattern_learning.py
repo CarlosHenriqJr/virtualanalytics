@@ -73,6 +73,7 @@ class AdaptiveLearningResponse(BaseModel):
     final_pattern: DayPattern  # Padrão final consolidado
     recommendations: List[str]
     overall_accuracy: float  # Acurácia geral do sistema
+    trigger_guide: Optional[Dict[str, Any]] = None  # Guia prático de como identificar o gatilho
 
 # ==================== FUNÇÕES AUXILIARES ====================
 
@@ -354,6 +355,9 @@ async def adaptive_daily_study(request: DailyStudyRequest):
         # Gerar recomendações
         recommendations = generate_recommendations(learning_evolution, validation_results, overall_accuracy)
         
+        # Gerar guia de gatilho
+        trigger_guide = generate_trigger_guide(current_pattern if current_pattern else learning_evolution[-1] if learning_evolution else None, request.target_market)
+        
         end_date = (start_date + timedelta(days=request.days_to_analyze - 1)).strftime("%Y-%m-%d")
         
         return AdaptiveLearningResponse(
@@ -365,7 +369,8 @@ async def adaptive_daily_study(request: DailyStudyRequest):
             validation_results=validation_results,
             final_pattern=current_pattern if current_pattern else learning_evolution[-1] if learning_evolution else None,
             recommendations=recommendations,
-            overall_accuracy=overall_accuracy
+            overall_accuracy=overall_accuracy,
+            trigger_guide=trigger_guide
         )
     
     except Exception as e:
@@ -585,5 +590,90 @@ def generate_recommendations(learning_evolution: List[DayPattern], validation_re
         avg_success_rate = statistics.mean([p.target_success_rate for p in learning_evolution])
         recommendations.append(f"📊 Taxa média de ocorrência do mercado: {avg_success_rate:.1f}%")
     
+    # Recomendação 5: Como identificar o gatilho (NOVO)
+    if learning_evolution:
+        last_pattern = learning_evolution[-1]
+        if last_pattern.features:
+            recommendations.append("\n🎯 COMO IDENTIFICAR O GATILHO DE ENTRADA:")
+            
+            # Top 3 features mais importantes
+            top_3_features = last_pattern.features[:3]
+            for i, feat in enumerate(top_3_features, 1):
+                recommendations.append(f"{i}. {feat.feature_name}: {feat.feature_value} (importância: {feat.importance:.1f}%)")
+            
+            # Sequências mais comuns
+            if last_pattern.top_sequences:
+                recommendations.append(f"\n📈 Sequências de gols mais comuns antes do mercado: {', '.join(last_pattern.top_sequences[:3])}")
+            
+            # Exemplo prático de gatilho
+            recommendations.append("\n✅ EXEMPLO DE GATILHO:")
+            if top_3_features:
+                feat1 = top_3_features[0]
+                recommendations.append(f"Quando você observar que {feat1.feature_name} está próximo de {feat1.feature_value}, considere a entrada.")
+    
     return recommendations
+
+def generate_trigger_guide(pattern: DayPattern, target_market: str) -> Dict[str, Any]:
+    """
+    Gera um guia prático de como identificar o gatilho de entrada.
+    """
+    if not pattern or not pattern.features:
+        return {
+            "available": False,
+            "message": "Padrão insuficiente para gerar guia de gatilho"
+        }
+    
+    # Top 5 features mais importantes
+    top_features = pattern.features[:5]
+    
+    # Criar checklist de verificação
+    checklist = []
+    for feat in top_features:
+        checklist.append({
+            "feature": feat.feature_name,
+            "target_value": feat.feature_value,
+            "importance": feat.importance,
+            "description": f"Verifique se {feat.feature_name} está próximo de {feat.feature_value}"
+        })
+    
+    # Criar exemplo prático
+    example = {
+        "scenario": f"Você está observando os jogos e quer entrar em {target_market}",
+        "steps": []
+    }
+    
+    example["steps"].append("1. Observe os últimos jogos (conforme lookback_games configurado)")
+    
+    for i, feat in enumerate(top_features[:3], 2):
+        example["steps"].append(f"{i}. Verifique se {feat.feature_name} está em torno de {feat.feature_value}")
+    
+    example["steps"].append(f"{len(top_features[:3]) + 2}. Se todas as condições acima forem atendidas, considere a entrada")
+    
+    # Sequências de referência
+    reference_sequences = []
+    if pattern.top_sequences:
+        for seq in pattern.top_sequences[:3]:
+            reference_sequences.append({
+                "sequence": seq,
+                "description": f"Sequência de gols observada: {seq}"
+            })
+    
+    # Critérios de entrada
+    entry_criteria = {
+        "minimum_confidence": "Médio" if pattern.target_success_rate >= 50 else "Baixo",
+        "pattern_strength": "Forte" if top_features[0].importance >= 70 else "Moderado" if top_features[0].importance >= 50 else "Fraco",
+        "recommended_action": "Entrada recomendada" if pattern.target_success_rate >= 50 and top_features[0].importance >= 60 else "Entrada com cautela"
+    }
+    
+    return {
+        "available": True,
+        "target_market": target_market,
+        "pattern_date": pattern.date,
+        "success_rate": pattern.target_success_rate,
+        "top_features": checklist,
+        "practical_example": example,
+        "reference_sequences": reference_sequences,
+        "entry_criteria": entry_criteria,
+        "summary": f"Para identificar o gatilho de {target_market}, observe principalmente: {top_features[0].feature_name} (importância: {top_features[0].importance:.1f}%)"
+    }
 
