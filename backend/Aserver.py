@@ -11,8 +11,6 @@ from analysis_routes import analysis_router
 from advanced_sequential_analysis import advanced_analysis_router
 from pattern_discovery_ml import pattern_discovery_router
 from efficient_pattern_analysis import efficient_pattern_router
-from adaptive_pattern_learning import adaptive_learning_router
-from over35_complete_analysis import over35_router
 
 # Configuração de logging
 logging.basicConfig(
@@ -56,8 +54,6 @@ app.include_router(analysis_router)
 app.include_router(advanced_analysis_router)
 app.include_router(pattern_discovery_router)
 app.include_router(efficient_pattern_router)
-app.include_router(adaptive_learning_router)
-app.include_router(over35_router)
 
 # Eventos de startup/shutdown
 @app.on_event("startup")
