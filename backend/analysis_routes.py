@@ -7,11 +7,12 @@ Versão adaptada para trabalhar com a estrutura real dos dados:
 - Análise baseada em resultados reais das partidas
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 from database import get_database
+from database import get_db
 
 analysis_router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -673,6 +674,43 @@ async def analyze_predictive_patterns(request: PredictiveAnalysisRequest):
         return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+# No arquivo analysis_routes.py, adicione esta rota:
+
+@analysis_router.get("/teams")
+async def get_all_teams(db = Depends(get_db)):
+    """
+    Retorna lista de todos os times únicos do banco de dados
+    """
+    try:
+        # Buscar times únicos dos campos timeCasa e timeFora
+        pipeline = [
+            {
+                "$group": {
+                    "_id": None,
+                    "home_teams": {"$addToSet": "$timeCasa"},
+                    "away_teams": {"$addToSet": "$timeFora"}
+                }
+            },
+            {
+                "$project": {
+                    "all_teams": {"$setUnion": ["$home_teams", "$away_teams"]}
+                }
+            }
+        ]
+        
+        result = await db.partidas.aggregate(pipeline).to_list(length=1)
+        
+        if result and 'all_teams' in result[0]:
+            teams = [team for team in result[0]['all_teams'] if team]  # Remove valores None/vazios
+            teams.sort()
+            return {"teams": teams}
+        else:
+            return {"teams": []}
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar times: {str(e)}")
 
 @analysis_router.post("/predictive-summary")
 async def get_predictive_summary(request: PredictiveAnalysisRequest):

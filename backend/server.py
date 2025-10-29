@@ -2,134 +2,131 @@
 Servidor FastAPI principal para análise de dados de futebol virtual.
 """
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Any
 import logging
 from database import connect_to_mongo, close_mongo_connection, get_db
+
+
+# Importar todos os routers
 from analysis_routes import analysis_router
 from advanced_sequential_analysis import advanced_analysis_router
 from pattern_discovery_ml import pattern_discovery_router
 from efficient_pattern_analysis import efficient_pattern_router
 from adaptive_pattern_learning import adaptive_learning_router
+from deep_pattern_analysis import deep_pattern_router
 from over35_complete_analysis import over35_router
+
 
 # Configuração de logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
+    handlers=[logging.StreamHandler()]
 )
-
 logger = logging.getLogger("futebol-analysis")
 
 # Criar aplicação FastAPI
 app = FastAPI(
     title="Futebol Virtual Analysis API",
     description="API para análise de dados de futebol virtual e identificação de gatilhos",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# ==================== CONFIGURAR CORS (APENAS UMA VEZ!) ====================
-# ✅ CORRIGIDO: Removida duplicação e adicionadas múltiplas origens
+# ==================== CORS ====================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",      # React Dev
-        "http://127.0.0.1:3000",      # React Dev (alternativo)
-        "http://localhost:5173",      # Vite Dev
-        "http://127.0.0.1:5173",      # Vite Dev (alternativo)
-        "*"                            # ⚠️ Remova em produção!
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",  # Para testes diretos
+        "*"  # ⚠️ Remover em produção
     ],
     allow_credentials=True,
-    allow_methods=["*"],               # Permite GET, POST, PUT, DELETE, etc
-    allow_headers=["*"],               # Permite todos os headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# ==================== INCLUIR ROUTERS ====================
-# ✅ Routers devem vir DEPOIS da configuração CORS
+# ==================== ROTAS ====================
 app.include_router(analysis_router)
 app.include_router(advanced_analysis_router)
 app.include_router(pattern_discovery_router)
 app.include_router(efficient_pattern_router)
 app.include_router(adaptive_learning_router)
+app.include_router(deep_pattern_router)
 app.include_router(over35_router)
 
-# Eventos de startup/shutdown
+
+# ==================== EVENTOS ====================
 @app.on_event("startup")
 async def startup_event():
-    """Conecta ao MongoDB quando a aplicação inicia."""
-    logger.info("🚀 Iniciando Futebol Analysis API")
+    logger.info("🚀 Iniciando Futebol Analysis API v2.0")
     try:
         await connect_to_mongo()
-        logger.info("✅ Aplicação inicializada com sucesso")
+        logger.info("✅ Conexão com MongoDB estabelecida")
+        logger.info("📊 Routers registrados:")
+        routers_info = [
+            ("/analysis", "Análise básica"),
+            ("/advanced-analysis", "Análise sequencial avançada"),
+            ("/pattern-discovery", "Descoberta de padrões com ML"),
+            ("/efficient-pattern", "Análise eficiente de padrões"),
+            ("/adaptive-learning", "Aprendizado adaptativo"),
+            ("/deep-pattern", "Análise profunda de padrões"),
+            ("/over35-analysis", "Análise completa Over 3.5 ⚽")
+        ]
+        for path, desc in routers_info:
+            logger.info(f"   • {path} → {desc}")
     except Exception as e:
-        logger.error(f"❌ Erro na inicialização: {e}")
+        logger.error(f"❌ Falha na inicialização: {e}")
+        raise
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Fecha a conexão com o MongoDB."""
-    logger.info("🛑 Encerrando Futebol Analysis API")
+    logger.info("🛑 Encerrando conexão com MongoDB...")
     await close_mongo_connection()
 
-# Rota raiz
+# ==================== ROTAS DE UTILIDADE ====================
 @app.get("/")
 async def root():
-    """Rota raiz com informações da API."""
     return {
-        "message": "Futebol Virtual Analysis API",
-        "version": "1.0.0",
+        "api": "Futebol Virtual Analysis API",
+        "version": "2.0.0",
         "docs": "/docs",
-        "health_check": "/analysis/health"
+        "debug_routes": "/debug/routes",
+        "health": "/health"
     }
 
-@app.get("/info")
-async def api_info(db: Any = Depends(get_db)):
-    """Informações gerais sobre a API."""
+@app.get("/health")
+async def health_check(db: Any = Depends(get_db)):
     try:
-        matches_count = await db.matches.count_documents({})
-        return {
-            "api": "Futebol Virtual Analysis",
-            "version": "1.0.0",
-            "database_status": "connected",
-            "total_matches": matches_count,
-            "endpoints": {
-                "analysis": "/analysis",
-                "advanced_analysis": "/advanced-analysis",
-                "health": "/analysis/health",
-                "docs": "/docs"
-            }
-        }
+        await db.command("ping")
+        total = await db.partidas.count_documents({})
+        return {"status": "healthy", "database": "connected", "total_matches": total}
     except Exception as e:
-        return {
-            "api": "Futebol Virtual Analysis",
-            "version": "1.0.0",
-            "database_status": "error",
-            "error": str(e)
-        }
-
+        raise HTTPException(status_code=503, detail=f"Database error: {str(e)}")
 
 @app.get("/debug/routes")
 def debug_routes():
-    """Lista todas as rotas registradas na API."""
-    route_list = []
+    """Lista todas as rotas registradas (use para diagnosticar 404)."""
+    routes = []
     for route in app.routes:
         if hasattr(route, 'path'):
-            methods = getattr(route, 'methods', [])
-            route_list.append({
+            routes.append({
                 "path": route.path,
                 "name": getattr(route, 'name', 'N/A'),
-                "methods": list(methods) if methods else []
+                "methods": list(getattr(route, 'methods', []))
             })
-    return route_list
+    return {"total": len(routes), "routes": sorted(routes, key=lambda x: x["path"])}
 
-
-# Para executar diretamente
+# ==================== EXECUÇÃO ====================
 if __name__ == "__main__":
     import uvicorn
-    logger.info("🚀 Iniciando servidor em http://0.0.0.0:8000")
+    logger.info("🚀 Servidor rodando em http://0.0.0.0:8000")
+    logger.info("📚 Documentação: http://localhost:8000/docs")
+    logger.info("🔍 Debug de rotas: http://localhost:8000/debug/routes")
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

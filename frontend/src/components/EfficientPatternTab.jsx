@@ -7,6 +7,12 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Button } from './ui/button.jsx';
+import { Input } from './ui/input.jsx';
+import { Label } from './ui/label.jsx';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card.jsx';
+import { Alert, AlertDescription } from './ui/alert.jsx';
+
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
@@ -332,4 +338,3 @@ export default function EfficientPatternTab({
     </div>
   );
 }
-
