@@ -80,6 +80,7 @@ class DeepPatternResponse(BaseModel):
     insights: List[str]
     recommendations: List[str]
 
+<<<<<<< HEAD
 class FullAnalysisResponse(BaseModel):
     """Resposta da análise completa (novo endpoint /full)"""
     team_analysis: DeepPatternResponse
@@ -88,6 +89,9 @@ class FullAnalysisResponse(BaseModel):
     actionable_insights: List[str]
 
 # ==================== ENDPOINTS ====================
+=======
+# ==================== ENDPOINT PRINCIPAL ====================
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
 
 @deep_pattern_router.post("/analyze-team")
 async def analyze_team_deep_patterns(request: DeepPatternRequest):
@@ -175,6 +179,7 @@ async def analyze_team_deep_patterns(request: DeepPatternRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+<<<<<<< HEAD
 
 @deep_pattern_router.post("/full")
 async def full_deep_analysis(request: DeepPatternRequest):
@@ -276,6 +281,9 @@ async def full_deep_analysis(request: DeepPatternRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+=======
+# ==================== ENDPOINT DE PREDIÇÃO ====================
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
 
 @deep_pattern_router.post("/predict-team-of-day")
 async def predict_team_of_day(start_date: str, end_date: str):
@@ -341,6 +349,7 @@ async def predict_team_of_day(start_date: str, end_date: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+<<<<<<< HEAD
 
 @deep_pattern_router.get("/teams")
 async def get_available_teams(start_date: Optional[str] = None, end_date: Optional[str] = None):
@@ -387,6 +396,8 @@ async def get_available_teams(start_date: Optional[str] = None, end_date: Option
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+=======
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
 # ==================== FUNÇÕES AUXILIARES ====================
 
 async def calculate_standings_over_time(db, start_date: str, end_date: str) -> Dict[str, Dict[str, int]]:
@@ -457,6 +468,7 @@ def calculate_positions(team_stats: Dict[str, Dict[str, int]]) -> Dict[str, int]
     
     return positions
 
+<<<<<<< HEAD
 # def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dict[str, int]]) -> GamePattern:
 #     """Processa um jogo e extrai padrões."""
 #     date = match.get("date", "")
@@ -514,6 +526,12 @@ def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dic
     else:
         time = ""
     
+=======
+def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dict[str, int]]) -> GamePattern:
+    """Processa um jogo e extrai padrões."""
+    date = match.get("date", "")
+    time = match.get("hour", "")
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     home_team = match.get("timeCasa", "")
     away_team = match.get("timeFora", "")
     home_goals = match.get("placarCasaFT", 0)
@@ -539,12 +557,16 @@ def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dic
     else:
         matchup_type = "fraco_vs_forte"
     
+<<<<<<< HEAD
     # ✅ OBTER ODDS DO CAMPO MARKETS
     markets = match.get("markets", {})
     over35_odds = markets.get("TotalGols_MaisDe_35")
     
     # ✅ CRIAR O GamePattern COM DADOS COMPLETOS
     game_pattern = GamePattern(
+=======
+    return GamePattern(
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
         date=date,
         time=time,
         opponent=opponent,
@@ -555,6 +577,7 @@ def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dic
         opponent_position=opponent_position,
         position_diff=position_diff,
         is_over35=is_over35,
+<<<<<<< HEAD
         odds=over35_odds,  # Odds específicas do Over 3.5
         matchup_type=matchup_type
     )
@@ -569,6 +592,22 @@ def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dic
 
 def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePattern]) -> SimilarityAnalysis:
     """Analisa similaridade entre jogos Over 3.5 com foco no adversário, odds e horários."""
+=======
+        odds=None,  # Pode ser preenchido se disponível
+        matchup_type=matchup_type
+    )
+
+def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePattern]) -> SimilarityAnalysis:
+    """
+    Analisa similaridade entre jogos Over 3.5.
+    
+    Identifica padrões comuns:
+    - ODDs médias
+    - Posições na tabela
+    - Tipo de confronto
+    - Casa vs Fora
+    """
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if not over35_games:
         return SimilarityAnalysis(
             total_over35_games=0,
@@ -590,6 +629,7 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
         "away_rate": round(away_count / len(over35_games) * 100, 2)
     }
     
+<<<<<<< HEAD
     # ✅ ANÁLISE ESPECÍFICA DO ADVERSÁRIO
     opponent_analysis = analyze_opponent_patterns(over35_games)
     
@@ -598,6 +638,13 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
     
     # ✅ ANÁLISE DE ODDS (se disponível)
     odds_analysis = analyze_odds_patterns(over35_games)
+=======
+    # Análise de ODDs (se disponível)
+    odds_analysis = {
+        "available": False,
+        "note": "Dados de ODDs não disponíveis nos jogos"
+    }
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     
     # Análise de posições
     team_positions = [g.team_position for g in over35_games if g.team_position < 99]
@@ -609,15 +656,20 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
         "avg_opponent_position": round(statistics.mean(opponent_positions), 1) if opponent_positions else None,
         "avg_position_diff": round(statistics.mean(position_diffs), 1) if position_diffs else None,
         "min_position_diff": min(position_diffs) if position_diffs else None,
+<<<<<<< HEAD
         "max_position_diff": max(position_diffs) if position_diffs else None,
         # ✅ ADICIONADO: Análise específica do adversário
         "opponent_analysis": opponent_analysis
+=======
+        "max_position_diff": max(position_diffs) if position_diffs else None
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     }
     
     # Análise de tipo de confronto
     matchup_types = Counter([g.matchup_type for g in over35_games])
     matchup_analysis = {
         "types": dict(matchup_types),
+<<<<<<< HEAD
         "most_common": matchup_types.most_common(1)[0][0] if matchup_types else None,
         # ✅ ADICIONADO: Horários mais comuns
         "time_patterns": time_analysis,
@@ -626,6 +678,12 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
     }
     
     # Resumo expandido
+=======
+        "most_common": matchup_types.most_common(1)[0][0] if matchup_types else None
+    }
+    
+    # Resumo
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     summary = f"Dos {len(over35_games)} jogos Over 3.5: "
     summary += f"{home_count} em casa ({common_patterns['home_rate']}%), "
     summary += f"{away_count} fora ({common_patterns['away_rate']}%). "
@@ -634,6 +692,7 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
         summary += f"Diferença média de posições: {position_analysis['avg_position_diff']}. "
     
     if matchup_analysis["most_common"]:
+<<<<<<< HEAD
         summary += f"Tipo de confronto mais comum: {matchup_analysis['most_common']}. "
     
     # ✅ ADICIONADO: Resumo do adversário
@@ -645,6 +704,9 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
     if time_analysis["most_common_times"]:
         top_time = time_analysis["most_common_times"][0]
         summary += f"Horário mais frequente: {top_time['time']} ({top_time['count']} jogos)."
+=======
+        summary += f"Tipo de confronto mais comum: {matchup_analysis['most_common']}."
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     
     return SimilarityAnalysis(
         total_over35_games=len(over35_games),
@@ -655,6 +717,7 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
         summary=summary
     )
 
+<<<<<<< HEAD
 # ✅ NOVA FUNÇÃO: Análise específica dos adversários
 def analyze_opponent_patterns(over35_games: List[GamePattern]) -> Dict[str, Any]:
     """Analisa padrões específicos dos adversários nos jogos Over 3.5."""
@@ -986,6 +1049,12 @@ def generate_insights(team_name: str, over35_rate: float, similarity: Similarity
 
 def analyze_correlations(all_games: List[GamePattern], over35_games: List[GamePattern]) -> CorrelationAnalysis:
     """Analisa correlações entre variáveis e Over 3.5."""
+=======
+def analyze_correlations(all_games: List[GamePattern], over35_games: List[GamePattern]) -> CorrelationAnalysis:
+    """
+    Analisa correlações entre variáveis e Over 3.5.
+    """
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if not all_games:
         return CorrelationAnalysis(
             position_diff_correlation=0.0,
@@ -1046,8 +1115,15 @@ def generate_insights(team_name: str, over35_rate: float, similarity: Similarity
     """Gera insights baseados nas análises."""
     insights = []
     
+<<<<<<< HEAD
     insights.append(f"📊 {team_name} teve {over35_rate:.1f}% de Over 3.5 no período ({similarity.total_over35_games} jogos)")
     
+=======
+    # Insight 1: Taxa geral
+    insights.append(f"📊 {team_name} teve {over35_rate:.1f}% de Over 3.5 no período ({similarity.total_over35_games} jogos)")
+    
+    # Insight 2: Casa vs Fora
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.common_patterns:
         home_rate = similarity.common_patterns.get("home_rate", 0)
         away_rate = similarity.common_patterns.get("away_rate", 0)
@@ -1059,14 +1135,26 @@ def generate_insights(team_name: str, over35_rate: float, similarity: Similarity
         else:
             insights.append(f"⚖️ Over 3.5 equilibrado entre casa ({home_rate:.1f}%) e fora ({away_rate:.1f}%)")
     
+<<<<<<< HEAD
+=======
+    # Insight 3: Posição na tabela
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.position_analysis.get("avg_team_position"):
         avg_pos = similarity.position_analysis["avg_team_position"]
         insights.append(f"📍 Nos jogos Over 3.5, {team_name} estava em média na {avg_pos:.0f}ª posição")
     
+<<<<<<< HEAD
+=======
+    # Insight 4: Tipo de confronto
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.matchup_analysis.get("most_common"):
         matchup = similarity.matchup_analysis["most_common"]
         insights.append(f"🎯 Tipo de confronto mais comum em Over 3.5: {matchup}")
     
+<<<<<<< HEAD
+=======
+    # Insight 5: Correlação
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if abs(correlation.position_diff_correlation) >= 0.3:
         if correlation.position_diff_correlation > 0:
             insights.append(f"📈 Maior diferença de posições tende a resultar em Over 3.5 (correlação: {correlation.position_diff_correlation:.2f})")
@@ -1079,6 +1167,10 @@ def generate_recommendations(similarity: SimilarityAnalysis, correlation: Correl
     """Gera recomendações baseadas nas análises."""
     recommendations = []
     
+<<<<<<< HEAD
+=======
+    # Recomendação 1: Casa vs Fora
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.common_patterns:
         home_rate = similarity.common_patterns.get("home_rate", 0)
         away_rate = similarity.common_patterns.get("away_rate", 0)
@@ -1088,6 +1180,10 @@ def generate_recommendations(similarity: SimilarityAnalysis, correlation: Correl
         elif away_rate > 60:
             recommendations.append("✅ Priorize jogos fora - maior taxa de Over 3.5")
     
+<<<<<<< HEAD
+=======
+    # Recomendação 2: Força do adversário
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if correlation.opponent_strength_impact:
         vs_weak = correlation.opponent_strength_impact.get("vs_weak_over35_rate", 0)
         vs_strong = correlation.opponent_strength_impact.get("vs_strong_over35_rate", 0)
@@ -1097,10 +1193,18 @@ def generate_recommendations(similarity: SimilarityAnalysis, correlation: Correl
         elif vs_strong > vs_weak + 10:
             recommendations.append("✅ Jogos contra adversários fortes tendem a ter mais gols")
     
+<<<<<<< HEAD
+=======
+    # Recomendação 3: Tipo de confronto
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.matchup_analysis.get("most_common"):
         matchup = similarity.matchup_analysis["most_common"]
         recommendations.append(f"✅ Padrão identificado: {matchup} - busque jogos similares")
     
+<<<<<<< HEAD
+=======
+    # Recomendação 4: Posição
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.position_analysis.get("avg_position_diff"):
         avg_diff = similarity.position_analysis["avg_position_diff"]
         recommendations.append(f"✅ Diferença média de posições em Over 3.5: {avg_diff:.0f} - use como referência")
@@ -1122,6 +1226,10 @@ def identify_team_of_day_for_date(day_matches: List[dict]) -> Optional[Dict[str,
                 if total_goals > 3.5:
                     team_stats[team]["over35"] += 1
     
+<<<<<<< HEAD
+=======
+    # Encontrar o time com maior taxa de Over 3.5
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     best_team = None
     best_rate = 0
     
@@ -1144,6 +1252,7 @@ def identify_team_of_day_for_date(day_matches: List[dict]) -> Optional[Dict[str,
     
     return None
 
+<<<<<<< HEAD
 
 def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPrediction:
     """Prediz o próximo time do dia baseado em padrões históricos."""
@@ -1151,12 +1260,34 @@ def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPre
     recent_teams = [p["team"] for p in daily_patterns[-3:]]
     recent_frequency = Counter(recent_teams)
     
+=======
+def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPrediction:
+    """
+    Prediz o próximo time do dia baseado em padrões históricos.
+    
+    Usa análise de tendências e recorrência.
+    """
+    # Contar frequência de cada time
+    team_frequency = Counter([p["team"] for p in daily_patterns])
+    
+    # Analisar tendência recente (últimos 3 dias)
+    recent_teams = [p["team"] for p in daily_patterns[-3:]]
+    recent_frequency = Counter(recent_teams)
+    
+    # Combinar frequência geral e recente
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     scores = {}
     for team in team_frequency:
         general_score = team_frequency[team] / len(daily_patterns)
         recent_score = recent_frequency.get(team, 0) / 3
+<<<<<<< HEAD
         scores[team] = (general_score * 0.4) + (recent_score * 0.6)
     
+=======
+        scores[team] = (general_score * 0.4) + (recent_score * 0.6)  # Peso maior para recente
+    
+    # Melhor candidato
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if scores:
         predicted_team = max(scores, key=scores.get)
         confidence = scores[predicted_team] * 100
@@ -1187,6 +1318,7 @@ def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPre
         features_importance={}
     )
 
+<<<<<<< HEAD
 # ==================== FUNÇÕES DO ENDPOINT /FULL ====================
 
 def get_performance_rating(over35_rate: float) -> str:
@@ -1310,3 +1442,5 @@ def generate_actionable_insights(
         insights.append(f"⚠️ CAUTELA: Score {opp_score}/100 - Padrões inconsistentes, aguarde mais dados")
     
     return insights if insights else ["Aguarde mais dados para insights acionáveis"]
+=======
+>>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
