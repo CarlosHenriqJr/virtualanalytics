@@ -80,7 +80,6 @@ class DeepPatternResponse(BaseModel):
     insights: List[str]
     recommendations: List[str]
 
-<<<<<<< HEAD
 class FullAnalysisResponse(BaseModel):
     """Resposta da análise completa (novo endpoint /full)"""
     team_analysis: DeepPatternResponse
@@ -89,9 +88,7 @@ class FullAnalysisResponse(BaseModel):
     actionable_insights: List[str]
 
 # ==================== ENDPOINTS ====================
-=======
 # ==================== ENDPOINT PRINCIPAL ====================
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
 
 @deep_pattern_router.post("/analyze-team")
 async def analyze_team_deep_patterns(request: DeepPatternRequest):
@@ -179,7 +176,6 @@ async def analyze_team_deep_patterns(request: DeepPatternRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-<<<<<<< HEAD
 
 @deep_pattern_router.post("/full")
 async def full_deep_analysis(request: DeepPatternRequest):
@@ -281,9 +277,7 @@ async def full_deep_analysis(request: DeepPatternRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-=======
 # ==================== ENDPOINT DE PREDIÇÃO ====================
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
 
 @deep_pattern_router.post("/predict-team-of-day")
 async def predict_team_of_day(start_date: str, end_date: str):
@@ -349,7 +343,6 @@ async def predict_team_of_day(start_date: str, end_date: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-<<<<<<< HEAD
 
 @deep_pattern_router.get("/teams")
 async def get_available_teams(start_date: Optional[str] = None, end_date: Optional[str] = None):
@@ -396,8 +389,6 @@ async def get_available_teams(start_date: Optional[str] = None, end_date: Option
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-=======
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
 # ==================== FUNÇÕES AUXILIARES ====================
 
 async def calculate_standings_over_time(db, start_date: str, end_date: str) -> Dict[str, Dict[str, int]]:
@@ -468,51 +459,6 @@ def calculate_positions(team_stats: Dict[str, Dict[str, int]]) -> Dict[str, int]
     
     return positions
 
-<<<<<<< HEAD
-# def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dict[str, int]]) -> GamePattern:
-#     """Processa um jogo e extrai padrões."""
-#     date = match.get("date", "")
-#     time = match.get("hour", "")
-#     home_team = match.get("timeCasa", "")
-#     away_team = match.get("timeFora", "")
-#     home_goals = match.get("placarCasaFT", 0)
-#     away_goals = match.get("placarForaFT", 0)
-#     total_goals = match.get("totalGolsFT", 0)
-    
-#     is_home = (team_name == home_team)
-#     opponent = away_team if is_home else home_team
-#     score = f"{home_goals}-{away_goals}"
-#     is_over35 = total_goals > 3.5
-    
-#     # Obter posições na tabela
-#     positions = standings_over_time.get(date, {})
-#     team_position = positions.get(team_name, 99)
-#     opponent_position = positions.get(opponent, 99)
-#     position_diff = abs(team_position - opponent_position)
-    
-#     # Determinar tipo de confronto
-#     if position_diff <= 3:
-#         matchup_type = "equilibrado"
-#     elif team_position < opponent_position:
-#         matchup_type = "forte_vs_fraco"
-#     else:
-#         matchup_type = "fraco_vs_forte"
-    
-#     return GamePattern(
-#         date=date,
-#         time=time,
-#         opponent=opponent,
-#         is_home=is_home,
-#         score=score,
-#         total_goals=total_goals,
-#         team_position=team_position,
-#         opponent_position=opponent_position,
-#         position_diff=position_diff,
-#         is_over35=is_over35,
-#         odds=None,
-#         matchup_type=matchup_type
-#     )
-
 def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dict[str, int]]) -> GamePattern:
     """Processa um jogo e extrai padrões."""
     date = match.get("date", "")
@@ -526,12 +472,6 @@ def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dic
     else:
         time = ""
     
-=======
-def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dict[str, int]]) -> GamePattern:
-    """Processa um jogo e extrai padrões."""
-    date = match.get("date", "")
-    time = match.get("hour", "")
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     home_team = match.get("timeCasa", "")
     away_team = match.get("timeFora", "")
     home_goals = match.get("placarCasaFT", 0)
@@ -557,16 +497,12 @@ def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dic
     else:
         matchup_type = "fraco_vs_forte"
     
-<<<<<<< HEAD
     # ✅ OBTER ODDS DO CAMPO MARKETS
     markets = match.get("markets", {})
     over35_odds = markets.get("TotalGols_MaisDe_35")
     
     # ✅ CRIAR O GamePattern COM DADOS COMPLETOS
     game_pattern = GamePattern(
-=======
-    return GamePattern(
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
         date=date,
         time=time,
         opponent=opponent,
@@ -577,7 +513,6 @@ def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dic
         opponent_position=opponent_position,
         position_diff=position_diff,
         is_over35=is_over35,
-<<<<<<< HEAD
         odds=over35_odds,  # Odds específicas do Over 3.5
         matchup_type=matchup_type
     )
@@ -591,23 +526,9 @@ def process_game(match: dict, team_name: str, standings_over_time: Dict[str, Dic
 
 
 def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePattern]) -> SimilarityAnalysis:
-    """Analisa similaridade entre jogos Over 3.5 com foco no adversário, odds e horários."""
-=======
-        odds=None,  # Pode ser preenchido se disponível
-        matchup_type=matchup_type
-    )
-
-def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePattern]) -> SimilarityAnalysis:
     """
     Analisa similaridade entre jogos Over 3.5.
-    
-    Identifica padrões comuns:
-    - ODDs médias
-    - Posições na tabela
-    - Tipo de confronto
-    - Casa vs Fora
     """
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if not over35_games:
         return SimilarityAnalysis(
             total_over35_games=0,
@@ -617,97 +538,73 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
             matchup_analysis={},
             summary="Nenhum jogo Over 3.5 encontrado"
         )
-    
+
     # Padrões comuns
     home_count = sum(1 for g in over35_games if g.is_home)
     away_count = len(over35_games) - home_count
-    
+
     common_patterns = {
         "home_games": home_count,
         "away_games": away_count,
         "home_rate": round(home_count / len(over35_games) * 100, 2),
         "away_rate": round(away_count / len(over35_games) * 100, 2)
     }
-    
-<<<<<<< HEAD
-    # ✅ ANÁLISE ESPECÍFICA DO ADVERSÁRIO
+
+    # ✅ ANÁLISES ESPECÍFICAS
     opponent_analysis = analyze_opponent_patterns(over35_games)
-    
-    # ✅ ANÁLISE DE HORÁRIOS
     time_analysis = analyze_time_patterns(over35_games)
     
-    # ✅ ANÁLISE DE ODDS (se disponível)
-    odds_analysis = analyze_odds_patterns(over35_games)
-=======
-    # Análise de ODDs (se disponível)
-    odds_analysis = {
-        "available": False,
-        "note": "Dados de ODDs não disponíveis nos jogos"
-    }
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
-    
-    # Análise de posições
+    # ✅ ANÁLISE DE ODDS (corrigida)
+    try:
+        odds_analysis = analyze_odds_patterns(over35_games)
+    except:
+        odds_analysis = {
+            "available": False,
+            "note": "Dados de ODDs não disponíveis nos jogos"
+        }
+
+    # Análise de posições (corrigida)
     team_positions = [g.team_position for g in over35_games if g.team_position < 99]
     opponent_positions = [g.opponent_position for g in over35_games if g.opponent_position < 99]
     position_diffs = [g.position_diff for g in over35_games if g.position_diff < 99]
-    
+
     position_analysis = {
         "avg_team_position": round(statistics.mean(team_positions), 1) if team_positions else None,
         "avg_opponent_position": round(statistics.mean(opponent_positions), 1) if opponent_positions else None,
         "avg_position_diff": round(statistics.mean(position_diffs), 1) if position_diffs else None,
         "min_position_diff": min(position_diffs) if position_diffs else None,
-<<<<<<< HEAD
         "max_position_diff": max(position_diffs) if position_diffs else None,
-        # ✅ ADICIONADO: Análise específica do adversário
-        "opponent_analysis": opponent_analysis
-=======
-        "max_position_diff": max(position_diffs) if position_diffs else None
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
+        "opponent_analysis": opponent_analysis  # ✅ Vírgula adicionada
     }
-    
+
     # Análise de tipo de confronto
     matchup_types = Counter([g.matchup_type for g in over35_games])
     matchup_analysis = {
         "types": dict(matchup_types),
-<<<<<<< HEAD
         "most_common": matchup_types.most_common(1)[0][0] if matchup_types else None,
-        # ✅ ADICIONADO: Horários mais comuns
         "time_patterns": time_analysis,
-        # ✅ ADICIONADO: Padrões de odds
         "odds_patterns": odds_analysis.get("patterns", {})
     }
-    
-    # Resumo expandido
-=======
-        "most_common": matchup_types.most_common(1)[0][0] if matchup_types else None
-    }
-    
-    # Resumo
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
+
+    # Resumo (corrigido)
     summary = f"Dos {len(over35_games)} jogos Over 3.5: "
     summary += f"{home_count} em casa ({common_patterns['home_rate']}%), "
     summary += f"{away_count} fora ({common_patterns['away_rate']}%). "
-    
+
     if position_analysis["avg_position_diff"]:
         summary += f"Diferença média de posições: {position_analysis['avg_position_diff']}. "
-    
+
     if matchup_analysis["most_common"]:
-<<<<<<< HEAD
         summary += f"Tipo de confronto mais comum: {matchup_analysis['most_common']}. "
-    
-    # ✅ ADICIONADO: Resumo do adversário
-    if opponent_analysis["most_common_opponents"]:
+
+    if opponent_analysis.get("most_common_opponents"):
         top_opponent = opponent_analysis["most_common_opponents"][0]
         summary += f"Adversário mais comum: {top_opponent['opponent']} ({top_opponent['count']} jogos). "
-    
-    # ✅ ADICIONADO: Resumo de horários
-    if time_analysis["most_common_times"]:
+
+    if time_analysis.get("most_common_times"):
         top_time = time_analysis["most_common_times"][0]
         summary += f"Horário mais frequente: {top_time['time']} ({top_time['count']} jogos)."
-=======
-        summary += f"Tipo de confronto mais comum: {matchup_analysis['most_common']}."
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
-    
+
     return SimilarityAnalysis(
         total_over35_games=len(over35_games),
         common_patterns=common_patterns,
@@ -717,7 +614,6 @@ def analyze_similarity(over35_games: List[GamePattern], all_games: List[GamePatt
         summary=summary
     )
 
-<<<<<<< HEAD
 # ✅ NOVA FUNÇÃO: Análise específica dos adversários
 def analyze_opponent_patterns(over35_games: List[GamePattern]) -> Dict[str, Any]:
     """Analisa padrões específicos dos adversários nos jogos Over 3.5."""
@@ -769,6 +665,199 @@ def analyze_opponent_patterns(over35_games: List[GamePattern]) -> Dict[str, Any]
         "strongest_opponent": min(opponent_analysis, key=lambda x: x["avg_position"]) if opponent_analysis else None,
         "weakest_opponent": max(opponent_analysis, key=lambda x: x["avg_position"]) if opponent_analysis else None
     }
+
+
+
+# ==================== FUNÇÕES AUXILIARES ====================
+
+async def find_matches_with_market(db, reference_date: str, target_market: str, days_before: int):
+    """Encontra jogos que tiveram o mercado alvo no período especificado"""
+    # Calcular data inicial (reference_date - days_before)
+    # Esta é uma simplificação - você precisará adaptar para seu formato de data
+    start_date = reference_date  # Simplificado
+    
+    query = {
+        "date": {"$lte": reference_date},
+        f"markets.{target_market}": {"$exists": True}
+    }
+    
+    if days_before > 0:
+        # Aqui você precisaria calcular a data de início baseada em days_before
+        # Isso depende do formato das suas datas
+        pass
+    
+    cursor = db.partidas.find(query).sort("date", -1).limit(100)
+    return await cursor.to_list(length=None)
+
+async def find_antecedent_patterns(db, target_match: dict, lookback_days: int):
+    """Encontra padrões que antecedem o jogo alvo"""
+    patterns = []
+    target_date = target_match.get("date")
+    target_teams = [target_match.get("timeCasa"), target_match.get("timeFora")]
+    
+    # Buscar jogos anteriores dos mesmos times
+    previous_matches_query = {
+        "date": {"$lt": target_date},
+        "$or": [
+            {"timeCasa": {"$in": target_teams}},
+            {"timeFora": {"$in": target_teams}}
+        ]
+    }
+    
+    cursor = db.partidas.find(previous_matches_query).sort("date", -1).limit(10)
+    previous_matches = await cursor.to_list(length=None)
+    
+    for prev_match in previous_matches:
+        pattern = analyze_single_pattern(prev_match, target_match)
+        if pattern:
+            patterns.append(pattern)
+    
+    return patterns
+
+def analyze_single_pattern(previous_match: dict, target_match: dict):
+    """Analisa padrões em um jogo anterior em relação ao jogo alvo"""
+    markets = previous_match.get("markets", {})
+    
+    if not markets:
+        return None
+    
+    # Identificar mercados com odds significativas
+    significant_markets = []
+    for market, odds in markets.items():
+        if isinstance(odds, (int, float)) and odds > 1.0:
+            significant_markets.append({
+                "market": market,
+                "odds": odds,
+                "result": "unknown"  # Você pode adicionar lógica para verificar resultados
+            })
+    
+    if not significant_markets:
+        return None
+    
+    return {
+        "date": previous_match.get("date"),
+        "home_team": previous_match.get("timeCasa"),
+        "away_team": previous_match.get("timeFora"),
+        "pattern_markets": [m["market"] for m in significant_markets],
+        "target_date": target_match.get("date"),
+        "target_home_team": target_match.get("timeCasa"),
+        "target_away_team": target_match.get("timeFora"),
+        "target_market_odds": target_match.get("markets", {}).get("target_market")
+    }
+
+async def collect_market_data(db, match: dict, market_data: dict):
+    """Coleta dados de mercado para análise estatística"""
+    markets = match.get("markets", {})
+    
+    for market_name, odds_value in markets.items():
+        if isinstance(odds_value, (int, float)):
+            if market_name not in market_data:
+                market_data[market_name] = []
+            market_data[market_name].append(odds_value)
+
+def analyze_pattern_frequency(patterns: list, min_frequency: int):
+    """Analisa a frequência dos padrões identificados"""
+    pattern_counts = {}
+    
+    for pattern in patterns:
+        pattern_key = ",".join(sorted(pattern["pattern_markets"]))
+        if pattern_key not in pattern_counts:
+            pattern_counts[pattern_key] = {
+                "markets": pattern["pattern_markets"],
+                "frequency": 0,
+                "examples": []
+            }
+        pattern_counts[pattern_key]["frequency"] += 1
+        pattern_counts[pattern_key]["examples"].append(pattern)
+    
+    # Filtrar por frequência mínima e ordenar
+    frequent_patterns = []
+    for pattern_key, data in pattern_counts.items():
+        if data["frequency"] >= min_frequency:
+            frequent_patterns.append({
+                "pattern_key": pattern_key,
+                "markets": data["markets"],
+                "frequency": data["frequency"],
+                "confidence": min(100, (data["frequency"] / len(patterns)) * 100),
+                "description": f"Padrão com {len(data['markets'])} mercados ocorreu {data['frequency']} vezes",
+                "examples": data["examples"][:3]  # Primeiros 3 exemplos
+            })
+    
+    # Ordenar por frequência (mais frequentes primeiro)
+    return sorted(frequent_patterns, key=lambda x: x["frequency"], reverse=True)
+
+def calculate_market_statistics(market_data: dict):
+    """Calcula estatísticas para cada mercado"""
+    stats = {}
+    
+    for market_name, odds_list in market_data.items():
+        if len(odds_list) > 0:
+            # Moda (valor mais frequente)
+            mode = statistics.mode(odds_list) if odds_list else None
+            
+            # Frequência de cada valor
+            frequency = {}
+            for odds in odds_list:
+                odds_key = str(round(odds, 2))
+                frequency[odds_key] = frequency.get(odds_key, 0) + 1
+            
+            # Desvio padrão (populacional, ddof=0)
+            std = statistics.stdev(odds_list) if len(odds_list) > 1 else 0
+            
+            stats[market_name] = {
+                "mode": mode,
+                "frequency": frequency,
+                "std": std,
+                "occurrences_with_data": len(odds_list),
+                "min_odds": min(odds_list) if odds_list else None,
+                "max_odds": max(odds_list) if odds_list else None,
+                "avg_odds": statistics.mean(odds_list) if odds_list else None
+            }
+    
+    return stats
+
+def calculate_market_correlations(market_data: dict):
+    """Calcula matriz de correlação entre mercados"""
+    markets = list(market_data.keys())
+    correlation_data = {"markets": markets, "pearson": {}, "spearman": {}}
+    
+    # Para Pearson e Spearman, precisamos de dados pareados
+    # Esta é uma implementação simplificada
+    for i, market1 in enumerate(markets):
+        for market2 in markets[i:]:
+            if market1 != market2:
+                # Correlação simplificada - implementação real precisaria de scipy
+                correlation_data["pearson"][f"{market1}_{market2}"] = 0.0
+                correlation_data["spearman"][f"{market1}_{market2}"] = 0.0
+    
+    return correlation_data
+
+def generate_predictive_insights(patterns: list, target_market: str, target_count: int):
+    """Gera insights automáticos sobre os padrões identificados"""
+    insights = []
+    
+    if not patterns:
+        insights.append(f"Nenhum padrão significativo identificado antes de {target_market}")
+        return insights
+    
+    insights.append(f"📈 Foram encontrados {len(patterns)} padrões antecedentes ao {target_market}")
+    insights.append(f"🎯 Analisados {target_count} jogos com {target_market} no período")
+    
+    # Insight do padrão mais frequente
+    if patterns:
+        top_pattern = patterns[0]
+        insights.append(f"🔍 Padrão mais frequente: {', '.join(top_pattern['markets'][:3])} "
+                       f"(ocorreu {top_pattern['frequency']} vezes)")
+    
+    # Insight sobre diversidade de padrões
+    unique_markets = set()
+    for pattern in patterns:
+        unique_markets.update(pattern["markets"])
+    
+    insights.append(f"🔄 {len(unique_markets)} mercados diferentes aparecem nos padrões identificados")
+    
+    return insights
+
 
 # ✅ NOVA FUNÇÃO: Análise de padrões de horário
 def analyze_time_patterns(over35_games: List[GamePattern]) -> Dict[str, Any]:
@@ -1049,12 +1138,10 @@ def generate_insights(team_name: str, over35_rate: float, similarity: Similarity
 
 def analyze_correlations(all_games: List[GamePattern], over35_games: List[GamePattern]) -> CorrelationAnalysis:
     """Analisa correlações entre variáveis e Over 3.5."""
-=======
 def analyze_correlations(all_games: List[GamePattern], over35_games: List[GamePattern]) -> CorrelationAnalysis:
     """
     Analisa correlações entre variáveis e Over 3.5.
     """
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if not all_games:
         return CorrelationAnalysis(
             position_diff_correlation=0.0,
@@ -1115,15 +1202,12 @@ def generate_insights(team_name: str, over35_rate: float, similarity: Similarity
     """Gera insights baseados nas análises."""
     insights = []
     
-<<<<<<< HEAD
     insights.append(f"📊 {team_name} teve {over35_rate:.1f}% de Over 3.5 no período ({similarity.total_over35_games} jogos)")
     
-=======
     # Insight 1: Taxa geral
     insights.append(f"📊 {team_name} teve {over35_rate:.1f}% de Over 3.5 no período ({similarity.total_over35_games} jogos)")
     
     # Insight 2: Casa vs Fora
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.common_patterns:
         home_rate = similarity.common_patterns.get("home_rate", 0)
         away_rate = similarity.common_patterns.get("away_rate", 0)
@@ -1135,26 +1219,17 @@ def generate_insights(team_name: str, over35_rate: float, similarity: Similarity
         else:
             insights.append(f"⚖️ Over 3.5 equilibrado entre casa ({home_rate:.1f}%) e fora ({away_rate:.1f}%)")
     
-<<<<<<< HEAD
-=======
     # Insight 3: Posição na tabela
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.position_analysis.get("avg_team_position"):
         avg_pos = similarity.position_analysis["avg_team_position"]
         insights.append(f"📍 Nos jogos Over 3.5, {team_name} estava em média na {avg_pos:.0f}ª posição")
     
-<<<<<<< HEAD
-=======
     # Insight 4: Tipo de confronto
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.matchup_analysis.get("most_common"):
         matchup = similarity.matchup_analysis["most_common"]
         insights.append(f"🎯 Tipo de confronto mais comum em Over 3.5: {matchup}")
     
-<<<<<<< HEAD
-=======
     # Insight 5: Correlação
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if abs(correlation.position_diff_correlation) >= 0.3:
         if correlation.position_diff_correlation > 0:
             insights.append(f"📈 Maior diferença de posições tende a resultar em Over 3.5 (correlação: {correlation.position_diff_correlation:.2f})")
@@ -1167,10 +1242,7 @@ def generate_recommendations(similarity: SimilarityAnalysis, correlation: Correl
     """Gera recomendações baseadas nas análises."""
     recommendations = []
     
-<<<<<<< HEAD
-=======
     # Recomendação 1: Casa vs Fora
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.common_patterns:
         home_rate = similarity.common_patterns.get("home_rate", 0)
         away_rate = similarity.common_patterns.get("away_rate", 0)
@@ -1180,10 +1252,7 @@ def generate_recommendations(similarity: SimilarityAnalysis, correlation: Correl
         elif away_rate > 60:
             recommendations.append("✅ Priorize jogos fora - maior taxa de Over 3.5")
     
-<<<<<<< HEAD
-=======
     # Recomendação 2: Força do adversário
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if correlation.opponent_strength_impact:
         vs_weak = correlation.opponent_strength_impact.get("vs_weak_over35_rate", 0)
         vs_strong = correlation.opponent_strength_impact.get("vs_strong_over35_rate", 0)
@@ -1193,18 +1262,12 @@ def generate_recommendations(similarity: SimilarityAnalysis, correlation: Correl
         elif vs_strong > vs_weak + 10:
             recommendations.append("✅ Jogos contra adversários fortes tendem a ter mais gols")
     
-<<<<<<< HEAD
-=======
     # Recomendação 3: Tipo de confronto
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.matchup_analysis.get("most_common"):
         matchup = similarity.matchup_analysis["most_common"]
         recommendations.append(f"✅ Padrão identificado: {matchup} - busque jogos similares")
     
-<<<<<<< HEAD
-=======
     # Recomendação 4: Posição
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if similarity.position_analysis.get("avg_position_diff"):
         avg_diff = similarity.position_analysis["avg_position_diff"]
         recommendations.append(f"✅ Diferença média de posições em Over 3.5: {avg_diff:.0f} - use como referência")
@@ -1226,10 +1289,7 @@ def identify_team_of_day_for_date(day_matches: List[dict]) -> Optional[Dict[str,
                 if total_goals > 3.5:
                     team_stats[team]["over35"] += 1
     
-<<<<<<< HEAD
-=======
     # Encontrar o time com maior taxa de Over 3.5
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     best_team = None
     best_rate = 0
     
@@ -1252,7 +1312,6 @@ def identify_team_of_day_for_date(day_matches: List[dict]) -> Optional[Dict[str,
     
     return None
 
-<<<<<<< HEAD
 
 def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPrediction:
     """Prediz o próximo time do dia baseado em padrões históricos."""
@@ -1260,7 +1319,6 @@ def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPre
     recent_teams = [p["team"] for p in daily_patterns[-3:]]
     recent_frequency = Counter(recent_teams)
     
-=======
 def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPrediction:
     """
     Prediz o próximo time do dia baseado em padrões históricos.
@@ -1275,19 +1333,15 @@ def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPre
     recent_frequency = Counter(recent_teams)
     
     # Combinar frequência geral e recente
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     scores = {}
     for team in team_frequency:
         general_score = team_frequency[team] / len(daily_patterns)
         recent_score = recent_frequency.get(team, 0) / 3
-<<<<<<< HEAD
         scores[team] = (general_score * 0.4) + (recent_score * 0.6)
     
-=======
         scores[team] = (general_score * 0.4) + (recent_score * 0.6)  # Peso maior para recente
     
     # Melhor candidato
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
     if scores:
         predicted_team = max(scores, key=scores.get)
         confidence = scores[predicted_team] * 100
@@ -1318,7 +1372,6 @@ def predict_next_team_of_day(daily_patterns: List[Dict[str, Any]]) -> TeamDayPre
         features_importance={}
     )
 
-<<<<<<< HEAD
 # ==================== FUNÇÕES DO ENDPOINT /FULL ====================
 
 def get_performance_rating(over35_rate: float) -> str:
@@ -1442,5 +1495,3 @@ def generate_actionable_insights(
         insights.append(f"⚠️ CAUTELA: Score {opp_score}/100 - Padrões inconsistentes, aguarde mais dados")
     
     return insights if insights else ["Aguarde mais dados para insights acionáveis"]
-=======
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746

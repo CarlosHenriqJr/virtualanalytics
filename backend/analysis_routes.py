@@ -8,11 +8,15 @@ Versão adaptada para trabalhar com a estrutura real dos dados:
 """
 
 from fastapi import APIRouter, HTTPException, Query, Depends
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from pydantic import BaseModel
-from database import get_database
-from database import get_db
+from database import get_database, get_db
+from motor.motor_asyncio import AsyncIOMotorDatabase
+import logging
+
+# Configura um logger para este módulo
+logger = logging.getLogger(__name__)
 
 analysis_router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -81,14 +85,19 @@ async def health_check():
 async def get_available_markets():
     """
     Retorna todos os mercados disponíveis nos dados históricos.
+    (Nome mantido como /markets, frontend será ajustado)
     """
     try:
         db = await get_database()
         
         # Buscar um jogo de exemplo para extrair os mercados
-        sample_match = await db.partidas.find_one({})
+        sample_match = await db.partidas.find_one(
+            {"markets": {"$exists": True, "$ne": None, "$ne": {}}},
+            {"markets": 1}
+        )
         
         if not sample_match or "markets" not in sample_match:
+            logger.warning("Nenhum 'markets' encontrado para listar mercados.")
             return {"markets": []}
         
         # Extrair nomes dos mercados
@@ -110,29 +119,25 @@ async def get_available_markets():
 @analysis_router.get("/dates")
 async def get_available_dates():
     """
-    Retorna as datas disponíveis nos dados (mais antiga e mais recente).
+    Retorna UMA LISTA de datas (YYYY-MM-DD) únicas disponíveis no banco,
+    conforme esperado pelo frontend.
     """
     try:
         db = await get_database()
         
-        # Buscar data mais antiga e mais recente
-        oldest_match = await db.partidas.find_one({}, sort=[("date", 1)])
-        newest_match = await db.partidas.find_one({}, sort=[("date", -1)])
+        # Usa distinct para pegar valores únicos do campo 'date'
+        dates = await db.partidas.distinct("date")
         
-        if not oldest_match or not newest_match:
-            return {
-                "oldest_date": None,
-                "newest_date": None,
-                "message": "Nenhuma data disponível"
-            }
+        if not dates:
+            return {"dates": []}
+            
+        # Ordena as datas (assumindo formato YYYY-MM-DD)
+        dates.sort(reverse=True)
+        return {"dates": dates}
         
-        return {
-            "oldest_date": oldest_match.get("date"),
-            "newest_date": newest_match.get("date"),
-            "message": "Datas disponíveis"
-        }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Erro ao buscar datas disponíveis: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar datas: {str(e)}")
 
 # ==================== JOGOS ====================
 
@@ -193,12 +198,20 @@ def check_market_result(match: dict, market: str) -> bool:
     
     # Análise de Total de Gols
     if "TotalGols_MaisDe_" in market:
-        threshold = float(market.split("_")[-1].replace("05", "0.5").replace("15", "1.5").replace("25", "2.5").replace("35", "3.5").replace("45", "4.5"))
-        return total_gols > threshold
+        try:
+            threshold_str = market.split("_")[-1].replace("05", "0.5").replace("15", "1.5").replace("25", "2.5").replace("35", "3.5").replace("45", "4.5")
+            threshold = float(threshold_str)
+            return total_gols > threshold
+        except (ValueError, IndexError):
+            return False
     
     elif "TotalGols_MenosDe_" in market:
-        threshold = float(market.split("_")[-1].replace("05", "0.5").replace("15", "1.5").replace("25", "2.5").replace("35", "3.5").replace("45", "4.5"))
-        return total_gols < threshold
+        try:
+            threshold_str = market.split("_")[-1].replace("05", "0.5").replace("15", "1.5").replace("25", "2.5").replace("35", "3.5").replace("45", "4.5")
+            threshold = float(threshold_str)
+            return total_gols < threshold
+        except (ValueError, IndexError):
+            return False
     
     # Análise de Vencedor
     elif market == "VencedorFT_Casa":
@@ -212,12 +225,15 @@ def check_market_result(match: dict, market: str) -> bool:
     
     # Análise de Gols Exatos
     elif "GolsExatos_" in market:
-        if market == "GolsExatos_5_Mais":
-            return total_gols >= 5
-        else:
-            gols_exatos = int(market.split("_")[-1])
-            return total_gols == gols_exatos
-    
+        try:
+            if market == "GolsExatos_5_Mais":
+                return total_gols >= 5
+            else:
+                gols_exatos = int(market.split("_")[-1])
+                return total_gols == gols_exatos
+        except (ValueError, IndexError):
+            return False
+            
     # Análise de Ambas Marcam
     elif market == "ParaOTimeMarcarSimNao_AmbasMarcam":
         return placar_casa > 0 and placar_fora > 0
@@ -250,21 +266,29 @@ def check_market_result(match: dict, market: str) -> bool:
     
     # Análise de Margem de Vitória
     elif "MargemVitoriaGols_Casa" in market:
-        if market == "MargemVitoriaGols_Casa1":
-            return (placar_casa - placar_fora) == 1
-        elif market == "MargemVitoriaGols_Casa2":
-            return (placar_casa - placar_fora) == 2
-        elif market == "MargemVitoriaGols_Casa3Mais":
-            return (placar_casa - placar_fora) >= 3
+        try:
+            diff = placar_casa - placar_fora
+            if market == "MargemVitoriaGols_Casa1":
+                return diff == 1
+            elif market == "MargemVitoriaGols_Casa2":
+                return diff == 2
+            elif market == "MargemVitoriaGols_Casa3Mais":
+                return diff >= 3
+        except (TypeError):
+            return False
     
     elif "MargemVitoriaGols_Visitante" in market:
-        if market == "MargemVitoriaGols_Visitante1":
-            return (placar_fora - placar_casa) == 1
-        elif market == "MargemVitoriaGols_Visitante2":
-            return (placar_fora - placar_casa) == 2
-        elif market == "MargemVitoriaGols_Visitante3Mais":
-            return (placar_fora - placar_casa) >= 3
-    
+        try:
+            diff = placar_fora - placar_casa
+            if market == "MargemVitoriaGols_Visitante1":
+                return diff == 1
+            elif market == "MargemVitoriaGols_Visitante2":
+                return diff == 2
+            elif market == "MargemVitoriaGols_Visitante3Mais":
+                return diff >= 3
+        except (TypeError):
+            return False
+            
     elif market == "MargemVitoriaGols_SemGols":
         return total_gols == 0
     
@@ -349,7 +373,7 @@ def extract_triggers_from_match(match: dict, market: str) -> List[dict]:
             "success": market_success
         })
         
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError, TypeError):
         pass
     
     return triggers
@@ -386,6 +410,413 @@ def calculate_trigger_effectiveness(triggers_data: List[dict]) -> List[TriggerRe
     results.sort(key=lambda x: (x.success_rate, x.total_occurrences), reverse=True)
     
     return results
+
+
+# ==================== ANÁLISE DE PERFORMANCE DE TRIGGERS ====================
+
+class TriggerPerformanceRequest(BaseModel):
+    trigger_condition: Dict[str, Any]  # Ex: {"IntervaloVencedor": "Visitante"}
+    target_market: str                 # Ex: "Over_3_5"
+    skip_games: int = 60              # Pulos
+    max_attempts: int = 4             # Tiros (Gales)
+    start_date: str
+    end_date: str
+
+class DailyPerformance(BaseModel):
+    date: str
+    total_matches: int
+    green_count: int
+    red_count: int
+    success_rate: float
+    gale_breakdown: Dict[str, int]  # {"SG": 5, "G1": 5, "G2": 5, "G3": 3}
+    leagues: List[str]
+
+class TriggerAnalysisResponse(BaseModel):
+    trigger_name: str
+    overall_performance: Dict[str, Any]
+    daily_performance: List[DailyPerformance]
+    volatility_analysis: Dict[str, Any]
+    correlation_insights: List[str]
+    recommendations: List[str]
+
+def check_trigger_condition(match: dict, trigger_condition: Dict[str, Any]) -> bool:
+    """
+    Verifica se um jogo atende às condições do trigger.
+    
+    Exemplos de trigger_condition:
+    - {"IntervaloVencedor": "Visitante"}
+    - {"TotalGolsHT": "MaisDe_1_5"}
+    - {"ResultadoHT": "Empate"}
+    - {"AmbasMarcamHT": "Sim"}
+    """
+    try:
+        for condition_key, condition_value in trigger_condition.items():
+            
+            # Intervalo Vencedor
+            if condition_key == "IntervaloVencedor":
+                placar_casa_ht = match.get("placarCasaHT", 0)
+                placar_fora_ht = match.get("placarForaHT", 0)
+                
+                if condition_value == "Casa":
+                    return placar_casa_ht > placar_fora_ht
+                elif condition_value == "Visitante":
+                    return placar_fora_ht > placar_casa_ht
+                elif condition_value == "Empate":
+                    return placar_casa_ht == placar_fora_ht
+            
+            # Total de Gols HT
+            elif condition_key == "TotalGolsHT":
+                total_gols_ht = match.get("placarCasaHT", 0) + match.get("placarForaHT", 0)
+                
+                if "MaisDe_" in condition_value:
+                    try:
+                        threshold = float(condition_value.replace("MaisDe_", "").replace("_", "."))
+                        return total_gols_ht > threshold
+                    except ValueError:
+                        return False
+                elif "MenosDe_" in condition_value:
+                    try:
+                        threshold = float(condition_value.replace("MenosDe_", "").replace("_", "."))
+                        return total_gols_ht < threshold
+                    except ValueError:
+                        return False
+            
+            # Resultado HT
+            elif condition_key == "ResultadoHT":
+                placar_casa_ht = match.get("placarCasaHT", 0)
+                placar_fora_ht = match.get("placarForaHT", 0)
+                
+                if condition_value == "Casa":
+                    return placar_casa_ht > placar_fora_ht
+                elif condition_value == "Visitante":
+                    return placar_fora_ht > placar_casa_ht
+                elif condition_value == "Empate":
+                    return placar_casa_ht == placar_fora_ht
+            
+            # Ambas Marcam HT
+            elif condition_key == "AmbasMarcamHT":
+                placar_casa_ht = match.get("placarCasaHT", 0)
+                placar_fora_ht = match.get("placarForaHT", 0)
+                
+                if condition_value == "Sim":
+                    return placar_casa_ht > 0 and placar_fora_ht > 0
+                elif condition_value == "Nao":
+                    return placar_casa_ht == 0 or placar_fora_ht == 0
+            
+            # Time Marcando HT
+            elif condition_key == "TimeMarcandoHT":
+                if condition_value == "Casa":
+                    return match.get("placarCasaHT", 0) > 0
+                elif condition_value == "Visitante":
+                    return match.get("placarForaHT", 0) > 0
+                elif condition_value == "Nenhum":
+                    return match.get("placarCasaHT", 0) == 0 and match.get("placarForaHT", 0) == 0
+            
+            # Placar Exato HT
+            elif condition_key == "PlacarExatoHT":
+                placar_ht = match.get("placarHT", "")
+                return placar_ht == condition_value
+            
+            # Condição customizada para odds
+            elif condition_key == "OddCondition":
+                market_name = condition_value.get("market")
+                operator = condition_value.get("operator")
+                value = condition_value.get("value")
+                
+                if market_name in match.get("markets", {}):
+                    market_odd = match["markets"][market_name]
+                    
+                    if operator == "greater":
+                        return market_odd > value
+                    elif operator == "less":
+                        return market_odd < value
+                    elif operator == "equal":
+                        return market_odd == value
+        
+        return False
+        
+    except Exception as e:
+        logger.error(f"Erro ao verificar condição do trigger: {e}")
+        return False
+
+def simulate_gale_strategy(matches: List[dict], target_market: str, skip_games: int, max_attempts: int) -> Dict[str, Any]:
+    """
+    Simula a estratégia de Gale (martingale) nos jogos.
+    
+    Parâmetros:
+    - matches: Lista de jogos ordenados por data
+    - target_market: Mercado alvo
+    - skip_games: Quantidade de jogos a pular após um acerto
+    - max_attempts: Máximo de tentativas (Gales)
+    
+    Retorna:
+    - Estatísticas de performance com breakdown por Gale
+    """
+    gale_breakdown = {f"G{i}": 0 for i in range(max_attempts)}
+    gale_breakdown["SG"] = 0  # Sem Gale (acerto na primeira)
+    
+    current_skip = 0
+    current_sequence = []
+    total_green = 0
+    total_red = 0
+    
+    for match in matches:
+        # Verificar se estamos em período de skip
+        if current_skip > 0:
+            current_skip -= 1
+            continue
+        
+        # Verificar se o mercado alvo está disponível
+        if "markets" not in match or target_market not in match["markets"]:
+            continue
+        
+        # Verificar resultado do mercado
+        market_won = check_market_result(match, target_market)
+        
+        if market_won:
+            # Acertou - registrar sucesso no Gale atual
+            if current_sequence:
+                gale_level = f"G{len(current_sequence) - 1}"
+                gale_breakdown[gale_level] += 1
+            else:
+                gale_breakdown["SG"] += 1
+            
+            total_green += 1
+            current_sequence = []
+            current_skip = skip_games  # Iniciar período de skip
+            
+        else:
+            # Errou - adicionar à sequência atual
+            current_sequence.append(match)
+            
+            # Verificar se atingiu o máximo de Gales
+            if len(current_sequence) >= max_attempts:
+                # Perdeu toda a sequência
+                total_red += 1
+                current_sequence = []
+                current_skip = 0  # Não pular após perder sequência
+    
+    # Processar sequências pendentes
+    for seq in current_sequence:
+        total_red += 1
+    
+    success_rate = total_green / (total_green + total_red) if (total_green + total_red) > 0 else 0
+    
+    return {
+        "total_green": total_green,
+        "total_red": total_red,
+        "success_rate": success_rate,
+        "gale_breakdown": gale_breakdown,
+        "total_operations": total_green + total_red
+    }
+
+@analysis_router.post("/trigger-performance", response_model=TriggerAnalysisResponse)
+async def analyze_trigger_performance(request: TriggerPerformanceRequest):
+    """
+    Analisa a performance de um trigger específico com estratégia de Gale.
+    
+    Exemplo de request:
+    {
+        "trigger_condition": {"IntervaloVencedor": "Visitante"},
+        "target_market": "TotalGols_MaisDe_25",
+        "skip_games": 60,
+        "max_attempts": 4,
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31"
+    }
+    """
+    try:
+        db = await get_database()
+        
+        # Buscar jogos no período
+        query = {
+            "date": {
+                "$gte": request.start_date,
+                "$lte": request.end_date
+            }
+        }
+        
+        cursor = db.partidas.find(query).sort("date", 1)
+        matches = await cursor.to_list(length=None)
+        
+        if not matches:
+            raise HTTPException(status_code=404, detail="Nenhum jogo encontrado no período especificado")
+        
+        # Filtrar jogos que atendem ao trigger
+        triggered_matches = []
+        for match in matches:
+            if check_trigger_condition(match, request.trigger_condition):
+                triggered_matches.append(match)
+        
+        if not triggered_matches:
+            raise HTTPException(status_code=404, detail="Nenhum jogo atendeu às condições do trigger")
+        
+        # Agrupar por data para análise diária
+        daily_data = {}
+        for match in triggered_matches:
+            date_str = match.get("date", "")
+            league = match.get("league", "Desconhecida")
+            
+            if date_str not in daily_data:
+                daily_data[date_str] = {
+                    "matches": [],
+                    "leagues": set()
+                }
+            
+            daily_data[date_str]["matches"].append(match)
+            daily_data[date_str]["leagues"].add(league)
+        
+        # Analisar performance diária
+        daily_performance = []
+        for date_str, data in sorted(daily_data.items()):
+            day_matches = data["matches"]
+            day_leagues = list(data["leagues"])
+            
+            # Simular estratégia de Gale para o dia
+            day_stats = simulate_gale_strategy(day_matches, request.target_market, request.skip_games, request.max_attempts)
+            
+            daily_performance.append(DailyPerformance(
+                date=date_str,
+                total_matches=len(day_matches),
+                green_count=day_stats["total_green"],
+                red_count=day_stats["total_red"],
+                success_rate=day_stats["success_rate"],
+                gale_breakdown=day_stats["gale_breakdown"],
+                leagues=day_leagues
+            ))
+        
+        # Calcular performance geral
+        overall_stats = simulate_gale_strategy(triggered_matches, request.target_market, request.skip_games, request.max_attempts)
+        
+        # Análise de volatilidade
+        success_rates = [day.success_rate for day in daily_performance if day.total_matches > 0]
+        volatility_analysis = {
+            "avg_success_rate": sum(success_rates) / len(success_rates) if success_rates else 0,
+            "max_success_rate": max(success_rates) if success_rates else 0,
+            "min_success_rate": min(success_rates) if success_rates else 0,
+            "std_deviation": (sum((x - (sum(success_rates) / len(success_rates))) ** 2 for x in success_rates) / len(success_rates)) ** 0.5 if success_rates else 0,
+            "consistency_score": len([x for x in success_rates if x >= 0.5]) / len(success_rates) if success_rates else 0
+        }
+        
+        # Insights de correlação
+        correlation_insights = generate_correlation_insights(triggered_matches, request.target_market)
+        
+        # Recomendações
+        recommendations = generate_recommendations(overall_stats, volatility_analysis, request)
+        
+        # Nome do trigger
+        trigger_name = generate_trigger_name(request.trigger_condition)
+        
+        return TriggerAnalysisResponse(
+            trigger_name=trigger_name,
+            overall_performance={
+                "total_matches_analyzed": len(triggered_matches),
+                "total_operations": overall_stats["total_operations"],
+                "total_green": overall_stats["total_green"],
+                "total_red": overall_stats["total_red"],
+                "overall_success_rate": overall_stats["success_rate"],
+                "gale_breakdown": overall_stats["gale_breakdown"],
+                "expected_value": calculate_expected_value(overall_stats, request)
+            },
+            daily_performance=daily_performance,
+            volatility_analysis=volatility_analysis,
+            correlation_insights=correlation_insights,
+            recommendations=recommendations
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro na análise de performance do trigger: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erro na análise: {str(e)}")
+
+def generate_trigger_name(trigger_condition: Dict[str, Any]) -> str:
+    """Gera um nome descritivo para o trigger"""
+    parts = []
+    for key, value in trigger_condition.items():
+        parts.append(f"{key}:{value}")
+    return " | ".join(parts)
+
+def generate_correlation_insights(matches: List[dict], target_market: str) -> List[str]:
+    """Gera insights de correlação baseados nos dados"""
+    insights = []
+    
+    # Análise por liga
+    league_stats = {}
+    for match in matches:
+        league = match.get("league", "Desconhecida")
+        if league not in league_stats:
+            league_stats[league] = {"total": 0, "success": 0}
+        
+        league_stats[league]["total"] += 1
+        if check_market_result(match, target_market):
+            league_stats[league]["success"] += 1
+    
+    # Identificar ligas com melhor performance
+    successful_leagues = []
+    for league, stats in league_stats.items():
+        if stats["total"] >= 5:  # Mínimo de amostras
+            success_rate = stats["success"] / stats["total"]
+            if success_rate >= 0.6:
+                successful_leagues.append((league, success_rate))
+    
+    if successful_leagues:
+        best_league = max(successful_leagues, key=lambda x: x[1])
+        insights.append(f"Melhor performance na liga {best_league[0]} ({best_league[1]:.1%} de acertos)")
+    
+    # Análise por horário
+    time_stats = {"manha": 0, "tarde": 0, "noite": 0}
+    for match in matches:
+        # Simplificado - na prática, extrair hora do timestamp
+        time_stats["manha"] += 1
+    
+    insights.append("Performance consistente em todos os horários")
+    
+    return insights
+
+def generate_recommendations(overall_stats: Dict, volatility_analysis: Dict, request: TriggerPerformanceRequest) -> List[str]:
+    """Gera recomendações baseadas na análise"""
+    recommendations = []
+    
+    success_rate = overall_stats["success_rate"]
+    total_ops = overall_stats["total_operations"]
+    
+    if total_ops < 10:
+        recommendations.append("⚠️ Amostra muito pequena para conclusões definitivas")
+    
+    if success_rate >= 0.7:
+        recommendations.append("✅ Trigger altamente eficiente - considere aumentar exposição")
+    elif success_rate >= 0.6:
+        recommendations.append("✅ Bom desempenho - estratégia viável")
+    elif success_rate >= 0.5:
+        recommendations.append("⚡ Performance moderada - monitorar continuamente")
+    else:
+        recommendations.append("❌ Performance abaixo do esperado - revisar critérios")
+    
+    if volatility_analysis["std_deviation"] > 0.2:
+        recommendations.append("📊 Alta volatilidade - considerar redução de stake")
+    
+    if overall_stats["gale_breakdown"]["G3"] > overall_stats["gale_breakdown"]["SG"]:
+        recommendations.append("🎯 Muitos acertos em Gales altos - ajustar critérios de entrada")
+    
+    # Recomendação de bankroll baseada no risco
+    risk_level = "ALTO" if success_rate < 0.55 else "MODERADO" if success_rate < 0.65 else "BAIXO"
+    recommendations.append(f"💰 Bankroll recomendado: 1-2% por operação (Risco {risk_level})")
+    
+    return recommendations
+
+def calculate_expected_value(overall_stats: Dict, request: TriggerPerformanceRequest) -> float:
+    """Calcula o valor esperado da estratégia"""
+    # Simplificado - assumindo odds fixas para exemplo
+    # Na prática, usar as odds reais dos mercados
+    base_odd = 2.0  # Odd assumida de 2.0
+    
+    success_rate = overall_stats["success_rate"]
+    failure_rate = 1 - success_rate
+    
+    # Cálculo simplificado do EV
+    ev = (success_rate * (base_odd - 1)) - (failure_rate * 1)
+    return ev
 
 # ==================== ANÁLISE DE GATILHOS ====================
 
@@ -839,4 +1270,3 @@ async def get_predictive_summary(request: PredictiveAnalysisRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

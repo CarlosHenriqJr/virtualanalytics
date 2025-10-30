@@ -15,14 +15,16 @@ from advanced_sequential_analysis import advanced_analysis_router
 from pattern_discovery_ml import pattern_discovery_router
 from efficient_pattern_analysis import efficient_pattern_router
 from adaptive_pattern_learning import adaptive_learning_router
-<<<<<<< HEAD
+
+# --- Imports dos conflitos de merge, agora combinados ---
 from deep_pattern_analysis import deep_pattern_router
 from over35_complete_analysis import over35_router
-
-=======
 from advanced_analysis import advanced_analysis_router as full_advanced_analysis_router
-from deep_pattern_analysis import deep_pattern_router
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
+# --- Fim dos imports combinados ---
+
+from comprehensive_stats_analysis import comprehensive_stats_router # Import da tela de Stats
+from pattern_discovery_routes import pattern_discovery_router # NOVO - Import do Buscador de Padrões
+
 
 # Configuração de logging
 logging.basicConfig(
@@ -63,13 +65,15 @@ app.include_router(advanced_analysis_router)
 app.include_router(pattern_discovery_router)
 app.include_router(efficient_pattern_router)
 app.include_router(adaptive_learning_router)
-<<<<<<< HEAD
+
+# --- Rotas dos conflitos de merge, agora combinadas ---
 app.include_router(deep_pattern_router)
 app.include_router(over35_router)
-=======
 app.include_router(full_advanced_analysis_router)
-app.include_router(deep_pattern_router)
->>>>>>> 2f592652b50a0514f6e87fc5b7d4e02582d6d746
+# --- Fim das rotas combinadas ---
+
+app.include_router(comprehensive_stats_router) # Rota da tela de Stats
+app.include_router(pattern_discovery_router) # NOVO - Rota do Buscador de Padrões
 
 
 # ==================== EVENTOS ====================
@@ -83,14 +87,33 @@ async def startup_event():
         routers_info = [
             ("/analysis", "Análise básica"),
             ("/advanced-analysis", "Análise sequencial avançada"),
-            ("/pattern-discovery", "Descoberta de padrões com ML"),
+            ("/pattern-discovery-ml", "Descoberta de padrões com ML"), # Rota do 'pattern_discovery_ml'
             ("/efficient-pattern", "Análise eficiente de padrões"),
             ("/adaptive-learning", "Aprendizado adaptativo"),
             ("/deep-pattern", "Análise profunda de padrões"),
-            ("/over35-analysis", "Análise completa Over 3.5 ⚽")
+            ("/over35-analysis", "Análise completa Over 3.5 ⚽"),
+            ("/advanced-analysis-full", "Análise Avançada Completa"),
+            ("/comprehensive-stats", "Estatísticas Completas"),
+            ("/pattern-discovery", "Buscador de Padrões (Pulos)"), # NOVO - Log do Buscador
         ]
+        
+        # Log de todas as rotas principais
+        registered_paths = {str(route.path) for route in app.routes if hasattr(route, 'path')}
+        
         for path, desc in routers_info:
-            logger.info(f"   • {path} → {desc}")
+             # Verifica se o prefixo exato está registrado
+             if path in registered_paths:
+                 logger.info(f"   • {path} → {desc}")
+             else:
+                 # Se não, verifica se *alguma* rota começa com esse prefixo
+                 # (Isso é o que app.include_router faz)
+                 prefix_found = any(reg_path.startswith(path + '/') for reg_path in registered_paths)
+                 if prefix_found:
+                     logger.info(f"   • {path}/* → {desc} (Router incluído)")
+                 else:
+                     logger.warning(f"   • {path} → {desc} (ROTA NÃO ENCONTRADA)")
+
+
     except Exception as e:
         logger.error(f"❌ Falha na inicialização: {e}")
         raise
