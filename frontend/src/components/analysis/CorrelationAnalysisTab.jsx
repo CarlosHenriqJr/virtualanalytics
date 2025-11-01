@@ -4,10 +4,10 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardHeader, CardTitle } from '@/componente./ui/card';
+import { Button } from './ui/button';
+import { Label } from './ui/label';
+import { Alert, AlertDescription } from './ui/alert';
 import { BarChart3, Calendar, Clock, Home, Trophy, TrendingUp, MapPin } from 'lucide-react';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';

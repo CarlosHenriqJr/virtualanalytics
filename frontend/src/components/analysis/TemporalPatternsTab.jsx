@@ -1,20 +1,14 @@
 /**
  * TemporalPatternsTab.jsx - Análise de Padrões Temporais
- * 
- * Analisa padrões temporais e sequenciais:
- * - Sequências de greens/reds
- * - Blocos de Over/Under
- * - Padrões por horário
- * - Ciclos e repetições
- * - Intervalos entre sucessos
+ * Versão completa e corrigida
  */
 
 import React, { useState, useMemo } from 'react';
 import axios from 'axios';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.jsx';
-import { Button } from '../ui/button.jsx';
-import { Label } from '../ui/label.jsx';
-import { Alert, AlertDescription } from '../ui/alert.jsx';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Clock, TrendingUp, Zap, Activity, Target, Repeat } from 'lucide-react';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -50,7 +44,6 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
     }
   };
 
-  // Análise de sequências
   const sequenceAnalysis = useMemo(() => {
     if (!results?.sequences) return null;
     
@@ -73,7 +66,7 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
 
   return (
     <div className="space-y-6">
-      {/* Configuração */}
+      {/* Card de Configuração */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -85,27 +78,27 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <Label>Data Inicial</Label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border rounded-md"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+              <input 
+                type="date" 
+                className="w-full px-3 py-2 border rounded-md" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)} 
               />
             </div>
             <div>
               <Label>Data Final</Label>
-              <input
-                type="date"
-                className="w-full px-3 py-2 border rounded-md"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+              <input 
+                type="date" 
+                className="w-full px-3 py-2 border rounded-md" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)} 
               />
             </div>
           </div>
           
           <Button 
             onClick={handleAnalyze} 
-            disabled={!dbConnected || loading}
+            disabled={!dbConnected || loading || !startDate || !endDate}
             className="w-full"
           >
             {loading ? 'Analisando...' : 'Analisar Padrões Temporais'}
@@ -130,16 +123,12 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-3xl font-bold text-blue-600">
-                    {results.total_days}
-                  </p>
+                  <p className="text-3xl font-bold text-blue-600">{results.total_days}</p>
                   <p className="text-sm text-gray-600">Dias Analisados</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <p className="text-3xl font-bold text-green-600">
-                    {results.total_sequences}
-                  </p>
-                  <p className="text-sm text-gray-600">Sequências Detectadas</p>
+                  <p className="text-3xl font-bold text-green-600">{results.total_sequences}</p>
+                  <p className="text-sm text-gray-600">Sequências</p>
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
                   <p className="text-3xl font-bold text-purple-600">
@@ -170,38 +159,54 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Sequências Verdes */}
                   <div className="p-6 bg-green-50 rounded-lg border-2 border-green-200">
-                    <h3 className="text-lg font-bold text-green-800 mb-4">Sequências de Sucesso (Green)</h3>
+                    <h3 className="text-lg font-bold text-green-800 mb-4">
+                      Sequências de Sucesso (Green)
+                    </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Mais longa:</span>
-                        <span className="text-2xl font-bold text-green-600">{sequenceAnalysis.longestGreen}</span>
+                        <span className="text-2xl font-bold text-green-600">
+                          {sequenceAnalysis.longestGreen}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Média:</span>
-                        <span className="text-xl font-bold text-green-600">{sequenceAnalysis.avgGreen}</span>
+                        <span className="text-xl font-bold text-green-600">
+                          {sequenceAnalysis.avgGreen}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Total de sequências:</span>
-                        <span className="text-lg font-bold text-green-600">{sequenceAnalysis.totalGreenSeq}</span>
+                        <span className="text-lg font-bold text-green-600">
+                          {sequenceAnalysis.totalGreenSeq}
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   {/* Sequências Vermelhas */}
                   <div className="p-6 bg-red-50 rounded-lg border-2 border-red-200">
-                    <h3 className="text-lg font-bold text-red-800 mb-4">Sequências de Falha (Red)</h3>
+                    <h3 className="text-lg font-bold text-red-800 mb-4">
+                      Sequências de Falha (Red)
+                    </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Mais longa:</span>
-                        <span className="text-2xl font-bold text-red-600">{sequenceAnalysis.longestRed}</span>
+                        <span className="text-2xl font-bold text-red-600">
+                          {sequenceAnalysis.longestRed}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Média:</span>
-                        <span className="text-xl font-bold text-red-600">{sequenceAnalysis.avgRed}</span>
+                        <span className="text-xl font-bold text-red-600">
+                          {sequenceAnalysis.avgRed}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-600">Total de sequências:</span>
-                        <span className="text-lg font-bold text-red-600">{sequenceAnalysis.totalRedSeq}</span>
+                        <span className="text-lg font-bold text-red-600">
+                          {sequenceAnalysis.totalRedSeq}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -209,7 +214,8 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
 
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm text-gray-700">
-                    <strong>Insight:</strong> {results.sequence_insight || 'Sequências longas indicam períodos de alta volatilidade. Use para ajustar bankroll.'}
+                    <strong>Insight:</strong> {results.sequence_insight || 
+                      'Sequências longas indicam períodos de alta volatilidade. Use para ajustar bankroll.'}
                   </p>
                 </div>
               </CardContent>
@@ -275,14 +281,15 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                 </div>
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm text-gray-700">
-                    <strong>Insight:</strong> {results.hourly_insight || 'Identifique os horários com melhor consistência para otimizar entradas.'}
+                    <strong>Insight:</strong> {results.hourly_insight || 
+                      'Identifique os horários com melhor consistência para otimizar entradas.'}
                   </p>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Blocos Temporais */}
+          {/* Blocos de Performance */}
           {results.blocks && (
             <Card>
               <CardHeader>
@@ -296,7 +303,9 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                   {/* Blocos Quentes */}
                   {results.blocks.hot_blocks && results.blocks.hot_blocks.length > 0 && (
                     <div>
-                      <h3 className="font-semibold text-green-700 mb-3">🔥 Blocos Quentes (Alta Performance)</h3>
+                      <h3 className="font-semibold text-green-700 mb-3">
+                        🔥 Blocos Quentes (Alta Performance)
+                      </h3>
                       <div className="space-y-2">
                         {results.blocks.hot_blocks.map((block, idx) => (
                           <div key={idx} className="p-3 bg-green-50 rounded-lg border-l-4 border-green-600">
@@ -327,7 +336,9 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                   {/* Blocos Frios */}
                   {results.blocks.cold_blocks && results.blocks.cold_blocks.length > 0 && (
                     <div>
-                      <h3 className="font-semibold text-red-700 mb-3">❄️ Blocos Frios (Baixa Performance)</h3>
+                      <h3 className="font-semibold text-red-700 mb-3">
+                        ❄️ Blocos Frios (Baixa Performance)
+                      </h3>
                       <div className="space-y-2">
                         {results.blocks.cold_blocks.map((block, idx) => (
                           <div key={idx} className="p-3 bg-red-50 rounded-lg border-l-4 border-red-600">
@@ -357,7 +368,8 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                 </div>
                 <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
                   <p className="text-sm text-gray-700">
-                    <strong>Insight:</strong> {results.blocks_insight || 'Blocos quentes e frios ajudam a identificar períodos de maior/menor confiabilidade.'}
+                    <strong>Insight:</strong> {results.blocks_insight || 
+                      'Blocos quentes e frios ajudam a identificar períodos de maior/menor confiabilidade.'}
                   </p>
                 </div>
               </CardContent>
@@ -377,7 +389,9 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 bg-purple-50 rounded-lg text-center">
-                      <p className="text-sm text-gray-600 mb-2">Intervalo Médio entre Greens</p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        Intervalo Médio entre Greens
+                      </p>
                       <p className="text-3xl font-bold text-purple-600">
                         {results.cycles.avg_interval_between_wins?.toFixed(1)} jogos
                       </p>
@@ -419,7 +433,8 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                 </div>
                 <div className="mt-4 p-3 bg-purple-50 rounded-lg">
                   <p className="text-sm text-gray-700">
-                    <strong>Insight:</strong> {results.cycles_insight || 'Padrões cíclicos podem indicar momentos ideais para entrada ou saída.'}
+                    <strong>Insight:</strong> {results.cycles_insight || 
+                      'Padrões cíclicos podem indicar momentos ideais para entrada ou saída.'}
                   </p>
                 </div>
               </CardContent>
@@ -438,7 +453,9 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="p-6 bg-orange-50 rounded-lg">
-                    <h3 className="font-semibold text-orange-800 mb-4">Períodos de Alta Volatilidade</h3>
+                    <h3 className="font-semibold text-orange-800 mb-4">
+                      Períodos de Alta Volatilidade
+                    </h3>
                     <div className="space-y-2">
                       {results.volatility.high_volatility_periods?.map((period, idx) => (
                         <div key={idx} className="text-sm">
@@ -452,7 +469,9 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                   </div>
                   
                   <div className="p-6 bg-blue-50 rounded-lg">
-                    <h3 className="font-semibold text-blue-800 mb-4">Períodos de Baixa Volatilidade</h3>
+                    <h3 className="font-semibold text-blue-800 mb-4">
+                      Períodos de Baixa Volatilidade
+                    </h3>
                     <div className="space-y-2">
                       {results.volatility.low_volatility_periods?.map((period, idx) => (
                         <div key={idx} className="text-sm">
@@ -467,7 +486,8 @@ export default function TemporalPatternsTab({ dbConnected, availableDates, selec
                 </div>
                 <div className="mt-4 p-3 bg-orange-50 rounded-lg">
                   <p className="text-sm text-gray-700">
-                    <strong>Insight:</strong> {results.volatility_insight || 'Ajuste o tamanho das apostas baseado na volatilidade do período.'}
+                    <strong>Insight:</strong> {results.volatility_insight || 
+                      'Ajuste o tamanho das apostas baseado na volatilidade do período.'}
                   </p>
                 </div>
               </CardContent>
