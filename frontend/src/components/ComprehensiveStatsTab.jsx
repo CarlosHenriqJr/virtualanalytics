@@ -1,285 +1,156 @@
 /**
- * ComprehensiveStatsTab.jsx
- * Componente para Análise Preditiva + Análise Diária
+ * ComprehensiveStatsTab.jsx - VERSÃO COM LOGS DE DEBUG
+ * Integração completa com Correlações e Padrões Temporais
  */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import TriggerDailyAnalysis from './analysis/TriggerDailyAnalysis';
+import CorrelationAnalysisTab from './analysis/CorrelationAnalysisTab';
+import TemporalPatternsTab from './analysis/TemporalPatternsTab';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-// --- Componentes Internos ---
-
-const JsonViewer = ({ data }) => (
-  <pre className="bg-gray-900 text-green-300 text-xs p-4 rounded-lg overflow-auto max-h-[600px] shadow-inner">
-    {JSON.stringify(data, null, 2)}
-  </pre>
-);
-
-const MarketStatsTable = ({ stats, markets }) => {
-  const [filter, setFilter] = useState('');
-
-  const filteredMarkets = (markets || []).filter((m) =>
-    m.toLowerCase().includes(filter.toLowerCase())
-  );
-
-  return (
-    <div className="mt-6">
-      <h4 className="text-lg font-semibold text-gray-800 mb-2">Estatísticas por Mercado</h4>
-      <input
-        type="text"
-        placeholder="Filtrar mercado..."
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className="w-full max-w-lg p-2 border border-gray-300 rounded-md mb-4 shadow-sm"
-      />
-      <div className="overflow-auto border border-gray-200 rounded-lg max-h-[600px] shadow-md">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-0 z-10">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mercado</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Moda (Odd Mais Frequente)</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desvio Padrão (σ)</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nº Ocorrências</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Frequência (Odd: Contagem)</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredMarkets.map((marketName) => {
-              const data = stats[marketName];
-              if (!data) return null;
-              const freqString = Object.entries(data.frequency)
-                .sort(([, a], [, b]) => b - a)
-                .map(([odd, count]) => `${odd}: ${count}`)
-                .join('; ');
-              return (
-                <tr key={marketName} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{marketName}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-indigo-700 font-medium">
-                    {Array.isArray(data.mode)
-                      ? data.mode.join(', ')
-                      : data.mode !== null
-                      ? data.mode
-                      : 'N/A'}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                    {data.std !== null ? data.std.toFixed(4) : 'N/A'}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 font-medium">
-                    {data.occurrences_with_data}
-                  </td>
-                  <td
-                    className="px-4 py-3 text-xs text-gray-600 max-w-sm overflow-hidden text-ellipsis whitespace-nowrap"
-                    title={freqString}
-                  >
-                    {freqString || 'N/A'}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-      {filteredMarkets.length === 0 && (
-        <p className="text-center text-gray-500 py-4">
-          Nenhum mercado encontrado para o filtro "{filter}".
-        </p>
-      )}
-    </div>
-  );
-};
-
-const PatternOccurrencesTable = ({ occurrences, targetMarket }) => {
-  if (!occurrences || occurrences.length === 0) return null;
-
-  return (
-    <div className="mt-6">
-      <h4 className="text-lg font-semibold text-gray-800 mb-2">
-        Ocorrências do Padrão Antecessor (Total: {occurrences.length})
-      </h4>
-      <div className="overflow-auto border border-gray-200 rounded-lg max-h-[600px] shadow-md">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 sticky top-0 z-10">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Casa × Time Fora</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Padrão Identificado</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Odd do {targetMarket}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mercados no Padrão</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {occurrences.map((occurrence, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {occurrence.date}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {occurrence.home_team} × {occurrence.away_team}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700">
-                  {occurrence.pattern_type || 'Padrão Complexo'}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-green-600">
-                  {occurrence.target_market_odds || 'N/A'}
-                </td>
-                <td className="px-4 py-3 text-xs text-gray-600">
-                  {occurrence.pattern_markets?.join(', ') || 'Analisando...'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
 export default function ComprehensiveStatsTab({ dbConnected }) {
-  const [activeSection, setActiveSection] = useState('predictive-analysis');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [view, setView] = useState('stats');
+  const [activeSection, setActiveSection] = useState('daily-analysis');
+  const [analysisResults, setAnalysisResults] = useState(null);
   const [availableDates, setAvailableDates] = useState([]);
   const [markets, setMarkets] = useState([]);
-  const [referenceDate, setReferenceDate] = useState('');
-  const [targetMarket, setTargetMarket] = useState('Over_2_5');
-  const [analysisDays, setAnalysisDays] = useState(30);
-  const [minPatternFrequency, setMinPatternFrequency] = useState(3);
 
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const datesResponse = await axios.get(`${API_BASE_URL}/analysis/available-dates`);
+        const datesResponse = await axios.get(`${API_BASE_URL}/analysis/dates`);
         const dates = datesResponse.data.dates || [];
         setAvailableDates(dates);
-        if (dates.length > 0) setReferenceDate(dates[dates.length - 1]);
 
-        const marketsResponse = await axios.get(`${API_BASE_URL}/analysis/available-markets`);
+        const marketsResponse = await axios.get(`${API_BASE_URL}/analysis/markets`);
         setMarkets(marketsResponse.data.markets || []);
+        
+        console.log('📦 [ComprehensiveStatsTab] Dados iniciais carregados');
+        console.log('   - Mercados:', marketsResponse.data.markets?.length);
+        console.log('   - Datas:', dates.length);
       } catch (error) {
-        console.error('Erro ao carregar dados iniciais:', error);
+        console.error('❌ [ComprehensiveStatsTab] Erro ao carregar dados iniciais:', error);
       }
     };
-    if (dbConnected) loadInitialData();
+    if (dbConnected) {
+      console.log('🔌 [ComprehensiveStatsTab] DB conectado, carregando dados...');
+      loadInitialData();
+    }
   }, [dbConnected]);
 
-  const handleRunPredictiveAnalysis = async () => {
-    if (!dbConnected) {
-      setError('Banco de dados não está conectado.');
-      return;
+  // ✅ CALLBACK COM LOGS DETALHADOS
+  const handleAnalysisComplete = (results) => {
+    console.log('');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('✅ [ComprehensiveStatsTab] CALLBACK EXECUTADO!');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('📊 Resultados recebidos:', results);
+    console.log('📊 Estrutura:');
+    console.log('   - daily_performance existe?', !!results?.daily_performance);
+    console.log('   - daily_performance length:', results?.daily_performance?.length);
+    console.log('   - overall_performance existe?', !!results?.overall_performance);
+    console.log('   - Keys do objeto:', Object.keys(results || {}));
+    
+    if (results?.daily_performance) {
+      console.log('📊 Primeiro dia:', results.daily_performance[0]);
+      console.log('📊 Último dia:', results.daily_performance[results.daily_performance.length - 1]);
     }
-    if (!referenceDate) {
-      setError('Selecione uma data de referência.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setAnalysisResult(null);
-
-    const analysisRequest = {
-      reference_date: referenceDate,
-      target_market: targetMarket,
-      analysis_days: parseInt(analysisDays, 10),
-      min_pattern_frequency: parseInt(minPatternFrequency, 10),
-      analysis_type: 'predictive_patterns',
-    };
-
-    try {
-      const response = await axios.post(`${API_BASE_URL}/comprehensive-stats/predictive-analysis`, analysisRequest);
-      setAnalysisResult(response.data);
-      setView('stats');
-    } catch (err) {
-      console.error('Erro na análise preditiva:', err);
-      setError(err.response?.data?.detail || err.message || 'Erro na análise preditiva.');
-    } finally {
-      setLoading(false);
-    }
+    
+    console.log('');
+    console.log('💾 Salvando no estado...');
+    setAnalysisResults(results);
+    console.log('✅ Estado atualizado com sucesso!');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('');
   };
 
-  const renderResult = () => {
-    if (!analysisResult) return null;
-    return (
-      <div className="mt-6 border border-gray-200 rounded-lg p-6 bg-white shadow-lg">
-        <h3 className="text-2xl font-bold text-gray-900">📈 Análise Preditiva Concluída</h3>
-        {/* Renderização original do resultado */}
-      </div>
-    );
-  };
+  // LOG ANTES DE RENDERIZAR
+  console.log('🎨 [ComprehensiveStatsTab] Renderizando componente');
+  console.log('   - Aba ativa:', activeSection);
+  console.log('   - analysisResults é null?', analysisResults === null);
+  console.log('   - analysisResults tem daily_performance?', !!analysisResults?.daily_performance);
+  if (analysisResults?.daily_performance) {
+    console.log('   - Quantidade de dias:', analysisResults.daily_performance.length);
+  }
 
   return (
     <div className="space-y-6">
+      {/* Navegação das Abas */}
       <div className="flex space-x-4 border-b border-gray-700">
         <button
           className={`px-4 py-2 font-medium ${
-            activeSection === 'predictive-analysis'
+            activeSection === 'daily-analysis'
               ? 'border-b-2 border-blue-500 text-blue-500'
-              : 'text-gray-400'
+              : 'text-gray-400 hover:text-gray-200'
           }`}
-          onClick={() => setActiveSection('predictive-analysis')}
+          onClick={() => {
+            console.log('🔘 [ComprehensiveStatsTab] Clicou em: Variação Diária');
+            setActiveSection('daily-analysis');
+          }}
         >
-          🎯 Análise Preditiva
+          📊 Análise de Variação Diária
         </button>
         <button
           className={`px-4 py-2 font-medium ${
-            activeSection === 'daily-analysis'
+            activeSection === 'correlation'
               ? 'border-b-2 border-green-500 text-green-500'
-              : 'text-gray-400'
+              : 'text-gray-400 hover:text-gray-200'
           }`}
-          onClick={() => setActiveSection('daily-analysis')}
+          onClick={() => {
+            console.log('');
+            console.log('═══════════════════════════════════════════════════════════');
+            console.log('🔘 [ComprehensiveStatsTab] CLICOU EM: CORRELAÇÕES');
+            console.log('═══════════════════════════════════════════════════════════');
+            console.log('📊 analysisResults atual:', analysisResults);
+            console.log('📊 Tem dados?', !!analysisResults?.daily_performance);
+            if (analysisResults?.daily_performance) {
+              console.log('📊 Quantidade de dias:', analysisResults.daily_performance.length);
+            }
+            console.log('═══════════════════════════════════════════════════════════');
+            console.log('');
+            setActiveSection('correlation');
+          }}
         >
-          📊 Análise Diária
+          🔍 Correlações
+        </button>
+        <button
+          className={`px-4 py-2 font-medium ${
+            activeSection === 'temporal-patterns'
+              ? 'border-b-2 border-purple-500 text-purple-500'
+              : 'text-gray-400 hover:text-gray-200'
+          }`}
+          onClick={() => {
+            console.log('🔘 [ComprehensiveStatsTab] Clicou em: Padrões Temporais');
+            setActiveSection('temporal-patterns');
+          }}
+        >
+          ⏰ Padrões Temporais
         </button>
       </div>
 
+      {/* Conteúdo das Abas - SEMPRE MONTADAS */}
       <div className="mt-6">
-        {activeSection === 'predictive-analysis' && (
-          <>
-            {/* JSX original da seção preditiva aqui */}
-            {renderResult()}
-          </>
-        )}
+        <div style={{ display: activeSection === 'daily-analysis' ? 'block' : 'none' }}>
+          {console.log('🎨 Renderizando TriggerDailyAnalysis (display:', activeSection === 'daily-analysis' ? 'block' : 'none', ')')}
+          <TriggerDailyAnalysis 
+            dbConnected={dbConnected}
+            availableMarkets={markets}
+            onAnalysisComplete={handleAnalysisComplete}
+          />
+        </div>
 
-        {activeSection === 'daily-analysis' && <TriggerDailyAnalysis />}
+        <div style={{ display: activeSection === 'correlation' ? 'block' : 'none' }}>
+          {console.log('🎨 Renderizando CorrelationAnalysisTab (display:', activeSection === 'correlation' ? 'block' : 'none', ')')}
+          {console.log('🎨 Passando results:', analysisResults)}
+          <CorrelationAnalysisTab results={analysisResults} />
+        </div>
+
+        <div style={{ display: activeSection === 'temporal-patterns' ? 'block' : 'none' }}>
+          {console.log('🎨 Renderizando TemporalPatternsTab (display:', activeSection === 'temporal-patterns' ? 'block' : 'none', ')')}
+          <TemporalPatternsTab results={analysisResults} />
+        </div>
       </div>
-    </div>
-  );
-}
-
-function TriggerDailyAnalysis() {
-  const [analysis, setAnalysis] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    triggerCondition: '{"IntervaloVencedor": "Visitante"}',
-    targetMarket: 'Over_3_5',
-    skipGames: 60,
-    maxAttempts: 4,
-    startDate: '2024-01-01',
-    endDate: '2024-12-31',
-  });
-
-  const runAnalysis = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/analysis/trigger-daily-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      const data = await response.json();
-      setAnalysis(data);
-    } catch (error) {
-      console.error('Erro na análise:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-6 p-4 bg-gray-800 rounded-lg">
-      <h3 className="text-xl font-bold text-white">📊 Análise de Variação Diária</h3>
-      {/* Formulário e resultados conforme sua sugestão original */}
     </div>
   );
 }

@@ -25,6 +25,7 @@ from advanced_analysis import advanced_analysis_router as full_advanced_analysis
 from comprehensive_stats_analysis import comprehensive_stats_router # Import da tela de Stats
 from pattern_discovery_routes import pattern_discovery_router # NOVO - Import do Buscador de Padrões
 
+from correlation_temporal_routes import correlation_temporal_router
 
 # Configuração de logging
 logging.basicConfig(
@@ -75,6 +76,7 @@ app.include_router(full_advanced_analysis_router)
 app.include_router(comprehensive_stats_router) # Rota da tela de Stats
 app.include_router(pattern_discovery_router) # NOVO - Rota do Buscador de Padrões
 
+app.include_router(correlation_temporal_router)
 
 # ==================== EVENTOS ====================
 @app.on_event("startup")
@@ -95,6 +97,7 @@ async def startup_event():
             ("/advanced-analysis-full", "Análise Avançada Completa"),
             ("/comprehensive-stats", "Estatísticas Completas"),
             ("/pattern-discovery", "Buscador de Padrões (Pulos)"), # NOVO - Log do Buscador
+            ("/over35-analysis", "Análise de Correlações e Padrões Temporais"),
         ]
         
         # Log de todas as rotas principais

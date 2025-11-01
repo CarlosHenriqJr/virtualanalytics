@@ -541,89 +541,132 @@ def check_trigger_condition(match: dict, trigger_condition: Dict[str, Any]) -> b
 
 def simulate_gale_strategy(matches: List[dict], target_market: str, skip_games: int, max_attempts: int) -> Dict[str, Any]:
     """
-    Simula a estratégia de Gale (martingale) nos jogos.
-    
-    Parâmetros:
-    - matches: Lista de jogos ordenados por data
-    - target_market: Mercado alvo
-    - skip_games: Quantidade de jogos a pular após um acerto
-    - max_attempts: Máximo de tentativas (Gales)
-    
-    Retorna:
-    - Estatísticas de performance com breakdown por Gale
+    Simula a estratégia de Gale com LOGS DETALHADOS para debug.
     """
-    gale_breakdown = {f"G{i}": 0 for i in range(max_attempts)}
-    gale_breakdown["SG"] = 0  # Sem Gale (acerto na primeira)
+    logger.info(f"=== INICIANDO SIMULAÇÃO DE GALE ===")
+    logger.info(f"Total de jogos recebidos: {len(matches)}")
+    logger.info(f"Target market: {target_market}")
+    logger.info(f"Skip games: {skip_games}")
+    logger.info(f"Max attempts (gales): {max_attempts}")
     
-    current_skip = 0
-    current_sequence = []
+    gale_breakdown = {f"G{i}": 0 for i in range(max_attempts)}
+    gale_breakdown["SG"] = 0
+    
     total_green = 0
     total_red = 0
+    total_entries = 0  # ← CONTADOR DE ENTRADAS
     
-    for match in matches:
-        # Verificar se estamos em período de skip
-        if current_skip > 0:
-            current_skip -= 1
-            continue
+    i = 0
+    operation_count = 0
+    
+    while i < len(matches):
+        # Verificar disponibilidade do mercado
+        match = matches[i]
         
-        # Verificar se o mercado alvo está disponível
         if "markets" not in match or target_market not in match["markets"]:
+            i += 1
             continue
         
-        # Verificar resultado do mercado
-        market_won = check_market_result(match, target_market)
+        # ========================================
+        # OPERAÇÃO INICIADA
+        # ========================================
+        operation_count += 1
+        logger.info(f"\n--- OPERAÇÃO #{operation_count} (índice {i}) ---")
+        logger.info(f"Data: {match.get('date', 'N/A')}, Hora: {match.get('hour', 'N/A')}")
         
-        if market_won:
-            # Acertou - registrar sucesso no Gale atual
-            if current_sequence:
-                gale_level = f"G{len(current_sequence) - 1}"
-                gale_breakdown[gale_level] += 1
-            else:
-                gale_breakdown["SG"] += 1
+        gale_won = False
+        win_at_attempt = -1
+        
+        # Tentar até max_attempts
+        for attempt in range(max_attempts):
+            entry_index = i + attempt
             
-            total_green += 1
-            current_sequence = []
-            current_skip = skip_games  # Iniciar período de skip
+            if entry_index >= len(matches):
+                logger.warning(f"Tentativa {attempt}: Sem mais jogos disponíveis")
+                break
             
+            entry_match = matches[entry_index]
+            
+            # Verificar mercado
+            if "markets" not in entry_match or target_market not in entry_match["markets"]:
+                logger.warning(f"Tentativa {attempt}: Mercado não disponível no jogo {entry_index}")
+                continue
+            
+            # CONTABILIZAR ENTRADA
+            total_entries += 1
+            
+            # Verificar resultado
+            market_won = check_market_result(entry_match, target_market)
+            
+            logger.info(f"  Tentativa {attempt} (jogo {entry_index}): {'GREEN ✅' if market_won else 'RED ❌'}")
+            logger.info(f"    Placar: {entry_match.get('placarFT', 'N/A')}, Total Gols: {entry_match.get('totalGolsFT', 'N/A')}")
+            
+            if market_won:
+                # ACERTOU
+                gale_won = True
+                win_at_attempt = attempt
+                
+                if attempt == 0:
+                    gale_breakdown["SG"] += 1
+                    logger.info(f"  → Resultado: GREEN SEM GALE")
+                else:
+                    gale_key = f"G{attempt - 1}"
+                    gale_breakdown[gale_key] += 1
+                    logger.info(f"  → Resultado: GREEN NO {gale_key}")
+                
+                total_green += 1
+                break
+        
+        if not gale_won:
+            # PERDEU TODOS OS GALES
+            total_red += 1
+            logger.info(f"  → Resultado: RED (perdeu todos os {max_attempts} gales)")
+        
+        # Avançar índice
+        if gale_won:
+            next_i = i + win_at_attempt + 1 + skip_games
+            logger.info(f"  Avançando para índice {next_i} (atual {i} + tentativas {win_at_attempt + 1} + pulos {skip_games})")
         else:
-            # Errou - adicionar à sequência atual
-            current_sequence.append(match)
-            
-            # Verificar se atingiu o máximo de Gales
-            if len(current_sequence) >= max_attempts:
-                # Perdeu toda a sequência
-                total_red += 1
-                current_sequence = []
-                current_skip = 0  # Não pular após perder sequência
+            next_i = i + max_attempts
+            logger.info(f"  Avançando para índice {next_i} (atual {i} + max_attempts {max_attempts})")
+        
+        i = next_i
     
-    # Processar sequências pendentes
-    for seq in current_sequence:
-        total_red += 1
-    
+    # ========================================
+    # RESULTADO FINAL
+    # ========================================
     success_rate = total_green / (total_green + total_red) if (total_green + total_red) > 0 else 0
+    
+    logger.info(f"\n=== RESULTADO FINAL ===")
+    logger.info(f"Total de ENTRADAS: {total_entries}")
+    logger.info(f"Total de OPERAÇÕES: {operation_count}")
+    logger.info(f"Total Greens: {total_green}")
+    logger.info(f"Total Reds: {total_red}")
+    logger.info(f"Soma (Greens + Reds): {total_green + total_red}")
+    logger.info(f"Success Rate: {success_rate:.2%}")
+    logger.info(f"Gale Breakdown: {gale_breakdown}")
+    logger.info(f"Soma Gales: {sum(gale_breakdown.values())}")
+    
+    # VALIDAÇÃO
+    if (total_green + total_red) != operation_count:
+        logger.error(f"❌ ERRO: Greens ({total_green}) + Reds ({total_red}) ≠ Operações ({operation_count})")
+    
+    if sum(gale_breakdown.values()) != total_green:
+        logger.error(f"❌ ERRO: Soma dos gales ({sum(gale_breakdown.values())}) ≠ Total Greens ({total_green})")
     
     return {
         "total_green": total_green,
         "total_red": total_red,
         "success_rate": success_rate,
         "gale_breakdown": gale_breakdown,
-        "total_operations": total_green + total_red
+        "total_operations": total_green + total_red,  # ← Deve ser igual a operation_count
+        "total_entries": total_entries  # ← NOVO: total de apostas feitas
     }
 
 @analysis_router.post("/trigger-performance", response_model=TriggerAnalysisResponse)
 async def analyze_trigger_performance(request: TriggerPerformanceRequest):
     """
     Analisa a performance de um trigger específico com estratégia de Gale.
-    
-    Exemplo de request:
-    {
-        "trigger_condition": {"IntervaloVencedor": "Visitante"},
-        "target_market": "TotalGols_MaisDe_25",
-        "skip_games": 60,
-        "max_attempts": 4,
-        "start_date": "2024-01-01",
-        "end_date": "2024-12-31"
-    }
     """
     try:
         db = await get_database()
@@ -651,42 +694,49 @@ async def analyze_trigger_performance(request: TriggerPerformanceRequest):
         if not triggered_matches:
             raise HTTPException(status_code=404, detail="Nenhum jogo atendeu às condições do trigger")
         
-        # Agrupar por data para análise diária
+        # ========================================
+        # CORREÇÃO: Agrupar por data DEPOIS de simular o gale
+        # ========================================
+        
+        # 1. SIMULAR GALE NO DATASET COMPLETO PRIMEIRO
+        overall_stats = simulate_gale_strategy(
+            triggered_matches, 
+            request.target_market, 
+            request.skip_games, 
+            request.max_attempts
+        )
+        
+        # 2. AGORA SIMULAR DIA A DIA PARA ANÁLISE DIÁRIA
         daily_data = {}
         for match in triggered_matches:
             date_str = match.get("date", "")
-            league = match.get("league", "Desconhecida")
-            
             if date_str not in daily_data:
-                daily_data[date_str] = {
-                    "matches": [],
-                    "leagues": set()
-                }
-            
-            daily_data[date_str]["matches"].append(match)
-            daily_data[date_str]["leagues"].add(league)
+                daily_data[date_str] = []
+            daily_data[date_str].append(match)
         
-        # Analisar performance diária
+        # 3. SIMULAR GALE PARA CADA DIA SEPARADAMENTE
         daily_performance = []
-        for date_str, data in sorted(daily_data.items()):
-            day_matches = data["matches"]
-            day_leagues = list(data["leagues"])
+        for date_str, day_matches in sorted(daily_data.items()):
+            # Simular estratégia de Gale APENAS para este dia
+            day_stats = simulate_gale_strategy(
+                day_matches, 
+                request.target_market, 
+                request.skip_games, 
+                request.max_attempts
+            )
             
-            # Simular estratégia de Gale para o dia
-            day_stats = simulate_gale_strategy(day_matches, request.target_market, request.skip_games, request.max_attempts)
+            # Extrair ligas únicas do dia
+            day_leagues = list(set([m.get("league", "Desconhecida") for m in day_matches]))
             
             daily_performance.append(DailyPerformance(
                 date=date_str,
-                total_matches=len(day_matches),
+                total_matches=day_stats["total_operations"],  # ← CORREÇÃO AQUI
                 green_count=day_stats["total_green"],
                 red_count=day_stats["total_red"],
                 success_rate=day_stats["success_rate"],
                 gale_breakdown=day_stats["gale_breakdown"],
                 leagues=day_leagues
             ))
-        
-        # Calcular performance geral
-        overall_stats = simulate_gale_strategy(triggered_matches, request.target_market, request.skip_games, request.max_attempts)
         
         # Análise de volatilidade
         success_rates = [day.success_rate for day in daily_performance if day.total_matches > 0]
@@ -699,7 +749,7 @@ async def analyze_trigger_performance(request: TriggerPerformanceRequest):
         }
         
         # Insights de correlação
-        correlation_insights = generate_correlation_insights(triggered_matches, request.target_market)
+        correlation_insights = generate_correlation_insights(triggered_matches, request.target_market, daily_performance)
         
         # Recomendações
         recommendations = generate_recommendations(overall_stats, volatility_analysis, request)
@@ -716,7 +766,8 @@ async def analyze_trigger_performance(request: TriggerPerformanceRequest):
                 "total_red": overall_stats["total_red"],
                 "overall_success_rate": overall_stats["success_rate"],
                 "gale_breakdown": overall_stats["gale_breakdown"],
-                "expected_value": calculate_expected_value(overall_stats, request)
+                "expected_value": calculate_expected_value(overall_stats, request),
+                "total_entries": overall_stats.get("total_entries", 0)  # ← Adicionar aqui
             },
             daily_performance=daily_performance,
             volatility_analysis=volatility_analysis,
@@ -729,6 +780,7 @@ async def analyze_trigger_performance(request: TriggerPerformanceRequest):
     except Exception as e:
         logger.error(f"Erro na análise de performance do trigger: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Erro na análise: {str(e)}")
+    
 
 def generate_trigger_name(trigger_condition: Dict[str, Any]) -> str:
     """Gera um nome descritivo para o trigger"""
@@ -737,42 +789,92 @@ def generate_trigger_name(trigger_condition: Dict[str, Any]) -> str:
         parts.append(f"{key}:{value}")
     return " | ".join(parts)
 
-def generate_correlation_insights(matches: List[dict], target_market: str) -> List[str]:
-    """Gera insights de correlação baseados nos dados"""
+def generate_correlation_insights(matches: List[dict], target_market: str, daily_performance: List[DailyPerformance]) -> List[str]:
+    """Gera insights de correlação baseados nos dados diários"""
     insights = []
     
-    # Análise por liga
-    league_stats = {}
-    for match in matches:
-        league = match.get("league", "Desconhecida")
-        if league not in league_stats:
-            league_stats[league] = {"total": 0, "success": 0}
+    if not daily_performance:
+        return ["Dados insuficientes para análise de correlação"]
+    
+    # 1. Análise por dia da semana
+    from datetime import datetime
+    weekday_stats = {}
+    
+    for day_perf in daily_performance:
+        try:
+            date_obj = datetime.strptime(day_perf.date, "%Y-%m-%d")
+            weekday = date_obj.strftime("%A")  # Segunda, Terça, etc
+            
+            if weekday not in weekday_stats:
+                weekday_stats[weekday] = {"rates": [], "operations": 0}
+            
+            weekday_stats[weekday]["rates"].append(day_perf.success_rate)
+            weekday_stats[weekday]["operations"] += day_perf.total_matches
+        except:
+            pass
+    
+    # Encontrar melhor e pior dia da semana
+    if weekday_stats:
+        weekday_avgs = {day: sum(stats["rates"])/len(stats["rates"]) for day, stats in weekday_stats.items() if stats["rates"]}
         
-        league_stats[league]["total"] += 1
-        if check_market_result(match, target_market):
-            league_stats[league]["success"] += 1
+        if weekday_avgs:
+            best_day = max(weekday_avgs.items(), key=lambda x: x[1])
+            worst_day = min(weekday_avgs.items(), key=lambda x: x[1])
+            
+            insights.append(f"📅 Melhor dia: {best_day[0]} ({best_day[1]:.1%} de acerto)")
+            insights.append(f"📅 Pior dia: {worst_day[0]} ({worst_day[1]:.1%} de acerto)")
     
-    # Identificar ligas com melhor performance
-    successful_leagues = []
-    for league, stats in league_stats.items():
-        if stats["total"] >= 5:  # Mínimo de amostras
-            success_rate = stats["success"] / stats["total"]
-            if success_rate >= 0.6:
-                successful_leagues.append((league, success_rate))
+    # 2. Análise de volume
+    high_volume_days = [d for d in daily_performance if d.total_matches >= 5]
+    low_volume_days = [d for d in daily_performance if d.total_matches < 5]
     
-    if successful_leagues:
-        best_league = max(successful_leagues, key=lambda x: x[1])
-        insights.append(f"Melhor performance na liga {best_league[0]} ({best_league[1]:.1%} de acertos)")
+    if high_volume_days and low_volume_days:
+        high_vol_avg = sum(d.success_rate for d in high_volume_days) / len(high_volume_days)
+        low_vol_avg = sum(d.success_rate for d in low_volume_days) / len(low_volume_days)
+        
+        if high_vol_avg > low_vol_avg + 0.1:
+            insights.append(f"📊 Dias com mais operações (≥5) têm {(high_vol_avg - low_vol_avg):.1%} mais assertividade")
+        elif low_vol_avg > high_vol_avg + 0.1:
+            insights.append(f"⚠️ Dias com menos operações (<5) têm {(low_vol_avg - high_vol_avg):.1%} mais assertividade")
     
-    # Análise por horário
-    time_stats = {"manha": 0, "tarde": 0, "noite": 0}
-    for match in matches:
-        # Simplificado - na prática, extrair hora do timestamp
-        time_stats["manha"] += 1
+    # 3. Análise de sequências
+    consecutive_good = 0
+    max_consecutive_good = 0
+    consecutive_bad = 0
+    max_consecutive_bad = 0
     
-    insights.append("Performance consistente em todos os horários")
+    for day_perf in sorted(daily_performance, key=lambda x: x.date):
+        if day_perf.success_rate >= 0.7:
+            consecutive_good += 1
+            consecutive_bad = 0
+            max_consecutive_good = max(max_consecutive_good, consecutive_good)
+        elif day_perf.success_rate < 0.5:
+            consecutive_bad += 1
+            consecutive_good = 0
+            max_consecutive_bad = max(max_consecutive_bad, consecutive_bad)
+        else:
+            consecutive_good = 0
+            consecutive_bad = 0
     
-    return insights
+    if max_consecutive_good >= 3:
+        insights.append(f"✅ Teve sequência de {max_consecutive_good} dias bons consecutivos")
+    
+    if max_consecutive_bad >= 3:
+        insights.append(f"⚠️ Teve sequência de {max_consecutive_bad} dias ruins consecutivos")
+    
+    # 4. Análise de gales
+    total_sg = sum(d.gale_breakdown.get("SG", 0) for d in daily_performance)
+    total_greens = sum(d.green_count for d in daily_performance)
+    
+    if total_greens > 0:
+        sg_rate = total_sg / total_greens
+        
+        if sg_rate >= 0.5:
+            insights.append(f"🎯 {sg_rate:.1%} dos acertos são sem gale (SG) - Excelente!")
+        elif sg_rate < 0.3:
+            insights.append(f"⚠️ Apenas {sg_rate:.1%} dos acertos são sem gale - Depende muito de recuperação")
+    
+    return insights if insights else ["Performance estável sem padrões claros detectados"]
 
 def generate_recommendations(overall_stats: Dict, volatility_analysis: Dict, request: TriggerPerformanceRequest) -> List[str]:
     """Gera recomendações baseadas na análise"""

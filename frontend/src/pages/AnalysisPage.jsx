@@ -14,6 +14,8 @@ import AdaptiveLearningTab from '../components/AdaptiveLearningTab.jsx';
 import Over35CompleteAnalysis from '../components/Over35CompleteAnalysis.jsx';
 import DeepAnalysisTab from '../components/DeepAnalysisTab.jsx';
 import ComprehensiveStatsTab from '../components/ComprehensiveStatsTab.jsx'; 
+// No AnalysisPage.jsx, adicione:
+import AnalysisTabs from '../components/AnalysisTabs.jsx';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -136,6 +138,8 @@ export default function AnalysisPage() {
     { id: 'over35-complete', label: '⚽ Over 3.5 Completo' },
     { id: 'efficient-pattern', label: '📊 Análise Eficiente' },
     { id: 'sequential', label: '🔁 Análise Sequencial' },
+    // Dentro do array de tabs:
+{ id: 'trigger-daily', label: '🎯 Análise de Gatilho' }
   ];
 
   return (
@@ -236,6 +240,14 @@ export default function AnalysisPage() {
                 availableDates={availableDates} 
               />
             )}
+
+            // No switch de activeTab:
+{activeTab === 'trigger-daily' && (
+  <AnalysisTabs 
+    dbConnected={dbStatus.connected} 
+    availableMarkets={markets}
+  />
+)}
 
             {activeTab === 'sequential' && (
               <AdvancedSequentialAnalysisTab
