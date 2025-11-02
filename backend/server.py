@@ -26,6 +26,11 @@ from comprehensive_stats_analysis import comprehensive_stats_router # Import da 
 from pattern_discovery_routes import pattern_discovery_router # NOVO - Import do Buscador de Padrões
 
 from correlation_temporal_routes import correlation_temporal_router
+from trigger_management_routes import trigger_router
+from unified_trigger_system import unified_router
+
+# ===== IMPORT DA IA (CORRIGIDO) =====
+from ai_system.ai_training_engine import router as ai_router, init_engine
 
 # Configuração de logging
 logging.basicConfig(
@@ -77,6 +82,11 @@ app.include_router(comprehensive_stats_router) # Rota da tela de Stats
 app.include_router(pattern_discovery_router) # NOVO - Rota do Buscador de Padrões
 
 app.include_router(correlation_temporal_router)
+app.include_router(trigger_router)
+app.include_router(unified_router)
+
+# ===== REGISTRAR ROTAS DA IA (CORRIGIDO) =====
+app.include_router(ai_router)
 
 # ==================== EVENTOS ====================
 @app.on_event("startup")
@@ -85,19 +95,29 @@ async def startup_event():
     try:
         await connect_to_mongo()
         logger.info("✅ Conexão com MongoDB estabelecida")
+        
+        # ===== INICIALIZAR AI ENGINE =====
+        try:
+            db = await get_db()
+            await init_engine(db)
+            logger.info("✅ AI Engine inicializado!")
+        except Exception as e:
+            logger.warning(f"⚠️  AI Engine não disponível: {e}")
+        
         logger.info("📊 Routers registrados:")
         routers_info = [
             ("/analysis", "Análise básica"),
             ("/advanced-analysis", "Análise sequencial avançada"),
-            ("/pattern-discovery-ml", "Descoberta de padrões com ML"), # Rota do 'pattern_discovery_ml'
+            ("/pattern-discovery-ml", "Descoberta de padrões com ML"),
             ("/efficient-pattern", "Análise eficiente de padrões"),
             ("/adaptive-learning", "Aprendizado adaptativo"),
             ("/deep-pattern", "Análise profunda de padrões"),
             ("/over35-analysis", "Análise completa Over 3.5 ⚽"),
             ("/advanced-analysis-full", "Análise Avançada Completa"),
             ("/comprehensive-stats", "Estatísticas Completas"),
-            ("/pattern-discovery", "Buscador de Padrões (Pulos)"), # NOVO - Log do Buscador
-            ("/over35-analysis", "Análise de Correlações e Padrões Temporais"),
+            ("/pattern-discovery", "Buscador de Padrões (Pulos)"),
+            ("/correlation-temporal", "Análise de Correlações e Padrões Temporais"),
+            ("/ai", "🤖 AI Training System"),  # NOVO - AI Training
         ]
         
         # Log de todas as rotas principais
@@ -158,6 +178,8 @@ def debug_routes():
                 "methods": list(getattr(route, 'methods', []))
             })
     return {"total": len(routes), "routes": sorted(routes, key=lambda x: x["path"])}
+
+
 
 # ==================== EXECUÇÃO ====================
 if __name__ == "__main__":

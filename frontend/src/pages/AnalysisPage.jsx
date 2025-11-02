@@ -13,9 +13,13 @@ import EfficientPatternTab from '../components/EfficientPatternTab.jsx';
 import AdaptiveLearningTab from '../components/AdaptiveLearningTab.jsx';
 import Over35CompleteAnalysis from '../components/Over35CompleteAnalysis.jsx';
 import DeepAnalysisTab from '../components/DeepAnalysisTab.jsx';
-import ComprehensiveStatsTab from '../components/ComprehensiveStatsTab.jsx'; 
+import ComprehensiveStatsTab from '../components/ComprehensiveStatsTab.jsx';
 // No AnalysisPage.jsx, adicione:
 import AnalysisTabs from '../components/AnalysisTabs.jsx';
+// 1. Importar o componente
+import TriggerManagementTab from '../components/TriggerManagementTab';
+
+import AITrainingDashboard from '../components/AITrainingDashboard';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -48,8 +52,8 @@ export default function AnalysisPage() {
   const [dbStatus, setDbStatus] = useState({ checking: true, connected: false, error: null, totalMatches: 0 });
   const [availableDates, setAvailableDates] = useState([]);
   const [markets, setMarkets] = useState([]); // <-- O ESTADO QUE VAMOS PASSAR
-  const [selectedMarket, setSelectedMarket] = useState('TotalGols_MaisDe_25'); 
-  const [activeTab, setActiveTab] = useState('pattern-discovery'); 
+  const [selectedMarket, setSelectedMarket] = useState('TotalGols_MaisDe_25');
+  const [activeTab, setActiveTab] = useState('pattern-discovery');
 
   /**
    * Verifica a saúde do banco de dados ao carregar a página.
@@ -59,13 +63,13 @@ export default function AnalysisPage() {
     setDbStatus({ checking: true, connected: false, error: null, totalMatches: 0 });
     try {
       const response = await axios.get(`${API_BASE_URL}/health`);
-      
+
       if (response.data.status === 'healthy') {
         setDbStatus({
           checking: false,
           connected: true,
           error: null,
-          totalMatches: response.data.total_matches 
+          totalMatches: response.data.total_matches
         });
       } else {
         throw new Error(response.data.detail || "Status não saudável");
@@ -93,15 +97,15 @@ export default function AnalysisPage() {
 
       if (marketsData.length > 0) {
         setMarkets(marketsData); // <-- OS DADOS SÃO SALVOS AQUI
-        
+
         if (!marketsData.includes(selectedMarket)) {
           setSelectedMarket(marketsData[0]);
         }
       } else {
-         console.warn("Nenhum mercado retornado da API.");
-         setMarkets(['Nenhum mercado encontrado']);
+        console.warn("Nenhum mercado retornado da API.");
+        setMarkets(['Nenhum mercado encontrado']);
       }
-      
+
     } catch (error) {
       console.error("Erro crítico ao carregar mercados:", error);
       setMarkets(['Erro ao carregar mercados']);
@@ -131,15 +135,17 @@ export default function AnalysisPage() {
 
   // Definição das abas
   const tabs = [
-    { id: 'pattern-discovery', label: '🤖 Criar Robô (Descoberta)' }, 
+    { id: 'pattern-discovery', label: '🤖 Criar Robô (Descoberta)' },
     { id: 'comprehensive-stats', label: '📈 Estatísticas Completas' },
     { id: 'deep-analysis', label: '🔎 Análise Profunda' },
     { id: 'adaptive-learning', label: '🧠 Aprendizado Adaptativo' },
     { id: 'over35-complete', label: '⚽ Over 3.5 Completo' },
     { id: 'efficient-pattern', label: '📊 Análise Eficiente' },
     { id: 'sequential', label: '🔁 Análise Sequencial' },
+    { id: 'ai-training', label: '🤖 IA Trading' },
     // Dentro do array de tabs:
-{ id: 'trigger-daily', label: '🎯 Análise de Gatilho' }
+    { id: 'trigger-daily', label: '🎯 Análise de Gatilho' },
+    { id: 'trigger-management', label: '🎯 Gerenciar Gatilhos' }, // ADICIONAR ESTA LINHA
   ];
 
   return (
@@ -175,13 +181,12 @@ export default function AnalysisPage() {
           <nav className="flex space-x-2 border-b border-gray-200 bg-gray-50 p-3 overflow-x-auto">
             {tabs.map((tab, index) => (
               <button
-                key={`${tab.id}-${index}`} 
+                key={`${tab.id}-${index}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 text-sm font-medium rounded-md whitespace-nowrap transition-colors
-                  ${
-                    activeTab === tab.id
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
+                  ${activeTab === tab.id
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-200 hover:text-gray-800'
                   }
                 `}
               >
@@ -192,12 +197,12 @@ export default function AnalysisPage() {
 
           {/* Conteúdo da Aba Ativa */}
           <div className="p-4 sm:p-6">
-            
+
             {/* ================================================================== */}
             {/* MUDANÇA PRINCIPAL AQUI */}
             {/* ================================================================== */}
             {activeTab === 'pattern-discovery' && (
-              <PatternDiscoveryTab 
+              <PatternDiscoveryTab
                 dbConnected={dbStatus.connected}
                 availableMarkets={markets} // <-- PROP ADICIONADA AQUI
                 selectedMarket={selectedMarket} // (Prop opcional, não usada por esta aba ainda)
@@ -206,48 +211,56 @@ export default function AnalysisPage() {
             )}
             {/* ================================================================== */}
 
-            
+
             {activeTab === 'comprehensive-stats' && (
-              <ComprehensiveStatsTab 
-                dbConnected={dbStatus.connected} 
+              <ComprehensiveStatsTab
+                dbConnected={dbStatus.connected}
               />
             )}
 
             {activeTab === 'deep-analysis' && (
-              <DeepAnalysisTab 
-                availableDates={availableDates} 
-                dbConnected={dbStatus.connected} 
+              <DeepAnalysisTab
+                availableDates={availableDates}
+                dbConnected={dbStatus.connected}
               />
             )}
-            
+
             {activeTab === 'adaptive-learning' && (
-              <AdaptiveLearningTab 
+              <AdaptiveLearningTab
                 dbConnected={dbStatus.connected}
               />
             )}
 
             {activeTab === 'over35-complete' && (
-              <Over35CompleteAnalysis 
-                dbConnected={dbStatus.connected} 
-                availableDates={availableDates} 
+              <Over35CompleteAnalysis
+                dbConnected={dbStatus.connected}
+                availableDates={availableDates}
               />
             )}
 
             {activeTab === 'efficient-pattern' && (
-              <EfficientPatternTab 
-                selectedMarket={selectedMarket} 
-                dbConnected={dbStatus.connected} 
-                availableDates={availableDates} 
+              <EfficientPatternTab
+                selectedMarket={selectedMarket}
+                dbConnected={dbStatus.connected}
+                availableDates={availableDates}
               />
+            )}
+            {activeTab === 'trigger-management' && (
+              <TriggerManagementTab
+                dbConnected={dbStatus.connected}
+              />
+            )}
+            {activeTab === 'ai-training' && (
+              <AITrainingDashboard dbConnected={dbStatus.connected} />
             )}
 
             // No switch de activeTab:
-{activeTab === 'trigger-daily' && (
-  <AnalysisTabs 
-    dbConnected={dbStatus.connected} 
-    availableMarkets={markets}
-  />
-)}
+            {activeTab === 'trigger-daily' && (
+              <AnalysisTabs
+                dbConnected={dbStatus.connected}
+                availableMarkets={markets}
+              />
+            )}
 
             {activeTab === 'sequential' && (
               <AdvancedSequentialAnalysisTab

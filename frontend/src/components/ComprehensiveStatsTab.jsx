@@ -11,10 +11,11 @@ import TemporalPatternsTab from './analysis/TemporalPatternsTab';
 const API_BASE_URL = 'http://localhost:8000';
 
 export default function ComprehensiveStatsTab({ dbConnected }) {
-  const [activeSection, setActiveSection] = useState('daily-analysis');
+  // const [activeSection, setActiveSection] = useState('daily-analysis');
   const [analysisResults, setAnalysisResults] = useState(null);
   const [availableDates, setAvailableDates] = useState([]);
   const [markets, setMarkets] = useState([]);
+  const [activeSection, setActiveSection] = useState('test-trigger');
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -129,28 +130,47 @@ export default function ComprehensiveStatsTab({ dbConnected }) {
         </button>
       </div>
 
-      {/* Conteúdo das Abas - SEMPRE MONTADAS */}
-      <div className="mt-6">
-        <div style={{ display: activeSection === 'daily-analysis' ? 'block' : 'none' }}>
-          {console.log('🎨 Renderizando TriggerDailyAnalysis (display:', activeSection === 'daily-analysis' ? 'block' : 'none', ')')}
-          <TriggerDailyAnalysis 
-            dbConnected={dbConnected}
-            availableMarkets={markets}
-            onAnalysisComplete={handleAnalysisComplete}
-          />
-        </div>
-
-        <div style={{ display: activeSection === 'correlation' ? 'block' : 'none' }}>
-          {console.log('🎨 Renderizando CorrelationAnalysisTab (display:', activeSection === 'correlation' ? 'block' : 'none', ')')}
-          {console.log('🎨 Passando results:', analysisResults)}
-          <CorrelationAnalysisTab results={analysisResults} />
-        </div>
-
-        <div style={{ display: activeSection === 'temporal-patterns' ? 'block' : 'none' }}>
-          {console.log('🎨 Renderizando TemporalPatternsTab (display:', activeSection === 'temporal-patterns' ? 'block' : 'none', ')')}
-          <TemporalPatternsTab results={analysisResults} />
-        </div>
+      <div className="flex space-x-4 border-b">
+        <button onClick={() => setActiveSection('test-trigger')}>
+          🧪 Testar Gatilho
+        </button>
+        <button onClick={() => setActiveSection('saved-triggers')}>
+          💾 Gatilhos Salvos
+        </button>
+        <button onClick={() => setActiveSection('cross-analysis')}>
+          🔄 Análise Cruzada
+        </button>
       </div>
+
+{/* Conteúdo das Abas - SEMPRE MONTADAS */}
+<div className="mt-6">
+  <div style={{ display: activeSection === 'daily-analysis' ? 'block' : 'none' }}>
+    {console.log('🎨 Renderizando TriggerDailyAnalysis')}
+    <TriggerDailyAnalysis 
+      dbConnected={dbConnected}
+      availableMarkets={markets}
+      onAnalysisComplete={handleAnalysisComplete}
+    />
+  </div>
+
+  <div style={{ display: activeSection === 'correlation' ? 'block' : 'none' }}>
+    {console.log('🎨 Renderizando CorrelationAnalysisTab')}
+    <CorrelationAnalysisTab 
+      dbConnected={dbConnected}
+      availableDates={availableDates}
+      selectedMarket="TotalGols_MaisDe_35"
+    />
+  </div>
+
+  <div style={{ display: activeSection === 'temporal-patterns' ? 'block' : 'none' }}>
+    {console.log('🎨 Renderizando TemporalPatternsTab')}
+    <TemporalPatternsTab 
+      dbConnected={dbConnected}
+      availableDates={availableDates}
+      selectedMarket="TotalGols_MaisDe_35"
+    />
+  </div>
+</div>
     </div>
   );
 }
