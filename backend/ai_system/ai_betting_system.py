@@ -354,7 +354,7 @@ class BettingAgent:
         # Feature extractor
         # self.feature_extractor = FeatureExtractor()
         self.feature_extractor = EnhancedFeatureExtractor()  # ao invés de FeatureExtractor()
-        
+
         # Atualizar state_size baseado nas features extraídas
         dummy_match = self._create_dummy_match()
         dummy_features = self.feature_extractor.extract(dummy_match)
@@ -584,7 +584,8 @@ class BettingAgent:
     
     def load_model(self, filepath: str):
         """Carrega modelo salvo"""
-        checkpoint = torch.load(filepath, map_location=self.device)
+        # checkpoint = torch.load(filepath, map_location=self.device)
+        checkpoint = torch.load(filepath, weights_only=False)  # ✅ Adicionar
         
         self.policy_net.load_state_dict(checkpoint['policy_net_state_dict'])
         self.target_net.load_state_dict(checkpoint['target_net_state_dict'])

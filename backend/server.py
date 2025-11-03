@@ -32,6 +32,8 @@ from unified_trigger_system import unified_router
 # ===== IMPORT DA IA (CORRIGIDO) =====
 from ai_system.ai_training_engine import router as ai_router, init_engine
 
+from ai_system.ai_insights_routes import router as insights_router
+
 # Configuração de logging
 logging.basicConfig(
     level=logging.INFO,
@@ -87,6 +89,7 @@ app.include_router(unified_router)
 
 # ===== REGISTRAR ROTAS DA IA (CORRIGIDO) =====
 app.include_router(ai_router)
+app.include_router(insights_router)
 
 # ==================== EVENTOS ====================
 @app.on_event("startup")
